@@ -17,6 +17,14 @@ import { BuscaUnidade } from "./busca-unidade";
  * `noindex` porque público aqui quer dizer "acessível por link", não
  * "publicado". Preço de unidade não deve virar resultado de busca do Google.
  */
+/**
+ * Nunca gerar esta página no build. Ela lê o banco com a chave de servidor, e
+ * durante o build essa chave pode não existir — o deploy quebraria por um
+ * motivo que não tem nada a ver com o código. Além disso o conteúdo muda a
+ * cada consulta: uma versão estática mostraria estoque velho.
+ */
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Simulador · Trilha",
   description: "Simule a entrada parcelada de uma unidade.",

@@ -31,6 +31,21 @@ const COR: Record<string, string> = {
   processando: "border-trilha-200 bg-trilha-50 text-trilha-700",
 };
 
+/**
+ * Esta página hospeda o envio do arquivo, e o envio espera a IA ler o PDF —
+ * o que leva de segundos a mais de meio minuto.
+ *
+ * Na Vercel toda função tem tempo máximo, e o padrão é curto demais para
+ * isso: sem esta linha o upload é cortado no meio da leitura, e o usuário vê
+ * um erro genérico sem entender que o arquivo estava bem.
+ *
+ * 60 s é o teto do plano Hobby. Se um dia isso não bastar, a saída não é
+ * aumentar o número: é tirar a leitura de dentro da requisição — responder na
+ * hora com "processando" e deixar a IA rodar depois, com a tela consultando o
+ * resultado.
+ */
+export const maxDuration = 60;
+
 const dataHora = (iso: string) =>
   new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 

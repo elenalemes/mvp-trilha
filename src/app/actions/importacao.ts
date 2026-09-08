@@ -83,8 +83,15 @@ export async function enviarArquivo(formulario: FormData): Promise<Resultado> {
   if (!(arquivo instanceof File) || arquivo.size === 0) {
     return { id: null, erro: "Anexe o arquivo com a lista de unidades." };
   }
-  if (arquivo.size > 20 * 1024 * 1024) {
-    return { id: null, erro: "Arquivo muito grande. O limite é 20 MB." };
+  // 4 MB é o limite da plataforma, não nosso: a Vercel recusa requisições
+  // maiores que isso antes de chegarem aqui. Barrar antes com uma mensagem
+  // útil é melhor do que deixar o navegador devolver um erro de rede.
+  if (arquivo.size > 4 * 1024 * 1024) {
+    const mb = (arquivo.size / 1024 / 1024).toFixed(1);
+    return {
+      id: null,
+      erro: `Arquivo muito grande (${mb} MB). O limite é 4 MB. Se for um PDF escaneado, peça a versão original à incorporadora ou comprima o arquivo antes de enviar.`,
+    };
   }
 
   const supabase = await createClient();
@@ -290,8 +297,8 @@ export async function aplicarImportacao(importacaoId: string): Promise<Resultado
     .order("ordem")
     .returns<LinhaImportacao[]>();
 
-  const plano = await calcularPlano(supabase, importacao.empreendimento_id, linhas ?? []);
   const empreendimentoId = importacao.empreendimento_id;
+  const plano = await calcularPlano(supabase, empreendimentoId, linhas ?? []);
 
   const campos = (l: LinhaImportacao) => ({
     identificacao: l.identificacao ?? "sem identificação",
@@ -310,38 +317,47 @@ export async function aplicarImportacao(importacaoId: string): Promise<Resultado
     observacao: l.observacao,
   });
 
-  const novos = plano.itens
-    .filter((i) => i.linha.incluir && i.acao === "criar")
-    .map((i) => ({ empreendimento_id: empreendimentoId, status: "disponivel", ...campos(i.linha) }));
+  const incluidos = plano.itens.filter((i) => i.linha.incluir);
 
-  if (novos.length > 0) {
-    const { error } = await supabase.from("imovel").insert(novos);
-    if (error) return { id: null, erro: detalhar("Falha ao criar as unidades novas.", error) };
+  const criar = incluidos.filter((i) => i.acao === "criar").map((i) => campos(i.linha));
+
+  const atualizar = incluidos
+    .filter((i) => i.acao === "atualizar" && i.existente)
+    .map((i) => ({ id: i.existente!.id, ...campos(i.linha) }));
+
+  const indisponibilizar = plano.desaparecidas.map((d) => d.id);
+
+  // Uma chamada, uma transação. Antes eram quatro escritas independentes, com
+  // um update por unidade — 260 idas à rede que estouravam o tempo limite da
+  // função na Vercel e podiam deixar a importação aplicada pela metade.
+  const { error } = await supabase.rpc("aplicar_importacao", {
+    p_importacao: importacaoId,
+    p_empreendimento: empreendimentoId,
+    p_criar: criar,
+    p_atualizar: atualizar,
+    p_indisponibilizar: indisponibilizar,
+  });
+
+  if (error) {
+    // Qualquer erro aqui significa que NADA foi gravado — a função desfaz a
+    // transação inteira. É seguro dizer ao usuário para tentar de novo.
+    if (error.code === "23505") {
+      return {
+        id: null,
+        erro: "O arquivo tem duas unidades com a mesma identificação, ou uma delas já existe no empreendimento. Nada foi gravado — corrija na conferência e aplique de novo.",
+      };
+    }
+    if (error.code === "42501") {
+      return { id: null, erro: "Você não tem permissão para aplicar esta importação." };
+    }
+    if (error.code === "22023") {
+      return { id: null, erro: "Esta importação já foi aplicada." };
+    }
+    if (error.code === "P0002") {
+      return { id: null, erro: "Importação não encontrada, ou sem permissão para aplicá-la." };
+    }
+    return { id: null, erro: detalhar("Não foi possível aplicar a importação.", error) };
   }
-
-  for (const item of plano.itens) {
-    if (!item.linha.incluir || item.acao !== "atualizar" || !item.existente) continue;
-    const { error } = await supabase
-      .from("imovel")
-      .update(campos(item.linha))
-      .eq("id", item.existente.id);
-    if (error) return { id: null, erro: detalhar("Falha ao atualizar uma unidade.", error) };
-  }
-
-  // Sumiu da tabela nova e ainda estava disponível: sai do estoque.
-  // Só chega aqui quem está "disponivel" — o resto é intocável por regra.
-  if (plano.desaparecidas.length > 0) {
-    const { error } = await supabase
-      .from("imovel")
-      .update({ status: "indisponivel" })
-      .in(
-        "id",
-        plano.desaparecidas.map((d) => d.id),
-      );
-    if (error) return { id: null, erro: detalhar("Falha ao baixar as unidades ausentes.", error) };
-  }
-
-  await supabase.from("importacao").update({ status: "aplicada" }).eq("id", importacaoId);
 
   revalidatePath("/empreendimentos");
   revalidatePath(`/empreendimentos/${empreendimentoId}`);
