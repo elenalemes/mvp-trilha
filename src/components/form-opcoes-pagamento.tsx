@@ -1,0 +1,248 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { opcoesPagamentoSchema, type OpcoesPagamentoValues } from "@/lib/schemas";
+import { parseDecimal } from "@/lib/br";
+import {
+  MAX_OPCOES_PAGAMENTO,
+  PRAZO_PADRAO_MESES,
+  PRAZO_TRILHA_MAX,
+  PRAZO_TRILHA_MIN,
+} from "@/lib/trilha";
+import { salvarOpcoesPagamento } from "@/app/actions/opcoes-pagamento";
+import { Alert, Button, Field, Input, Section } from "@/components/ui";
+
+const OPCAO_VAZIA = {
+  percentual_entrada: "",
+  percentual_ato: "0",
+  prazo_meses: String(PRAZO_PADRAO_MESES),
+};
+
+const pct = (n: number) => `${n.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
+
+function Bloco({
+  titulo,
+  aoRemover,
+  children,
+}: {
+  titulo: string;
+  aoRemover: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-lg border border-trilha-200 bg-white p-6 shadow-[0_1px_2px_rgba(21,38,110,0.05)]">
+      <header className="mb-5 flex items-center justify-between gap-3 border-b border-trilha-100 pb-3">
+        <h2 className="font-display text-xl font-semibold text-trilha-700">{titulo}</h2>
+        <button
+          type="button"
+          onClick={aoRemover}
+          className="font-display text-sm font-semibold tracking-wide text-trilha-400 uppercase transition-colors hover:text-red-600"
+        >
+          Remover
+        </button>
+      </header>
+      <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-6">{children}</div>
+    </section>
+  );
+}
+
+export default function FormOpcoesPagamento({
+  incorporadoraId,
+  empreendimentoId,
+  iniciais,
+  comissaoInicial,
+  voltarPara,
+}: {
+  incorporadoraId: string;
+  /** Ausente = está editando o padrão da incorporadora. */
+  empreendimentoId?: string;
+  iniciais: OpcoesPagamentoValues["opcoes"];
+  /** Só no padrão: a comissão é da incorporadora, não de cada opção. */
+  comissaoInicial?: string;
+  /** A Trilha volta para a ficha da incorporadora; ela volta para o perfil. */
+  voltarPara: string;
+}) {
+  const router = useRouter();
+  const [erro, setErro] = useState<string | null>(null);
+  const [salvo, setSalvo] = useState(false);
+  const [pendente, iniciar] = useTransition();
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors },
+  } = useForm<OpcoesPagamentoValues>({
+    resolver: zodResolver(opcoesPagamentoSchema),
+    mode: "onBlur",
+    defaultValues: { opcoes: iniciais, percentual_comissao: comissaoInicial },
+  });
+
+  const { fields, append, remove } = useFieldArray({ control, name: "opcoes" });
+
+  // O que se paga durante a Trilha e o que sobra para financiar são
+  // consequência dos dois percentuais — mostramos, não pedimos.
+  const atuais = useWatch({ control, name: "opcoes" });
+
+  const enviar = (valores: OpcoesPagamentoValues) => {
+    setErro(null);
+    setSalvo(false);
+    iniciar(async () => {
+      const resultado = await salvarOpcoesPagamento(incorporadoraId, valores, empreendimentoId);
+      if (resultado.erro) {
+        setErro(resultado.erro);
+        return;
+      }
+      setSalvo(true);
+      router.refresh();
+    });
+  };
+
+  const cheio = fields.length >= MAX_OPCOES_PAGAMENTO;
+
+  return (
+    <form onSubmit={handleSubmit(enviar)} className="flex flex-col gap-6" noValidate>
+      {empreendimentoId ? null : (
+        <Section
+          title="Comissão do parceiro imobiliário"
+          hint="Vale para todas as opções. É o que a Trilha repassa a imobiliárias, corretores e parceiros que trouxeram o negócio."
+        >
+          <Field
+            label="Comissão"
+            error={errors.percentual_comissao?.message}
+            span={2}
+            hint="% do valor do imóvel reajustado"
+          >
+            <Input
+              inputMode="decimal"
+              placeholder="6"
+              aria-invalid={!!errors.percentual_comissao}
+              {...register("percentual_comissao")}
+            />
+          </Field>
+          <p className="text-sm text-trilha-400 sm:col-span-4">
+            Sai de dentro da entrada e é paga ao parceiro parcelada ao longo da Trilha. O que a
+            incorporadora recebe durante a Trilha é a entrada menos a comissão; o saldo do fim não
+            tem desconto.
+          </p>
+        </Section>
+      )}
+
+      {fields.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-trilha-200 bg-white px-6 py-10 text-center">
+          <p className="font-display text-lg font-semibold text-trilha-700">
+            Nenhuma opção de pagamento
+          </p>
+          <p className="mx-auto mt-1 max-w-lg text-[15px] text-trilha-400">
+            {empreendimentoId
+              ? "Sem condições próprias, este empreendimento usa o padrão da incorporadora. Salvar assim, vazio, é como voltar a usar o padrão."
+              : "Enquanto não houver nenhuma, os imóveis desta incorporadora aparecem sem formatos de pagamento. O cadastro continua liberado."}
+          </p>
+        </div>
+      ) : null}
+
+      {fields.map((campo, i) => {
+        const e = errors.opcoes?.[i];
+        const entrada = parseDecimal(atuais?.[i]?.percentual_entrada ?? "");
+        const ato = parseDecimal(atuais?.[i]?.percentual_ato ?? "") ?? 0;
+        const prazo = parseDecimal(atuais?.[i]?.prazo_meses ?? "");
+        const fecha =
+          entrada !== null && entrada > 0 && entrada <= 100 && ato <= entrada && prazo !== null;
+
+        return (
+          <Bloco key={campo.id} titulo={`Opção ${i + 1}`} aoRemover={() => remove(i)}>
+            <Field
+              label="Entrada total"
+              error={e?.percentual_entrada?.message}
+              span={2}
+              hint="% do valor do imóvel reajustado"
+            >
+              <Input
+                inputMode="decimal"
+                placeholder="20"
+                aria-invalid={!!e?.percentual_entrada}
+                {...register(`opcoes.${i}.percentual_entrada`)}
+              />
+            </Field>
+
+            <Field
+              label="Ato"
+              error={e?.percentual_ato?.message}
+              span={2}
+              hint="Pago no fechamento, sai de dentro da entrada"
+            >
+              <Input
+                inputMode="decimal"
+                placeholder="0"
+                aria-invalid={!!e?.percentual_ato}
+                {...register(`opcoes.${i}.percentual_ato`)}
+              />
+            </Field>
+
+            <Field
+              label="Tempo de Trilha"
+              error={e?.prazo_meses?.message}
+              span={2}
+              hint={`Em meses, de ${PRAZO_TRILHA_MIN} a ${PRAZO_TRILHA_MAX}`}
+            >
+              <Input
+                inputMode="numeric"
+                placeholder={String(PRAZO_PADRAO_MESES)}
+                aria-invalid={!!e?.prazo_meses}
+                {...register(`opcoes.${i}.prazo_meses`)}
+              />
+            </Field>
+
+            <p className="text-sm text-trilha-400 sm:col-span-6">
+              {fecha ? (
+                <>
+                  Durante a Trilha: <strong className="text-trilha-700">{pct(ato)}</strong> no ato,{" "}
+                  <strong className="text-trilha-700">{pct(entrada - ato)}</strong> parcelado em{" "}
+                  <strong className="text-trilha-700">{prazo}</strong> meses · A financiar no fim:{" "}
+                  <strong className="text-trilha-700">{pct(100 - entrada)}</strong> do valor.
+                </>
+              ) : (
+                "Preencha a entrada e o prazo para ver como a condição fecha."
+              )}
+            </p>
+          </Bloco>
+        );
+      })}
+
+      {erro ? <Alert>{erro}</Alert> : null}
+      {salvo ? (
+        <Alert tone="ok">
+          {empreendimentoId
+            ? fields.length === 0
+              ? "Condições próprias removidas. Este empreendimento voltou a usar o padrão da incorporadora."
+              : "Condições salvas. Valem só para os imóveis deste empreendimento."
+            : "Padrão salvo. Vale para todos os imóveis da incorporadora que não tenham condições próprias."}
+        </Alert>
+      ) : null}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="submit" disabled={pendente}>
+          {pendente ? "Salvando…" : "Salvar opções"}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={cheio}
+          onClick={() => append({ ...OPCAO_VAZIA })}
+        >
+          {cheio ? `Máximo de ${MAX_OPCOES_PAGAMENTO} opções` : "Adicionar opção"}
+        </Button>
+        <Link
+          href={voltarPara}
+          className="font-display px-2 text-[15px] font-semibold tracking-wide text-trilha-400 underline underline-offset-2 hover:text-trilha-700"
+        >
+          Voltar
+        </Link>
+      </div>
+    </form>
+  );
+}

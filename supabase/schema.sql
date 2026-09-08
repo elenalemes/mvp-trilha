@@ -1,0 +1,9 @@
+-- OBSOLETO — não rode este arquivo. Pode apagar.
+--
+-- Este era o primeiro rascunho de schema (developers / responsibles /
+-- bank_accounts / addresses, em inglês), feito antes de vermos o banco que
+-- já existia no Supabase.
+--
+-- O que vale agora:
+--   supabase/sprint-1.sql                    ← o schema em uso
+--   supabase/schema-completo-referencia.sql  ← o modelo completo, para as próximas sprints

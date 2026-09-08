@@ -1,0 +1,222 @@
+import Link from "next/link";
+import { Suspense } from "react";
+import { createClient } from "@/lib/supabase/server";
+import { getSessao, podeEditar } from "@/lib/sessao";
+import { EmptyState, PageHeader, Stat } from "@/components/ui";
+import { FiltroIncorporadora } from "@/components/filtro-incorporadora";
+import { Busca } from "@/components/busca";
+
+type Linha = {
+  id: string;
+  nome: string;
+  endereco: string | null;
+  incorporadora_id: string;
+  incorporadora: { nome: string } | null;
+  imovel: { count: number }[];
+};
+
+/** PostgREST separa condições do `or` por vírgula — então ela não pode passar. */
+const limpar = (termo: string) => termo.replace(/[,()*]/g, " ").trim();
+
+export default async function EmpreendimentosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ incorporadora?: string; q?: string }>;
+}) {
+  const { incorporadora, q } = await searchParams;
+  const termo = limpar(q ?? "");
+  const sessao = await getSessao();
+  const admin = sessao?.conta?.tipo === "trilha_admin";
+  const edita = podeEditar(sessao);
+
+  const supabase = await createClient();
+
+  const { data: incorporadoras } = await supabase
+    .from("incorporadora")
+    .select("id, nome")
+    .order("nome")
+    .returns<{ id: string; nome: string }[]>();
+
+  let consulta = supabase
+    .from("empreendimento")
+    .select("id, nome, endereco, incorporadora_id, incorporadora(nome), imovel(count)")
+    .order("nome");
+
+  if (incorporadora) consulta = consulta.eq("incorporadora_id", incorporadora);
+
+  if (termo) {
+    // Nome do empreendimento ou endereço.
+    consulta = consulta.or(`nome.ilike.*${termo}*,endereco.ilike.*${termo}*`);
+  }
+
+  const { data } = await consulta.returns<Linha[]>();
+
+  // Resumo do topo. Ele acompanha o filtro por incorporadora, mas ignora a
+  // busca por texto de propósito: "total de imóveis" tem que continuar sendo
+  // o total, e não o número de linhas que a busca deixou na tela.
+  let escopo = supabase.from("empreendimento").select("id");
+  if (incorporadora) escopo = escopo.eq("incorporadora_id", incorporadora);
+  const { data: doEscopo } = await escopo.returns<{ id: string }[]>();
+  const idsEscopo = (doEscopo ?? []).map((e) => e.id);
+
+  const contarImoveis = async (status?: string) => {
+    if (idsEscopo.length === 0) return 0;
+    let q = supabase
+      .from("imovel")
+      .select("id", { count: "exact", head: true })
+      .in("empreendimento_id", idsEscopo);
+    if (status) q = q.eq("status", status);
+    const { count } = await q;
+    return count ?? 0;
+  };
+
+  const [totalImoveis, totalDisponiveis, totalNegociacao, totalEmTrilha] = await Promise.all([
+    contarImoveis(),
+    contarImoveis("disponivel"),
+    contarImoveis("em_negociacao"),
+    contarImoveis("em_trilha"),
+  ]);
+
+  const semIncorporadora = admin && (incorporadoras?.length ?? 0) === 0;
+  const filtrando = Boolean(incorporadora);
+  const buscando = Boolean(termo);
+  const nomeFiltrado = incorporadoras?.find((i) => i.id === incorporadora)?.nome;
+
+  return (
+    <>
+      <PageHeader
+        titulo="Empreendimentos"
+        descricao={
+          filtrando
+            ? `Empreendimentos de ${nomeFiltrado ?? "—"}.`
+            : "Os prédios e condomínios onde ficam os imóveis."
+        }
+        acao={
+          semIncorporadora || !edita
+            ? undefined
+            : { href: "/empreendimentos/novo", label: "Novo empreendimento" }
+        }
+      />
+
+      {idsEscopo.length > 0 ? (
+        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <Stat valor={idsEscopo.length} label="Empreendimentos" />
+          <Stat valor={totalImoveis} label="Imóveis cadastrados" />
+          <Stat valor={totalDisponiveis} label="Disponíveis" tom="positivo" />
+          <Stat valor={totalNegociacao} label="Em negociação" tom="atencao" />
+          <Stat valor={totalEmTrilha} label="Em Trilha" tom="destaque" />
+        </div>
+      ) : null}
+
+      <div className="mb-5 flex flex-wrap items-center gap-4">
+        <Suspense fallback={null}>
+          <Busca base="/empreendimentos" placeholder="Buscar por nome ou endereço" />
+        </Suspense>
+
+        {admin && (incorporadoras?.length ?? 0) > 0 ? (
+          <Suspense fallback={null}>
+            <FiltroIncorporadora incorporadoras={incorporadoras ?? []} base="/empreendimentos" />
+          </Suspense>
+        ) : null}
+
+        {buscando ? (
+          <span className="text-sm text-trilha-400">
+            {data?.length ?? 0} resultado{(data?.length ?? 0) === 1 ? "" : "s"} para “{termo}”
+          </span>
+        ) : null}
+
+        {filtrando || buscando ? (
+          <Link
+            href="/empreendimentos"
+            className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+          >
+            Limpar
+          </Link>
+        ) : null}
+      </div>
+
+      {semIncorporadora ? (
+        <EmptyState
+          titulo="Cadastre uma incorporadora primeiro"
+          texto="Todo empreendimento pertence a uma incorporadora, então é por ela que o cadastro começa."
+          acao={{ href: "/incorporadoras/nova", label: "Cadastrar incorporadora" }}
+        />
+      ) : !data || data.length === 0 ? (
+        <EmptyState
+          titulo={
+            buscando
+              ? "Nenhum empreendimento encontrado"
+              : filtrando
+                ? "Nenhum empreendimento desta incorporadora"
+                : "Nenhum empreendimento cadastrado"
+          }
+          texto={
+            buscando
+              ? `Nada corresponde a “${termo}”. Tente parte do nome ou do endereço.`
+              : "Cadastre o prédio ou condomínio antes de incluir as unidades."
+          }
+          acao={edita ? { href: "/empreendimentos/novo", label: "Cadastrar empreendimento" } : undefined}
+        />
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-trilha-200 bg-white">
+          <table className="w-full min-w-[680px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-trilha-100">
+                {[
+                  "Empreendimento",
+                  ...(admin ? ["Incorporadora"] : []),
+                  "Endereço",
+                  "Imóveis",
+                  "",
+                ].map((h, i) => (
+                  <th
+                    key={`${h}-${i}`}
+                    className="font-display px-5 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.map((linha) => (
+                <tr key={linha.id} className="border-b border-trilha-100 last:border-0">
+                  <td className="px-5 py-4">
+                    <Link
+                      href={`/empreendimentos/${linha.id}`}
+                      className="font-display text-[17px] font-semibold text-trilha-700 underline underline-offset-2 hover:text-trilha-500"
+                    >
+                      {linha.nome}
+                    </Link>
+                  </td>
+                  {admin ? (
+                    <td className="px-5 py-4 text-[15px]">
+                      <Link
+                        href={`/incorporadoras/${linha.incorporadora_id}`}
+                        className="text-trilha-500 underline underline-offset-2 hover:text-trilha-700"
+                      >
+                        {linha.incorporadora?.nome ?? "—"}
+                      </Link>
+                    </td>
+                  ) : null}
+                  <td className="px-5 py-4 text-[15px] text-trilha-400">{linha.endereco || "—"}</td>
+                  <td className="px-5 py-4 text-[15px] tabular-nums">
+                    {linha.imovel?.[0]?.count ?? 0}
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Link
+                      href={`/empreendimentos/${linha.id}`}
+                      className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+                    >
+                      Abrir
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  );
+}

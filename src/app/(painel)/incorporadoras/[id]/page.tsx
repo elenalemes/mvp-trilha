@@ -1,0 +1,262 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getSessao } from "@/lib/sessao";
+import { maritalLabel, maskCNPJ, maskCPF, maskPhone, pixTypeLabel } from "@/lib/br";
+import { PageHeader, Stat } from "@/components/ui";
+import ListaOpcoes from "@/components/lista-opcoes";
+import { opcoesPadrao } from "@/lib/opcoes";
+
+type Incorporadora = {
+  id: string;
+  nome: string;
+  cnpj: string;
+  email: string;
+  telefone: string;
+  endereco: string | null;
+  resp_nome: string;
+  resp_cpf: string;
+  resp_rg: string | null;
+  resp_profissao: string | null;
+  resp_cargo: string | null;
+  resp_estado_civil: string | null;
+  resp_email: string;
+  resp_telefone: string;
+  resp_endereco: string | null;
+  banco: string | null;
+  agencia: string | null;
+  conta_numero: string | null;
+  chave_pix: string | null;
+  chave_pix_tipo: string | null;
+  percentual_comissao: number;
+  conta: { email: string | null } | null;
+};
+
+
+
+function Item({ label, valor }: { label: string; valor: string }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <span className="font-display text-xs font-semibold tracking-[0.12em] text-trilha-400 uppercase">
+        {label}
+      </span>
+      <span className="text-[15px] text-trilha-900">{valor}</span>
+    </div>
+  );
+}
+
+function Card({
+  titulo,
+  acao,
+  children,
+}: {
+  titulo: string;
+  acao?: { href: string; label: string };
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-lg border border-trilha-200 bg-white p-6">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-trilha-100 pb-3">
+        <h2 className="font-display text-xl font-semibold text-trilha-700">{titulo}</h2>
+        {acao ? (
+          <Link
+            href={acao.href}
+            className="font-display rounded-md border border-trilha-200 bg-white px-3.5 py-1.5 text-sm font-semibold tracking-wide text-trilha-700 transition-colors hover:border-trilha-500 hover:bg-trilha-50"
+          >
+            {acao.label}
+          </Link>
+        ) : null}
+      </div>
+      <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">{children}</div>
+    </section>
+  );
+}
+
+
+/**
+ * "Não existe" e "não consigo ler" são coisas diferentes, e confundir as duas
+ * já custou rodadas de conserto no lugar errado nesta base. Erro do banco vira
+ * mensagem na tela com código e motivo; ausência de linha vira 404.
+ */
+function ErroDeLeitura({ erro }: { erro: { code?: string; message?: string } }) {
+  return (
+    <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
+      <p className="font-display text-[15px] font-semibold text-red-800">
+        O banco recusou a leitura desta incorporadora.
+      </p>
+      <p className="mt-1 text-sm text-red-700">
+        {erro.code ?? "sem código"}: {erro.message ?? "sem mensagem"}
+      </p>
+      <p className="mt-2 text-sm text-red-700">
+        Isso não quer dizer que o cadastro não exista — quer dizer que esta sessão não conseguiu
+        lê-lo.
+      </p>
+    </div>
+  );
+}
+
+export default async function IncorporadoraPage({ params }: { params: Promise<{ id: string }> }) {
+  const sessao = await getSessao();
+  if (sessao?.conta && sessao.conta.tipo !== "trilha_admin") redirect("/empreendimentos");
+
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("incorporadora")
+    .select(
+      `id, nome, cnpj, email, telefone, endereco,
+       resp_nome, resp_cpf, resp_rg, resp_profissao, resp_cargo, resp_estado_civil,
+       resp_email, resp_telefone, resp_endereco,
+       banco, agencia, conta_numero, chave_pix, chave_pix_tipo, percentual_comissao,
+       conta (email)`,
+    )
+    .eq("id", id)
+    .maybeSingle<Incorporadora>();
+
+  if (error) return <ErroDeLeitura erro={error} />;
+  if (!data) notFound();
+
+  const { data: empreendimentos } = await supabase
+    .from("empreendimento")
+    .select("id")
+    .eq("incorporadora_id", id)
+    .returns<{ id: string }[]>();
+
+  const ids = (empreendimentos ?? []).map((e) => e.id);
+
+  // Do lado da Trilha as opções vivem aqui, e não no menu: é nesta ficha que
+  // se sabe de qual incorporadora estamos falando.
+  const padrao = await opcoesPadrao(supabase, id);
+
+  const { data: parceiros } = await supabase
+    .from("parceiro")
+    .select("id, nome, ativo")
+    .eq("incorporadora_id", id)
+    .order("nome")
+    .returns<{ id: string; nome: string; ativo: boolean }[]>();
+
+  const { count: totalImoveis } = ids.length
+    ? await supabase
+        .from("imovel")
+        .select("id", { count: "exact", head: true })
+        .in("empreendimento_id", ids)
+    : { count: 0 };
+
+  return (
+    <>
+      <PageHeader
+        titulo={data.nome}
+        descricao={maskCNPJ(data.cnpj)}
+        voltar={{ href: "/incorporadoras", label: "Incorporadoras" }}
+        acaoSecundaria={{ href: `/incorporadoras/${id}/acesso`, label: "Alterar acesso" }}
+        acao={{ href: `/incorporadoras/${id}/editar`, label: "Editar cadastro" }}
+      />
+
+      <div className="mb-6 grid grid-cols-2 gap-3">
+        <Stat
+          href={`/empreendimentos?incorporadora=${id}`}
+          valor={ids.length}
+          label="Empreendimentos"
+        />
+        <Stat valor={totalImoveis ?? 0} label="Imóveis" />
+      </div>
+
+      <div className="flex flex-col gap-6">
+        <Card titulo="Dados da incorporadora">
+          <Item label="E-mail corporativo" valor={data.email} />
+          <Item label="Telefone" valor={maskPhone(data.telefone)} />
+          <div className="sm:col-span-2">
+            <Item label="Endereço" valor={data.endereco || "—"} />
+          </div>
+        </Card>
+
+        <Card
+          titulo="Opções de pagamento"
+          acao={{
+            href: `/incorporadoras/${id}/opcoes-pagamento`,
+            label: padrao.length ? "Editar padrão" : "Definir padrão",
+          }}
+        >
+          <div className="sm:col-span-2">
+            <ListaOpcoes opcoes={padrao} percentualComissao={data.percentual_comissao} />
+            <p className="mt-4 text-sm text-trilha-400">
+              Padrão desta incorporadora: vale para todos os imóveis dela, menos os de
+              empreendimentos com condições próprias. Os valores em reais aparecem na ficha de cada
+              unidade.
+            </p>
+          </div>
+        </Card>
+
+        <Card
+          titulo="Parceiros imobiliários"
+          acao={{
+            href: `/incorporadoras/${id}/parceiros`,
+            label: (parceiros?.length ?? 0) > 0 ? "Ver parceiros" : "Cadastrar parceiro",
+          }}
+        >
+          <div className="sm:col-span-2">
+            {(parceiros?.length ?? 0) === 0 ? (
+              <p className="text-[15px] text-trilha-400">
+                Nenhum parceiro cadastrado. São as imobiliárias e corretores que vendem o estoque
+                desta incorporadora — cada um com acesso próprio, só de leitura.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-2">
+                {parceiros!.map((p) => (
+                  <li key={p.id} className="flex items-baseline gap-2.5 text-[15px]">
+                    <span className="text-trilha-900">{p.nome}</span>
+                    {p.ativo ? null : (
+                      <span className="font-display rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                        inativo
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Card>
+
+        <Card
+          titulo="Acesso"
+          acao={{ href: `/incorporadoras/${id}/acesso`, label: "Alterar acesso" }}
+        >
+          <Item label="E-mail de login" valor={data.conta?.email ?? "sem acesso criado"} />
+          <Item label="Senha" valor="não pode ser consultada, só substituída" />
+          <p className="text-sm text-trilha-400 sm:col-span-2">
+            Use “Alterar acesso” para trocar o e-mail de login ou definir uma senha nova.
+          </p>
+        </Card>
+
+        <Card titulo="Dados bancários">
+          <Item label="Banco" valor={data.banco || "—"} />
+          <Item
+            label="Agência / Conta"
+            valor={
+              data.agencia || data.conta_numero
+                ? `${data.agencia ?? "—"} / ${data.conta_numero ?? "—"}`
+                : "—"
+            }
+          />
+          <Item label="Tipo de chave" valor={pixTypeLabel(data.chave_pix_tipo)} />
+          <Item label="Chave PIX" valor={data.chave_pix || "—"} />
+        </Card>
+
+        <Card titulo="Responsável">
+          <Item label="Nome" valor={data.resp_nome} />
+          <Item label="CPF" valor={maskCPF(data.resp_cpf)} />
+          <Item label="RG" valor={data.resp_rg || "—"} />
+          <Item label="Profissão" valor={data.resp_profissao || "—"} />
+          <Item label="Cargo" valor={data.resp_cargo || "—"} />
+          <Item label="Estado civil" valor={maritalLabel(data.resp_estado_civil)} />
+          <Item label="E-mail" valor={data.resp_email} />
+          <Item label="Telefone" valor={maskPhone(data.resp_telefone)} />
+          <div className="sm:col-span-2">
+            <Item label="Endereço" valor={data.resp_endereco || "—"} />
+          </div>
+        </Card>
+      </div>
+    </>
+  );
+}

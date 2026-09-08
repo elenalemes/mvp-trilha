@@ -1,0 +1,338 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { formatBRL } from "@/lib/br";
+import { Alert, Button, Stat } from "@/components/ui";
+import {
+  alterarLinha,
+  aplicarImportacao,
+  descartarImportacao,
+  vincularEmpreendimento,
+} from "@/app/actions/importacao";
+import type { LinhaImportacao, Plano } from "@/lib/importacao/plano";
+
+const ROTULO_ACAO: Record<string, string> = {
+  criar: "Nova",
+  atualizar: "Atualiza",
+  ignorar: "Intocável",
+};
+
+const COR_ACAO: Record<string, string> = {
+  criar: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  atualizar: "border-amber-200 bg-amber-50 text-amber-700",
+  ignorar: "border-slate-200 bg-slate-100 text-slate-600",
+};
+
+/** Semelhança grosseira entre nomes, para sugerir o empreendimento certo. */
+function pareceCom(a: string, b: string) {
+  const limpa = (s: string) =>
+    s
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9 ]/g, " ")
+      .split(/\s+/)
+      .filter((p) => p.length > 2);
+
+  const pa = limpa(a);
+  const pb = new Set(limpa(b));
+  if (pa.length === 0) return 0;
+  return pa.filter((p) => pb.has(p)).length / pa.length;
+}
+
+export function Revisao({
+  importacaoId,
+  empreendimentoId,
+  empreendimentoDetectado,
+  enderecoDetectado,
+  empreendimentos,
+  linhas,
+  plano,
+}: {
+  importacaoId: string;
+  empreendimentoId: string | null;
+  empreendimentoDetectado: string | null;
+  enderecoDetectado: string | null;
+  empreendimentos: { id: string; nome: string }[];
+  linhas: LinhaImportacao[];
+  plano: Plano | null;
+}) {
+  const router = useRouter();
+  const [erro, setErro] = useState<string | null>(null);
+  const [pendente, iniciar] = useTransition();
+
+  const sugestao = empreendimentoDetectado
+    ? empreendimentos
+        .map((e) => ({ ...e, nota: pareceCom(empreendimentoDetectado, e.nome) }))
+        .filter((e) => e.nota >= 0.5)
+        .sort((a, b) => b.nota - a.nota)[0]
+    : undefined;
+
+  const [escolha, setEscolha] = useState<string>(empreendimentoId ?? sugestao?.id ?? "novo");
+  const [nomeNovo, setNomeNovo] = useState(empreendimentoDetectado ?? "");
+
+  const vincular = () =>
+    iniciar(async () => {
+      setErro(null);
+      const r = await vincularEmpreendimento(
+        importacaoId,
+        escolha === "novo"
+          ? { novoNome: nomeNovo, novoEndereco: enderecoDetectado ?? undefined }
+          : { empreendimentoId: escolha },
+      );
+      if (r.erro) setErro(r.erro);
+      router.refresh();
+    });
+
+  const mudarLinha = (id: string, campos: Parameters<typeof alterarLinha>[1]) =>
+    iniciar(async () => {
+      const r = await alterarLinha(id, campos);
+      if (r.erro) setErro(r.erro);
+      router.refresh();
+    });
+
+  const aplicar = () =>
+    iniciar(async () => {
+      setErro(null);
+      const r = await aplicarImportacao(importacaoId);
+      if (r.erro) {
+        setErro(r.erro);
+        return;
+      }
+      router.push(`/empreendimentos/${r.id}`);
+      router.refresh();
+    });
+
+  const descartar = () =>
+    iniciar(async () => {
+      await descartarImportacao(importacaoId);
+      router.push("/incorporadoras");
+      router.refresh();
+    });
+
+  // ---------- passo 1: empreendimento ----------
+
+  if (!empreendimentoId || !plano) {
+    return (
+      <section className="rounded-lg border border-trilha-200 bg-white p-6">
+        <h2 className="font-display text-xl font-semibold text-trilha-700">
+          A qual empreendimento estas {linhas.length} unidades pertencem?
+        </h2>
+        <p className="mt-1 text-sm text-trilha-400">
+          A IA leu no arquivo:{" "}
+          <span className="font-medium text-trilha-700">
+            {empreendimentoDetectado ?? "nada identificável"}
+          </span>
+          {enderecoDetectado ? ` · ${enderecoDetectado}` : ""}
+        </p>
+
+        <div className="mt-5 flex flex-col gap-3">
+          {empreendimentos.map((e) => (
+            <label
+              key={e.id}
+              className="flex cursor-pointer items-center gap-3 rounded-md border border-trilha-200 px-4 py-3 hover:bg-trilha-50"
+            >
+              <input
+                type="radio"
+                name="empreendimento"
+                checked={escolha === e.id}
+                onChange={() => setEscolha(e.id)}
+                className="accent-trilha-500"
+              />
+              <span className="text-[15px] text-trilha-900">{e.nome}</span>
+              {sugestao?.id === e.id ? (
+                <span className="font-display rounded-full bg-trilha-100 px-2 py-0.5 text-xs font-semibold tracking-wide text-trilha-700 uppercase">
+                  parece este
+                </span>
+              ) : null}
+            </label>
+          ))}
+
+          <label className="flex cursor-pointer flex-col gap-2 rounded-md border border-trilha-200 px-4 py-3 hover:bg-trilha-50">
+            <span className="flex items-center gap-3">
+              <input
+                type="radio"
+                name="empreendimento"
+                checked={escolha === "novo"}
+                onChange={() => setEscolha("novo")}
+                className="accent-trilha-500"
+              />
+              <span className="text-[15px] text-trilha-900">Criar um empreendimento novo</span>
+            </span>
+            {escolha === "novo" ? (
+              <input
+                value={nomeNovo}
+                onChange={(e) => setNomeNovo(e.target.value)}
+                placeholder="Nome do empreendimento"
+                className="ml-7 rounded-md border border-trilha-200 px-3 py-2 text-[15px]"
+              />
+            ) : null}
+          </label>
+        </div>
+
+        {erro ? (
+          <div className="mt-4">
+            <Alert>{erro}</Alert>
+          </div>
+        ) : null}
+
+        <div className="mt-5 flex items-center gap-3">
+          <Button type="button" onClick={vincular} disabled={pendente}>
+            {pendente ? "Salvando…" : "Continuar"}
+          </Button>
+          <button
+            type="button"
+            onClick={descartar}
+            disabled={pendente}
+            className="font-display px-2 text-[15px] font-semibold tracking-wide text-trilha-400 underline underline-offset-2 hover:text-trilha-700"
+          >
+            Descartar importação
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  // ---------- passo 2: conferência ----------
+
+  const { resumo, itens, desaparecidas } = plano;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat valor={resumo.criar} label="Novas" tom="positivo" />
+        <Stat valor={resumo.atualizar} label="Atualizadas" tom="atencao" />
+        <Stat valor={resumo.indisponibilizar} label="Vão sair do estoque" />
+        <Stat valor={resumo.ignorar} label="Intocáveis" />
+      </div>
+
+      {desaparecidas.length > 0 ? (
+        <p className="rounded-md border border-trilha-200 bg-trilha-50 px-4 py-3 text-sm text-trilha-700">
+          <span className="font-semibold">
+            {desaparecidas.length} unidade{desaparecidas.length === 1 ? "" : "s"} que estava
+            {desaparecidas.length === 1 ? "" : "m"} disponível no sistema não veio neste arquivo
+          </span>{" "}
+          e vai ser marcada como indisponível:{" "}
+          {desaparecidas.map((d) => d.identificacao).join(", ")}.
+        </p>
+      ) : null}
+
+      {resumo.ignorar > 0 ? (
+        <p className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          Unidades marcadas como <strong>intocáveis</strong> já estão Em Trilha, Em negociação ou
+          reservadas no sistema. A importação não altera nenhuma delas.
+        </p>
+      ) : null}
+
+      <div className="overflow-x-auto rounded-lg border border-trilha-200 bg-white">
+        <table className="w-full min-w-[900px] border-collapse text-left">
+          <thead>
+            <tr className="border-b border-trilha-100">
+              {["", "Unidade", "Valor", "Tipologia", "Características", "O que vai acontecer", "No arquivo"].map(
+                (h, i) => (
+                  <th
+                    key={`${h}-${i}`}
+                    className="font-display px-4 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
+                  >
+                    {h}
+                  </th>
+                ),
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {itens.map(({ linha, acao, valorAntigo }) => (
+              <tr
+                key={linha.id}
+                className={`border-b border-trilha-100 last:border-0 ${
+                  linha.incluir ? "" : "opacity-40"
+                }`}
+              >
+                <td className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={linha.incluir}
+                    onChange={(e) => mudarLinha(linha.id, { incluir: e.target.checked })}
+                    className="size-4 accent-trilha-500"
+                    aria-label="incluir"
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    defaultValue={linha.identificacao ?? ""}
+                    onBlur={(e) => {
+                      if (e.target.value !== (linha.identificacao ?? "")) {
+                        mudarLinha(linha.id, { identificacao: e.target.value });
+                      }
+                    }}
+                    className="font-display w-32 rounded border border-transparent bg-transparent px-1.5 py-1 text-[16px] font-semibold text-trilha-700 hover:border-trilha-200 focus:border-trilha-300"
+                  />
+                </td>
+                <td className="px-4 py-3">
+                  <input
+                    defaultValue={linha.valor ?? ""}
+                    inputMode="decimal"
+                    onBlur={(e) => {
+                      if (e.target.value !== String(linha.valor ?? "")) {
+                        mudarLinha(linha.id, { valor: e.target.value });
+                      }
+                    }}
+                    className="w-32 rounded border border-transparent bg-transparent px-1.5 py-1 text-[15px] tabular-nums text-trilha-900 hover:border-trilha-200 focus:border-trilha-300"
+                  />
+                  {valorAntigo !== undefined && valorAntigo !== null && valorAntigo !== linha.valor ? (
+                    <span className="block text-xs text-trilha-400 line-through">
+                      {formatBRL(valorAntigo)}
+                    </span>
+                  ) : null}
+                </td>
+                <td className="px-4 py-3 text-[15px]">{linha.tipologia ?? "—"}</td>
+                <td className="px-4 py-3 text-sm text-trilha-400">
+                  {[
+                    linha.num_quartos ? `${linha.num_quartos} dorm.` : null,
+                    linha.num_vagas ? `${linha.num_vagas} vaga(s)` : null,
+                    linha.metros_quadrados ? `${linha.metros_quadrados} m²` : null,
+                    linha.observacao,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || "—"}
+                </td>
+                <td className="px-4 py-3">
+                  <span
+                    className={`font-display inline-block rounded-full border px-2.5 py-0.5 text-sm font-semibold ${COR_ACAO[acao]}`}
+                  >
+                    {ROTULO_ACAO[acao]}
+                  </span>
+                  {linha.alertas.length > 0 ? (
+                    <span className="mt-1 block text-xs text-red-600">
+                      {linha.alertas.join(" · ")}
+                    </span>
+                  ) : null}
+                </td>
+                <td className="max-w-xs px-4 py-3 text-xs text-trilha-400">
+                  {linha.origem ?? "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {erro ? <Alert>{erro}</Alert> : null}
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="button" onClick={aplicar} disabled={pendente}>
+          {pendente ? "Aplicando…" : "Aprovar e cadastrar"}
+        </Button>
+        <button
+          type="button"
+          onClick={descartar}
+          disabled={pendente}
+          className="font-display px-2 text-[15px] font-semibold tracking-wide text-trilha-400 underline underline-offset-2 hover:text-trilha-700"
+        >
+          Descartar importação
+        </button>
+      </div>
+    </div>
+  );
+}
