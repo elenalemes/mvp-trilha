@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { UnidadeSimulavel } from "@/lib/simulador";
 import { caracteristicas } from "@/lib/unidade";
@@ -11,87 +11,79 @@ const normalizar = (s: string) =>
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "");
 
-const MAX_RESULTADOS = 20;
+const MAX_RESULTADOS = 30;
 
 /**
  * A escolha da unidade, dentro do empreendimento já selecionado.
  *
- * Mesmo desenho da busca de empreendimento: a lista vem inteira do servidor e
- * o filtro é em memória. Aqui a lista é maior — um prédio pode ter centenas de
- * unidades —, mas cada linha carrega quase nada, e ir ao banco a cada tecla
- * seria pior para quem está digitando na frente de um cliente.
+ * Mesmo desenho da busca de empreendimento, e pelo mesmo motivo: o campo
+ * continua editável depois da escolha, com a unidade escrita dentro. Trocar
+ * de unidade é digitar outra — não existe voltar, porque não se saiu de lugar
+ * nenhum.
+ *
+ * Sem empreendimento escolhido o campo aparece desativado em vez de sumir:
+ * assim a pessoa vê desde o começo que são dois passos, e qual falta.
  */
 export function BuscaUnidade({
   empreendimentoId,
   unidades,
   selecionada,
 }: {
-  empreendimentoId: string;
+  empreendimentoId?: string;
   unidades: UnidadeSimulavel[];
   selecionada?: UnidadeSimulavel;
 }) {
   const router = useRouter();
-  const [texto, setTexto] = useState("");
+  const nomeEscolhido = selecionada?.identificacao ?? "";
+  const [texto, setTexto] = useState(nomeEscolhido);
+  const [aberto, setAberto] = useState(false);
+  const campo = useRef<HTMLInputElement>(null);
+
+  // Quando a escolha muda no servidor, o campo acompanha. Ajustar o estado
+  // durante a renderização, e não num efeito, é o padrão que o próprio React
+  // recomenda para "estado derivado de prop": um efeito aqui renderizaria a
+  // tela duas vezes a cada troca de unidade.
+  const [ultimoNome, setUltimoNome] = useState(nomeEscolhido);
+  if (nomeEscolhido !== ultimoNome) {
+    setUltimoNome(nomeEscolhido);
+    setTexto(nomeEscolhido);
+  }
 
   const resultados = useMemo(() => {
     const termo = normalizar(texto.trim());
-    const lista = termo
-      ? unidades.filter(
-          (u) =>
-            normalizar(u.identificacao).includes(termo) ||
-            normalizar(u.tipologia ?? "").includes(termo),
-        )
-      : unidades;
+    const lista =
+      termo === "" || termo === normalizar(nomeEscolhido)
+        ? unidades
+        : unidades.filter(
+            (u) =>
+              normalizar(u.identificacao).includes(termo) ||
+              normalizar(u.tipologia ?? "").includes(termo),
+          );
     return lista.slice(0, MAX_RESULTADOS);
-  }, [texto, unidades]);
+  }, [texto, unidades, nomeEscolhido]);
 
-  if (selecionada) {
-    return (
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-trilha-200 bg-white px-5 py-4">
-        <div>
-          <p className="font-display text-xs font-semibold tracking-[0.12em] text-trilha-400 uppercase">
-            Unidade
-          </p>
-          <p className="font-display text-lg font-semibold text-trilha-700">
-            {selecionada.identificacao}
-          </p>
-          {caracteristicas(selecionada) ? (
-            <p className="text-sm text-trilha-400">{caracteristicas(selecionada)}</p>
-          ) : null}
-        </div>
-        <button
-          type="button"
-          onClick={() => {
-            setTexto("");
-            router.replace(`/simulador?e=${empreendimentoId}`);
-          }}
-          className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
-        >
-          Trocar
-        </button>
-      </div>
-    );
-  }
+  const desativado = !empreendimentoId;
 
-  if (unidades.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed border-trilha-200 bg-white px-6 py-10 text-center">
-        <p className="font-display text-lg font-semibold text-trilha-700">
-          Nenhuma unidade disponível
-        </p>
-        <p className="mx-auto mt-1 max-w-md text-[15px] text-trilha-400">
-          Este empreendimento não tem unidades disponíveis no momento. Fale com quem está te
-          atendendo.
-        </p>
-      </div>
-    );
-  }
+  const escolher = (u: UnidadeSimulavel) => {
+    setAberto(false);
+    campo.current?.blur();
+    router.replace(`/simulador?e=${empreendimentoId}&u=${u.id}`);
+  };
+
+  const limpar = () => {
+    setTexto("");
+    setAberto(true);
+    campo.current?.focus();
+    if (selecionada) router.replace(`/simulador?e=${empreendimentoId}`);
+  };
 
   return (
-    <div className="rounded-lg border border-trilha-200 bg-white p-5">
+    <div className="relative">
       <label
         htmlFor="busca-unidade"
-        className="font-display mb-1.5 block text-sm font-semibold tracking-wide text-trilha-700 uppercase"
+        className={`font-display mb-1.5 block text-sm font-semibold tracking-wide uppercase ${
+          desativado ? "text-trilha-300" : "text-trilha-700"
+        }`}
       >
         Unidade
       </label>
@@ -111,46 +103,78 @@ export function BuscaUnidade({
         </svg>
 
         <input
+          ref={campo}
           id="busca-unidade"
-          type="search"
+          type="text"
           autoComplete="off"
+          disabled={desativado}
           value={texto}
-          onChange={(e) => setTexto(e.target.value)}
-          placeholder="Digite a unidade — ex.: 302"
-          className="w-full rounded-md border border-trilha-200 bg-white py-2.5 pr-3 pl-10 text-[15px] text-trilha-900 placeholder:text-trilha-300 transition-colors hover:border-trilha-300 focus:border-trilha-500 focus:outline-none"
+          onChange={(e) => {
+            setTexto(e.target.value);
+            setAberto(true);
+          }}
+          onFocus={(e) => {
+            setAberto(true);
+            e.target.select();
+          }}
+          onBlur={() => setTimeout(() => { setAberto(false); setTexto(nomeEscolhido); }, 150)}
+          placeholder={
+            desativado ? "Escolha o empreendimento primeiro" : "Digite a unidade — ex.: 302"
+          }
+          className="w-full rounded-md border border-trilha-200 bg-white py-2.5 pr-10 pl-10 text-[15px] text-trilha-900 placeholder:text-trilha-300 transition-colors hover:border-trilha-300 focus:border-trilha-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-trilha-50 disabled:text-trilha-400 disabled:hover:border-trilha-200"
         />
+
+        {texto && !desativado ? (
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={limpar}
+            aria-label="Limpar unidade"
+            className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-trilha-300 transition-colors hover:bg-trilha-50 hover:text-trilha-700"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-4" aria-hidden="true">
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        ) : null}
       </div>
 
-      <p className="mt-2 text-xs text-trilha-400">
-        {unidades.length} unidade{unidades.length === 1 ? "" : "s"} disponível
-        {unidades.length === 1 ? "" : "is"}
-        {texto.trim() ? ` · ${resultados.length} na busca` : ""}
-      </p>
-
-      {resultados.length === 0 ? (
-        <p className="mt-3 text-sm text-trilha-400">
-          Nenhuma unidade encontrada com esse texto.
+      {!desativado && unidades.length > 0 ? (
+        <p className="mt-1.5 text-xs text-trilha-400">
+          {unidades.length} unidade{unidades.length === 1 ? "" : "s"} disponíve
+          {unidades.length === 1 ? "l" : "is"} neste empreendimento
         </p>
-      ) : (
-        <ul className="mt-3 flex max-h-80 flex-col divide-y divide-trilha-100 overflow-y-auto rounded-md border border-trilha-100">
-          {resultados.map((u) => (
-            <li key={u.id}>
-              <button
-                type="button"
-                onClick={() => router.replace(`/simulador?e=${empreendimentoId}&u=${u.id}`)}
-                className="flex w-full flex-col items-start px-4 py-3 text-left transition-colors hover:bg-trilha-50"
-              >
-                <span className="font-display text-[16px] font-semibold text-trilha-700">
-                  {u.identificacao}
-                </span>
-                {caracteristicas(u) ? (
-                  <span className="text-sm text-trilha-400">{caracteristicas(u)}</span>
-                ) : null}
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      ) : null}
+
+      {aberto && !desativado ? (
+        resultados.length > 0 ? (
+          <ul className="absolute z-20 mt-1 flex max-h-72 w-full flex-col divide-y divide-trilha-100 overflow-y-auto rounded-md border border-trilha-200 bg-white shadow-lg">
+            {resultados.map((u) => (
+              <li key={u.id}>
+                <button
+                  type="button"
+                  onMouseDown={(ev) => ev.preventDefault()}
+                  onClick={() => escolher(u)}
+                  className={`flex w-full flex-col items-start px-4 py-3 text-left transition-colors hover:bg-trilha-50 ${
+                    selecionada?.id === u.id ? "bg-trilha-50" : ""
+                  }`}
+                >
+                  <span className="font-display text-[16px] font-semibold text-trilha-700">
+                    {u.identificacao}
+                  </span>
+                  {caracteristicas(u) ? (
+                    <span className="text-sm text-trilha-400">{caracteristicas(u)}</span>
+                  ) : null}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="absolute z-20 mt-1 w-full rounded-md border border-trilha-200 bg-white px-4 py-3 text-sm text-trilha-400 shadow-lg">
+            Nenhuma unidade com esse texto.
+          </p>
+        )
+      ) : null}
     </div>
   );
 }

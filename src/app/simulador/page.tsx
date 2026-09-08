@@ -65,15 +65,17 @@ export default async function SimuladorPage({
   return (
     <Moldura>
       <div className="flex flex-col gap-5">
-        <BuscaEmpreendimento empreendimentos={empreendimentos} selecionado={selecionado} />
-
-        {selecionado ? (
+        {/* As duas buscas ficam sempre visíveis e sempre editáveis, lado a lado.
+            Trocar de unidade ou de empreendimento é digitar por cima — por isso
+            não existe "voltar" nesta tela: nunca se saiu de lugar nenhum. */}
+        <div className="grid grid-cols-1 gap-4 rounded-lg border border-trilha-200 bg-white p-5 sm:grid-cols-2">
+          <BuscaEmpreendimento empreendimentos={empreendimentos} selecionado={selecionado} />
           <BuscaUnidade
-            empreendimentoId={selecionado.id}
+            empreendimentoId={selecionado?.id}
             unidades={unidades}
             selecionada={unidadeSelecionada}
           />
-        ) : null}
+        </div>
 
         {selecionado && u && !simulacao ? (
           <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
