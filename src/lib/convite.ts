@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { headers } from "next/headers";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { linkDoSite } from "@/lib/site";
 
 /**
  * O convite de primeiro acesso, do lado público.
@@ -21,20 +21,9 @@ export function novoConvite() {
   return { token: randomBytes(24).toString("hex"), expiraEm: expira.toISOString() };
 }
 
-/**
- * O link completo do convite.
- *
- * A origem sai dos cabeçalhos da requisição em vez de uma variável de
- * ambiente: assim vale em `localhost`, no domínio da Vercel e num domínio
- * próprio depois, sem ninguém lembrar de configurar nada. É o mesmo raciocínio
- * do botão "enviar ao cliente" do simulador, que monta o link no navegador.
- */
+/** O link completo do convite. A origem vem de `lib/site.ts`. */
 export async function linkDeConvite(token: string): Promise<string> {
-  const h = await headers();
-  const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
-  const protocolo = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
-
-  return `${protocolo}://${host}/primeiro-acesso?t=${token}`;
+  return linkDoSite(`/primeiro-acesso?t=${token}`);
 }
 
 export type ConviteAberto = {

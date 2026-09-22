@@ -2,6 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { linkDoSite } from "@/lib/site";
+import {
+  enviarWhatsApp,
+  textoAceitaComprador,
+  textoAceitaCorretor,
+  textoAceitaIncorporadora,
+} from "@/lib/notificacoes";
 
 /**
  * Aceitar e recusar proposta.
@@ -47,15 +54,129 @@ function revalidar(id: string) {
 export async function aceitarProposta(id: string, motivo?: string): Promise<ResultadoDecisao> {
   const supabase = await createClient();
 
-  const { error } = await supabase.rpc("aceitar_proposta", {
+  const { data: negocioId, error } = await supabase.rpc("aceitar_proposta", {
     p_proposta: id,
     p_motivo: motivo?.trim() || null,
   });
 
   if (error) return { ok: false, erro: traduzir(error) };
 
+  // Os avisos vêm DEPOIS e nunca derrubam a aceitação: o negócio já existe, e
+  // um WhatsApp fora do ar não pode desfazer uma decisão comercial. O que
+  // falhar vai para o terminal e pode ser reenviado pela ficha.
+  if (typeof negocioId === "string") await avisarDaAceitacao(supabase, id, negocioId);
+
   revalidar(id);
   return { ok: true };
+}
+
+type Supabase = Awaited<ReturnType<typeof createClient>>;
+
+type Envolvidos = {
+  codigo: string;
+  imovel: { identificacao: string } | null;
+  empreendimento: { nome: string } | null;
+  parceiro: { nome: string; telefone: string } | null;
+  comprador: { nome: string; telefone: string } | null;
+  incorporadora: { resp_nome: string | null; resp_telefone: string | null; telefone: string | null } | null;
+};
+
+/**
+ * Avisar as três pontas no WhatsApp.
+ *
+ * Cada uma recebe o link que é dela: o comprador, a página pública de
+ * acompanhamento; o corretor e a incorporadora, o fechamento no painel, que é
+ * onde eles têm tarefas.
+ *
+ * Tudo em paralelo e tolerante a falha — se o número da incorporadora estiver
+ * vazio, as outras duas mensagens saem do mesmo jeito.
+ */
+async function avisarDaAceitacao(supabase: Supabase, propostaId: string, negocioId: string) {
+  try {
+    const [{ data: proposta }, { data: negocio }] = await Promise.all([
+      supabase
+        .from("proposta")
+        .select(
+          `codigo,
+           imovel (identificacao),
+           empreendimento (nome),
+           parceiro (nome, telefone),
+           comprador (nome, telefone),
+           incorporadora (resp_nome, resp_telefone, telefone)`,
+        )
+        .eq("id", propostaId)
+        .maybeSingle<Envolvidos>(),
+      supabase
+        .from("negocio")
+        .select("token")
+        .eq("id", negocioId)
+        .maybeSingle<{ token: string }>(),
+    ]);
+
+    if (!proposta || !negocio) return;
+
+    const unidade = proposta.imovel?.identificacao ?? "";
+    const empreendimento = proposta.empreendimento?.nome ?? "";
+
+    const [linkComprador, linkPainel] = await Promise.all([
+      linkDoSite(`/acompanhar?t=${negocio.token}`),
+      linkDoSite(`/negocios/${negocioId}`),
+    ]);
+
+    const envios: { quem: string; telefone: string; texto: string }[] = [];
+
+    if (proposta.comprador?.telefone) {
+      envios.push({
+        quem: "comprador",
+        telefone: proposta.comprador.telefone,
+        texto: textoAceitaComprador({
+          nome: proposta.comprador.nome,
+          link: linkComprador,
+          unidade,
+          empreendimento,
+        }),
+      });
+    }
+
+    if (proposta.parceiro?.telefone) {
+      envios.push({
+        quem: "corretor",
+        telefone: proposta.parceiro.telefone,
+        texto: textoAceitaCorretor({
+          nome: proposta.parceiro.nome,
+          link: linkPainel,
+          codigo: proposta.codigo,
+          unidade,
+          empreendimento,
+        }),
+      });
+    }
+
+    // O responsável primeiro; o telefone da empresa é o reserva.
+    const telefoneInc = proposta.incorporadora?.resp_telefone || proposta.incorporadora?.telefone;
+    if (telefoneInc) {
+      envios.push({
+        quem: "incorporadora",
+        telefone: telefoneInc,
+        texto: textoAceitaIncorporadora({
+          nome: proposta.incorporadora?.resp_nome || "equipe",
+          link: linkPainel,
+          unidade,
+          empreendimento,
+        }),
+      });
+    }
+
+    const resultados = await Promise.all(
+      envios.map(async (e) => ({ quem: e.quem, r: await enviarWhatsApp(e.telefone, e.texto) })),
+    );
+
+    for (const { quem, r } of resultados) {
+      if (!r.ok) console.error(`[proposta aceita] aviso ao ${quem} não saiu:`, r.erro);
+    }
+  } catch (e) {
+    console.error("[proposta aceita] falha ao avisar as partes:", e);
+  }
 }
 
 export async function recusarProposta(id: string, motivo?: string): Promise<ResultadoDecisao> {

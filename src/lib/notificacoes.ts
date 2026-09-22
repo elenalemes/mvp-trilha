@@ -81,6 +81,83 @@ export async function enviarWhatsApp(telefone: string, texto: string): Promise<E
 // Texto em um lugar só. Mensagem que o corretor recebe é a primeira impressão
 // da Trilha para ele, e não deve estar espalhada dentro de uma action.
 
+/**
+ * Proposta aceita: três mensagens, uma por ator, cada uma com o link que é dela.
+ *
+ * O comprador recebe a página pública de acompanhamento — ele não tem login e
+ * nunca vai ter. O corretor e a incorporadora recebem o link do painel, que é
+ * onde eles trabalham; mandar a página do comprador para eles seria mandar a
+ * versão resumida de um processo em que eles têm tarefas.
+ */
+export function textoAceitaComprador({
+  nome,
+  link,
+  unidade,
+  empreendimento,
+}: {
+  nome: string;
+  link: string;
+  unidade: string;
+  empreendimento: string;
+}): string {
+  return [
+    `Olá, ${nome.trim().split(/\s+/)[0]}! Sua proposta foi aceita. 🎉`,
+    "",
+    `🏠 *${unidade}* · ${empreendimento}`,
+    "",
+    "Agora começa o fechamento. Acompanhe o andamento por aqui, a qualquer hora:",
+    link,
+    "",
+    "Guarde este link — ele é seu e vale até a entrega das chaves.",
+  ].join("\n");
+}
+
+export function textoAceitaCorretor({
+  nome,
+  link,
+  codigo,
+  unidade,
+  empreendimento,
+}: {
+  nome: string;
+  link: string;
+  codigo: string;
+  unidade: string;
+  empreendimento: string;
+}): string {
+  return [
+    `Boa notícia, ${nome.trim().split(/\s+/)[0]}! A proposta ${codigo} foi aceita. 🎉`,
+    "",
+    `🏠 *${unidade}* · ${empreendimento}`,
+    "",
+    "O fechamento começou e já tem tarefas esperando por você — a documentação do comprador:",
+    link,
+    "",
+    "O comprador também recebeu um link para acompanhar o processo.",
+  ].join("\n");
+}
+
+export function textoAceitaIncorporadora({
+  nome,
+  link,
+  unidade,
+  empreendimento,
+}: {
+  nome: string;
+  link: string;
+  unidade: string;
+  empreendimento: string;
+}): string {
+  return [
+    `Olá, ${nome.trim().split(/\s+/)[0]}! Uma unidade de vocês foi vendida pela Trilha. 🎉`,
+    "",
+    `🏠 *${unidade}* · ${empreendimento}`,
+    "",
+    "O fechamento começou. Há documentos do imóvel esperando por vocês:",
+    link,
+  ].join("\n");
+}
+
 export function textoConviteParceiro({
   nome,
   link,

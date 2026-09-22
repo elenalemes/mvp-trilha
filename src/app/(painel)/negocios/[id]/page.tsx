@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/ui";
 import ErroLeitura from "@/components/erro-leitura";
 import TarefaFechamento from "@/components/tarefa-fechamento";
 import CancelarNegocio from "@/components/cancelar-negocio";
+import LinkComprador from "@/components/link-comprador";
 import {
   NOME_DO_ATOR,
   bolaCom,
@@ -184,11 +185,14 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
         })}
       </div>
 
-      {admin ? (
-        <p className="mt-8 text-xs text-trilha-400">
-          Link do comprador (a página dele ainda não existe — item A4):{" "}
-          <code className="rounded bg-trilha-50 px-1.5 py-0.5">{negocio.token}</code>
-        </p>
+      {/* O corretor também manda o link: é ele quem conversa com o comprador
+          no dia a dia. A incorporadora não — ela não fala com o cliente. */}
+      {(admin || ehParceiro(sessao)) && negocio.status !== "cancelado" ? (
+        <LinkComprador
+          token={negocio.token}
+          unidade={negocio.imovel?.identificacao ?? ""}
+          empreendimento={negocio.empreendimento?.nome ?? ""}
+        />
       ) : null}
 
       {admin && negocio.status !== "cancelado" && negocio.status !== "quitado" ? (
