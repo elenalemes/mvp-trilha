@@ -24,15 +24,21 @@ export default async function PainelLayout({ children }: { children: React.React
   const links = admin
     ? [
         { href: "/propostas", label: "Propostas", icone: "proposta" as const },
+        { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
         { href: "/importacao", label: "Importação de estoque", icone: "importar" as const },
         { href: "/incorporadoras", label: "Incorporadoras", icone: "empresa" as const },
         { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
         { href: "/parceiros", label: "Parceiros imobiliários", icone: "parceiros" as const },
       ]
     : parceiro
-      ? [{ href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const }]
+      ? [
+          { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
+          { href: "/propostas", label: "Minhas propostas", icone: "proposta" as const },
+          { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+        ]
       : [
           { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
+          { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
           { href: "/opcoes-pagamento", label: "Opções de pagamento", icone: "pagamento" as const },
           { href: "/parceiros", label: "Parceiros imobiliários", icone: "parceiros" as const },
         ];

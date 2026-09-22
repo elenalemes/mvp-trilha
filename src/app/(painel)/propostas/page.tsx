@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ehAdmin, getSessao } from "@/lib/sessao";
+import { ehAdmin, ehParceiro, getSessao } from "@/lib/sessao";
 import { formatBRL } from "@/lib/br";
 import { EmptyState, PageHeader } from "@/components/ui";
 import ErroLeitura from "@/components/erro-leitura";
@@ -38,7 +38,12 @@ const ABERTAS = ["enviada", "em_analise"];
 
 export default async function PropostasPage() {
   const sessao = await getSessao();
-  if (!ehAdmin(sessao)) redirect("/empreendimentos");
+  const admin = ehAdmin(sessao);
+  const corretor = ehParceiro(sessao);
+
+  // A incorporadora não entra aqui: ela vê proposta pela view própria, sem os
+  // dados do comprador — tela ainda por fazer.
+  if (!admin && !corretor) redirect("/empreendimentos");
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -62,24 +67,42 @@ export default async function PropostasPage() {
   return (
     <>
       <PageHeader
-        titulo="Propostas"
-        descricao="Pedidos de negócio enviados pelos corretores."
+        titulo={corretor ? "Minhas propostas" : "Propostas"}
+        descricao={
+          corretor
+            ? "As propostas que você enviou e em que pé está cada uma."
+            : "Pedidos de negócio enviados pelos corretores."
+        }
       />
 
       {propostas.length === 0 ? (
         <EmptyState
           titulo="Nenhuma proposta ainda"
-          texto="As propostas chegam pelo simulador, quando um corretor escolhe uma condição e envia os dados do comprador."
+          texto={
+            corretor
+              ? "Abra o simulador, escolha a unidade e a condição, e envie a proposta. Ela aparece aqui com a situação."
+              : "As propostas chegam pelo simulador, quando um corretor escolhe uma condição e envia os dados do comprador."
+          }
         />
       ) : (
         <div className="flex flex-col gap-10">
           <Bloco
-            titulo="Esperando decisão"
-            vazio="Nenhuma proposta aguardando. Fila limpa."
+            titulo={corretor ? "Em análise" : "Esperando decisão"}
+            vazio={
+              corretor
+                ? "Nenhuma proposta em análise agora."
+                : "Nenhuma proposta aguardando. Fila limpa."
+            }
             propostas={abertas}
+            mostrarIncorporadora={admin}
           />
           {decididas.length > 0 ? (
-            <Bloco titulo="Já decididas" vazio="" propostas={decididas} />
+            <Bloco
+              titulo="Já decididas"
+              vazio=""
+              propostas={decididas}
+              mostrarIncorporadora={admin}
+            />
           ) : null}
         </div>
       )}
@@ -91,11 +114,18 @@ function Bloco({
   titulo,
   vazio,
   propostas,
+  mostrarIncorporadora,
 }: {
   titulo: string;
   vazio: string;
   propostas: Linha[];
+  /** O corretor pertence a uma incorporadora só: a coluna não diz nada a ele. */
+  mostrarIncorporadora: boolean;
 }) {
+  const colunas = mostrarIncorporadora
+    ? ["Código", "Unidade", "Incorporadora", "Corretor", "Condição", "Situação"]
+    : ["Código", "Unidade", "Condição", "Situação"];
+
   return (
     <section>
       <h2 className="font-display mb-3 text-sm font-semibold tracking-[0.12em] text-trilha-400 uppercase">
@@ -111,19 +141,17 @@ function Bloco({
         </p>
       ) : (
         <div className="overflow-x-auto rounded-lg border border-trilha-200 bg-white">
-          <table className="w-full min-w-[940px] border-collapse text-left">
+          <table className="w-full min-w-[720px] border-collapse text-left">
             <thead>
               <tr className="border-b border-trilha-100">
-                {["Código", "Unidade", "Incorporadora", "Corretor", "Condição", "Situação"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="font-display px-5 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
+                {colunas.map((h) => (
+                  <th
+                    key={h}
+                    className="font-display px-5 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
+                  >
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -148,21 +176,25 @@ function Bloco({
                     </span>
                   </td>
 
-                  <td className="px-5 py-4 text-[15px] text-trilha-400">
-                    {p.incorporadora?.nome ?? "—"}
-                  </td>
+                  {mostrarIncorporadora ? (
+                    <td className="px-5 py-4 text-[15px] text-trilha-400">
+                      {p.incorporadora?.nome ?? "—"}
+                    </td>
+                  ) : null}
 
-                  <td className="px-5 py-4 text-[15px]">
-                    {p.parceiro?.nome ?? "—"}
+                  {mostrarIncorporadora ? (
+                    <td className="px-5 py-4 text-[15px]">
+                      {p.parceiro?.nome ?? "—"}
                     {/* O corretor que nasceu desta proposta ainda não tem
                         acesso. Dizer isso aqui é o que faz a fila de aprovação
                         ser vista por quem pode resolvê-la. */}
-                    {p.parceiro && p.parceiro.origem === "proposta" && !p.parceiro.ativo ? (
-                      <span className="block text-sm font-semibold text-amber-700">
-                        cadastro pendente
-                      </span>
-                    ) : null}
-                  </td>
+                      {p.parceiro && p.parceiro.origem === "proposta" && !p.parceiro.ativo ? (
+                        <span className="block text-sm font-semibold text-amber-700">
+                          cadastro pendente
+                        </span>
+                      ) : null}
+                    </td>
+                  ) : null}
 
                   <td className="px-5 py-4 text-[15px] tabular-nums">
                     {p.prazo_meses}× {formatBRL(p.valor_parcela)}

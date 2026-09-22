@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { acessoSchema, parceiroEdicaoSchema, parceiroSchema } from "@/lib/schemas";
+import {
+  acessoNovoSchema,
+  acessoSchema,
+  parceiroEdicaoSchema,
+  parceiroSchema,
+} from "@/lib/schemas";
 import { stripMask } from "@/lib/br";
 import { ehAdmin, getSessao } from "@/lib/sessao";
 
@@ -200,6 +205,120 @@ export async function atualizarParceiro(id: string, bruto: unknown): Promise<Res
 }
 
 // --------------------------------------------------------------- acesso
+
+/**
+ * Criar o acesso de um parceiro que ainda não tem.
+ *
+ * É a aprovação do corretor que chegou por proposta: ele nasce PENDENTE
+ * (`ativo = false`, `origem = 'proposta'`, sem `conta_id`) e fica esperando
+ * alguém liberar. Até aqui não havia como liberar — a tela de acesso só sabia
+ * TROCAR um login existente, e quem nasceu sem login ficava num beco.
+ *
+ * Criar o acesso e ativar o cadastro é um passo só de propósito. São a mesma
+ * decisão ("este corretor pode entrar"), e separá-las só criaria o estado
+ * esquisito de quem tem senha mas continua desligado.
+ */
+export async function criarAcessoParceiro(id: string, bruto: unknown): Promise<Resultado> {
+  const sessao = await getSessao();
+  if (!sessao?.conta) return { id: null, erro: "Sessão expirada. Entre de novo." };
+
+  const parsed = acessoNovoSchema.safeParse(bruto);
+  if (!parsed.success) {
+    return { id: null, erro: parsed.error.issues[0]?.message ?? "Confira os campos destacados." };
+  }
+
+  const { email, senha } = parsed.data;
+  if (!senha) return { id: null, erro: "Defina uma senha de ao menos 8 caracteres." };
+
+  // Leitura pelo cliente normal: se esta sessão não enxerga o parceiro, ela
+  // também não cria acesso para ele.
+  const supabase = await createClient();
+  const { data: parceiro } = await supabase
+    .from("parceiro")
+    .select("nome, telefone, conta_id, incorporadora_id")
+    .eq("id", id)
+    .maybeSingle<{
+      nome: string;
+      telefone: string;
+      conta_id: string | null;
+      incorporadora_id: string;
+    }>();
+
+  if (!parceiro) {
+    return { id: null, erro: "Parceiro não encontrado, ou sem permissão para alterá-lo." };
+  }
+  if (parceiro.conta_id) {
+    return { id: null, erro: "Este parceiro já tem acesso. Use a troca de e-mail e senha." };
+  }
+
+  const permissao = await podeGerenciar(parceiro.incorporadora_id);
+  if (!permissao.ok) return { id: null, erro: permissao.erro };
+
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return {
+      id: null,
+      erro: "A chave de administrador do Supabase não está configurada no .env.local.",
+    };
+  }
+
+  const { data: novoUsuario, error: erroUsuario } = await admin.auth.admin.createUser({
+    email,
+    password: senha,
+    email_confirm: true,
+  });
+
+  if (erroUsuario || !novoUsuario?.user) {
+    const jaExiste = erroUsuario?.message?.toLowerCase().includes("already");
+    return {
+      id: null,
+      erro: jaExiste
+        ? "Já existe um acesso com esse e-mail. Use outro e-mail de acesso."
+        : detalhar("Não foi possível criar o acesso do parceiro.", erroUsuario),
+    };
+  }
+
+  const contaId = novoUsuario.user.id;
+
+  const { error: erroConta } = await admin.from("conta").insert({
+    id: contaId,
+    tipo: "parceiro",
+    nome: parceiro.nome,
+    email,
+    telefone: parceiro.telefone,
+  });
+
+  if (erroConta) {
+    await admin.auth.admin.deleteUser(contaId);
+    return { id: null, erro: detalhar("Não foi possível criar a conta de acesso.", erroConta) };
+  }
+
+  // Ligar e ativar. Pelo cliente da sessão, para a policy conferir de novo —
+  // a checagem do app não pode ser a única trava.
+  const { data: ligado, error: erroLigar } = await supabase
+    .from("parceiro")
+    .update({ conta_id: contaId, ativo: true })
+    .eq("id", id)
+    .select("id")
+    .maybeSingle<{ id: string }>();
+
+  if (erroLigar || !ligado) {
+    // Desfaz na ordem inversa, senão sobra um login órfão que entra e não vê
+    // nada — o pior estado possível.
+    await admin.from("conta").delete().eq("id", contaId);
+    await admin.auth.admin.deleteUser(contaId);
+    return {
+      id: null,
+      erro: detalhar("O acesso foi criado, mas não pôde ser ligado ao parceiro.", erroLigar),
+    };
+  }
+
+  revalidatePath(`/incorporadoras/${parceiro.incorporadora_id}/parceiros`);
+  revalidatePath("/parceiros");
+  return { id, erro: null };
+}
 
 export async function atualizarAcessoParceiro(id: string, bruto: unknown): Promise<Resultado> {
   const sessao = await getSessao();

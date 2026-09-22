@@ -5,7 +5,8 @@ import { PageHeader } from "@/components/ui";
 import ErroLeitura from "@/components/erro-leitura";
 import ListaParceiros, { type ParceiroLinha } from "@/components/lista-parceiros";
 
-const CAMPOS = "id, nome, documento, creci, email, telefone, ativo, conta_id, conta (email)";
+const CAMPOS =
+  "id, nome, documento, creci, email, telefone, ativo, conta_id, convite_token, conta (email)";
 
 /**
  * Os parceiros imobiliários.
@@ -70,17 +71,11 @@ export default async function ParceirosPage() {
         imóvel, nem empreendimento, nem condição de pagamento.
       </p>
 
-      <ListaParceiros
-        parceiros={parceiros}
-        base="/parceiros"
-        mostrarIncorporadora={admin}
-        fichaDe={
-          admin
-            ? (p) =>
-                p.incorporadora ? `/incorporadoras/${p.incorporadora.id}/parceiros` : "/parceiros"
-            : undefined
-        }
-      />
+      {/* As fichas ficam todas sob `/parceiros`, inclusive para a Trilha. Antes
+          os links dela apontavam para dentro da incorporadora — reaproveitava
+          telas prontas, mas mandava o admin para um caminho onde o "voltar"
+          levava a outro lugar, e a tela de acesso ainda recusava a Trilha. */}
+      <ListaParceiros parceiros={parceiros} base="/parceiros" mostrarIncorporadora={admin} />
     </>
   );
 }

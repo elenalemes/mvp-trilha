@@ -12,6 +12,8 @@ export type ParceiroLinha = {
   ativo: boolean;
   conta_id: string | null;
   conta: { email: string | null } | null;
+  /** Presente = convite de primeiro acesso em aberto, ainda não usado. */
+  convite_token?: string | null;
   /** Só vem preenchido na lista geral da Trilha. */
   incorporadora?: { id: string; nome: string } | null;
 };
@@ -21,30 +23,19 @@ const documentoFormatado = (v: string | null) =>
   !v ? "—" : v.length > 11 ? maskCNPJ(v) : maskCPF(v);
 
 /**
- * A mesma tabela serve à Trilha e à incorporadora.
- *
- * `base` é onde nasce um parceiro novo. `fichaDe` é onde vive a ficha de cada
- * linha — existe porque na lista geral da Trilha cada parceiro mora sob a
- * incorporadora dele (`/incorporadoras/<id>/parceiros/<parceiroId>`), e essas
- * telas já funcionam. Reaproveitá-las custa uma função aqui; duplicá-las
- * custaria um segundo lugar para errar permissão.
- *
- * Sem `fichaDe`, a ficha fica sob a própria `base` — o caso da incorporadora
- * olhando os parceiros dela.
+ * A mesma tabela serve à Trilha e à incorporadora. `base` diz sob qual rota as
+ * fichas vivem — `/parceiros` nos dois menus, `/incorporadoras/<id>/parceiros`
+ * quando se chega pela ficha de uma incorporadora.
  */
 export default function ListaParceiros({
   parceiros,
   base,
-  fichaDe,
   mostrarIncorporadora = false,
 }: {
   parceiros: ParceiroLinha[];
   base: string;
-  fichaDe?: (p: ParceiroLinha) => string;
   mostrarIncorporadora?: boolean;
 }) {
-  const rotaDa = fichaDe ?? (() => base);
-
   if (parceiros.length === 0) {
     return (
       <EmptyState
@@ -78,7 +69,7 @@ export default function ListaParceiros({
         </thead>
         <tbody>
           {parceiros.map((p) => {
-            const rota = rotaDa(p);
+            const rota = base;
             return (
               <tr key={p.id} className="border-b border-trilha-100 last:border-0">
                 <td className="px-5 py-4">
@@ -118,7 +109,11 @@ export default function ListaParceiros({
                 <td className="px-5 py-4 text-[15px] text-trilha-400">
                   {/* Sem conta_id não há login. Com conta_id mas sem e-mail legível,
                       o acesso existe e quem está olhando é que não pode lê-lo. */}
-                  {!p.conta_id ? "sem acesso criado" : (p.conta?.email ?? "acesso criado")}
+                  {p.conta_id
+                    ? (p.conta?.email ?? "acesso criado")
+                    : p.convite_token
+                      ? "convite enviado, não usado"
+                      : "sem acesso criado"}
                 </td>
                 <td className="px-5 py-4">
                   <span
@@ -134,9 +129,19 @@ export default function ListaParceiros({
                 <td className="px-5 py-4 text-right whitespace-nowrap">
                   <Link
                     href={`${rota}/${p.id}/acesso`}
-                    className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+                    className={`font-display text-sm font-semibold tracking-wide uppercase underline underline-offset-2 hover:text-trilha-700 ${
+                      p.conta_id ? "text-trilha-500" : "text-amber-700"
+                    }`}
                   >
-                    Acesso
+                    {/* Três situações, três rótulos. Um "Acesso" genérico
+                        escondia a diferença entre quem já entra, quem tem
+                        convite esperando e quem não tem caminho nenhum — e é
+                        justamente essa diferença que diz o que fazer. */}
+                    {p.conta_id
+                      ? "Acesso"
+                      : p.convite_token
+                        ? "Convite pendente"
+                        : "Criar acesso"}
                   </Link>
                 </td>
               </tr>

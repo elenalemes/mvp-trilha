@@ -9,6 +9,8 @@ import { RemoverParceiro } from "@/components/remover-parceiro";
 
 type Registro = {
   nome: string;
+  conta_id: string | null;
+  convite_token: string | null;
   documento: string | null;
   creci: string | null;
   email: string;
@@ -30,8 +32,9 @@ export default async function EditarMeuParceiroPage({
 }: {
   params: Promise<{ parceiroId: string }>;
 }) {
+  // A Trilha também edita por aqui: desde que ela ganhou a lista geral de
+  // parceiros, mandá-la para `/incorporadoras` era devolver ela ao começo.
   const sessao = await getSessao();
-  if (sessao?.conta?.tipo === "trilha_admin") redirect("/incorporadoras");
   if (ehParceiro(sessao)) redirect("/empreendimentos");
 
   const { parceiroId } = await params;
@@ -42,7 +45,7 @@ export default async function EditarMeuParceiroPage({
   const { data, error } = await supabase
     .from("parceiro")
     .select(
-      `nome, documento, creci, email, telefone, endereco, ativo,
+      `nome, conta_id, convite_token, documento, creci, email, telefone, endereco, ativo,
        banco, agencia, conta_numero, chave_pix, chave_pix_tipo`,
     )
     .eq("id", parceiroId)
@@ -57,7 +60,17 @@ export default async function EditarMeuParceiroPage({
         titulo={data.nome}
         descricao="Dados cadastrais do parceiro"
         voltar={{ href: "/parceiros", label: "Parceiros" }}
-        acaoSecundaria={{ href: `/parceiros/${parceiroId}/acesso`, label: "Alterar acesso" }}
+        /* O rótulo diz a situação, e não uma ação genérica: "Criar acesso"
+           num parceiro que já tem convite em aberto manda a pessoa para a
+           tela certa pelo motivo errado. */
+        acaoSecundaria={{
+          href: `/parceiros/${parceiroId}/acesso`,
+          label: data.conta_id
+            ? "Alterar acesso"
+            : data.convite_token
+              ? "Convite pendente"
+              : "Criar acesso",
+        }}
       />
       <FormParceiro
         modo="editar"

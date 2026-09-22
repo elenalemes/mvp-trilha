@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ehAdmin, getSessao } from "@/lib/sessao";
+import { ehAdmin, ehParceiro, getSessao } from "@/lib/sessao";
 import { maskCNPJ, maskCPF, maskPhone } from "@/lib/br";
 import type { Condicao } from "@/lib/pagamento";
 import CardPagamento from "@/components/card-pagamento";
@@ -58,7 +58,13 @@ export default async function PropostaDetalhePage({
   params: Promise<{ id: string }>;
 }) {
   const sessao = await getSessao();
-  if (!ehAdmin(sessao)) redirect("/empreendimentos");
+  const admin = ehAdmin(sessao);
+  const corretor = ehParceiro(sessao);
+
+  // O corretor abre a ficha da PRÓPRIA proposta — a policy já garante que ele
+  // não alcança as dos outros. O que ele não tem é a decisão: aceitar e
+  // recusar são da Trilha.
+  if (!admin && !corretor) redirect("/empreendimentos");
 
   const { id } = await params;
   const supabase = await createClient();
@@ -111,8 +117,18 @@ export default async function PropostaDetalhePage({
         </div>
 
         <div className="flex flex-col gap-6">
-          {aberta ? (
+          {aberta && admin ? (
             <DecisaoProposta id={data.id} unidade={imovel?.identificacao ?? "—"} />
+          ) : aberta && corretor ? (
+            <Bloco titulo="Situação">
+              <p className="text-[15px] text-trilha-900">
+                A equipe da Trilha está analisando esta proposta — o formato de pagamento e a
+                qualificação do comprador. Assim que houver decisão, ela aparece aqui.
+              </p>
+              <p className="mt-2 text-sm text-trilha-400">
+                Enquanto isso a unidade segue disponível: outra proposta ainda pode chegar antes.
+              </p>
+            </Bloco>
           ) : data.motivo_decisao ? (
             <Bloco titulo="Motivo da decisão">
               <p className="text-[15px] text-trilha-900">{data.motivo_decisao}</p>
@@ -132,7 +148,7 @@ export default async function PropostaDetalhePage({
             )}
           </Bloco>
 
-          <Bloco titulo="O corretor">
+          <Bloco titulo={corretor ? "Você" : "O corretor"}>
             {parceiro ? (
               <>
                 {pendente ? (
@@ -150,14 +166,16 @@ export default async function PropostaDetalhePage({
                   <Dado termo="E-mail" valor={parceiro.email} />
                 </dl>
 
+                {admin ? (
                 <p className="mt-4">
                   <Link
-                    href={`/incorporadoras/${parceiro.incorporadora_id}/parceiros/${parceiro.id}/editar`}
+                    href={`/parceiros/${parceiro.id}/editar`}
                     className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
                   >
                     Abrir ficha do parceiro
                   </Link>
                 </p>
+                ) : null}
               </>
             ) : (
               <p className="text-[15px] text-trilha-400">Sem dados.</p>

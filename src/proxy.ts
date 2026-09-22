@@ -1,10 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Rotas que existem sem sessão. `/simulador` é a ferramenta do corretor e
-// `/condicoes` é a página que ele envia ao cliente: quem tem o link entra, sem
-// conta e sem senha.
-const PUBLIC_ROUTES = ["/login", "/simulador", "/condicoes"];
+// Rotas que existem sem sessão. `/simulador` é a ferramenta do corretor,
+// `/condicoes` é a página que ele envia ao cliente e `/primeiro-acesso` é o
+// link de convite que ele recebe no WhatsApp: quem tem o link entra, sem conta
+// e sem senha.
+const PUBLIC_ROUTES = ["/login", "/simulador", "/condicoes", "/primeiro-acesso"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

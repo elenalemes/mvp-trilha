@@ -83,6 +83,19 @@ export const acessoSchema = z.object({
     .refine((v) => !v || v.length >= 8, "A senha precisa ter ao menos 8 caracteres"),
 });
 
+/**
+ * Criar acesso do zero. Mesmos campos, mas aqui a senha é obrigatória: não há
+ * senha atual para manter.
+ *
+ * É um `refine` sobre o schema de troca, e não um objeto novo, de propósito: o
+ * tipo inferido continua sendo o mesmo, e o formulário atende os dois casos
+ * sem duplicar campo nem componente.
+ */
+export const acessoNovoSchema = acessoSchema.refine((v) => (v.senha ?? "").length >= 8, {
+  message: "Defina uma senha de ao menos 8 caracteres",
+  path: ["senha"],
+});
+
 export type AcessoFormValues = z.infer<typeof acessoSchema>;
 
 // ------------------------------------------------------- empreendimento

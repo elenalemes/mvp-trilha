@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getSessao } from "@/lib/sessao";
 import { simular } from "@/lib/simulador";
 import { propostaLogadaSchema, propostaSchema } from "@/lib/schemas";
+import { linkDeConvite, novoConvite } from "@/lib/convite";
+import { enviarWhatsApp, textoConviteParceiro } from "@/lib/notificacoes";
 
 /**
  * O envio da proposta.
@@ -37,6 +39,8 @@ type Corretor = {
 };
 
 type Comprador = { nome: string; cpf: string; email: string; telefone: string };
+
+type ParceiroExistente = { id: string; incorporadora_id: string; conta_id: string | null };
 
 type Entrada = {
   empreendimentoId: string;
@@ -114,10 +118,15 @@ export async function enviarProposta(entrada: Entrada): Promise<ResultadoPropost
   const admin = createAdminClient();
 
   // ------------------------------------------------------------- o corretor
+  // `convite` só vem preenchido quando o cadastro nasceu agora: é o link de
+  // primeiro acesso, disparado depois que a proposta estiver gravada.
+  let convite: Convite | null = null;
+
   if (!parceiroId && corretor) {
     const resolvido = await resolverParceiro(admin, corretor, simulacao.incorporadoraId);
     if ("erro" in resolvido) return resolvido;
     parceiroId = resolvido.id;
+    convite = resolvido.convite ?? null;
   }
 
   if (!parceiroId) {
@@ -188,12 +197,46 @@ export async function enviarProposta(entrada: Entrada): Promise<ResultadoPropost
     };
   }
 
+  // ------------------------------------------------------ o primeiro acesso
+  // Depois de gravar, e nunca antes: se o envio falhar, a proposta já está
+  // salva e a Trilha reenvia o convite pela ficha do parceiro. O contrário —
+  // mandar o link e a proposta não entrar — deixaria o corretor com acesso a
+  // um negócio que não existe.
+  if (convite) {
+    const link = await linkDeConvite(convite.token);
+
+    const envio = await enviarWhatsApp(
+      convite.telefone,
+      textoConviteParceiro({
+        nome: convite.nome,
+        link,
+        proposta: {
+          codigo: data.codigo,
+          unidade: simulacao.unidade.identificacao,
+          empreendimento: simulacao.empreendimento,
+        },
+      }),
+    );
+
+    if (!envio.ok) console.error("[proposta] convite não saiu:", envio.erro);
+
+    await admin
+      .from("parceiro")
+      .update({
+        convite_enviado_em: envio.ok ? new Date().toISOString() : null,
+        convite_canal: envio.ok ? "whatsapp" : null,
+      })
+      .eq("id", parceiroId);
+  }
+
   return { ok: true, codigo: data.codigo };
 }
 
 // ---------------------------------------------------------------------------
 
 type Admin = ReturnType<typeof createAdminClient>;
+
+type Convite = { token: string; telefone: string; nome: string };
 
 const primeiroErro = (issues: { message: string }[]) =>
   issues[0]?.message ?? "Confira os dados informados.";
@@ -217,7 +260,9 @@ async function resolverParceiro(
   admin: Admin,
   corretor: Corretor,
   incorporadoraId: string,
-): Promise<{ id: string } | { ok: false; erro: string; precisaLogin: boolean }> {
+): Promise<
+  { id: string; convite?: Convite } | { ok: false; erro: string; precisaLogin: boolean }
+> {
   const email = normalizarEmail(corretor.email);
   const documento = digitos(corretor.documento);
 
@@ -258,6 +303,18 @@ async function resolverParceiro(
   const pendente = existentes.find((p) => p.incorporadora_id === incorporadoraId);
   if (pendente) return { id: pendente.id };
 
+  // O cadastro nasce ATIVO, e o login nasce quando ele usar o convite.
+  //
+  // Antes o parceiro nascia desligado, esperando a Trilha aprovar. O argumento
+  // era que conta automática abriria o estoque — mas o simulador já é público
+  // e mostra o estoque inteiro sem login nenhum, então a trava não protegia
+  // nada e só criava atrito no momento em que o corretor está mais engajado.
+  //
+  // O que segue valendo é não mandar senha para contato que ninguém verificou.
+  // Por isso aqui nasce só o CADASTRO e um token de convite: quem usa o link
+  // prova que aquele WhatsApp é dele, e só aí o login existe.
+  const { token, expiraEm } = novoConvite();
+
   const { data: criado, error } = await admin
     .from("parceiro")
     .insert({
@@ -267,11 +324,10 @@ async function resolverParceiro(
       creci: corretor.creci || null,
       email,
       telefone: digitos(corretor.telefone),
-      // Nasce desligado e marcado: é a fila de aprovação da Trilha. Criar
-      // acesso ativo por formulário público seria porta aberta — qualquer um
-      // com o link do simulador teria login para o estoque.
-      ativo: false,
+      ativo: true,
       origem: "proposta",
+      convite_token: token,
+      convite_expira_em: expiraEm,
     })
     .select("id")
     .maybeSingle<{ id: string }>();
@@ -284,10 +340,11 @@ async function resolverParceiro(
     return { ok: false, precisaLogin: false, erro: traduzirFalhaDeCadastro(error) };
   }
 
-  return { id: criado.id };
+  return {
+    id: criado.id,
+    convite: { token, telefone: corretor.telefone, nome: corretor.nome },
+  };
 }
-
-type ParceiroExistente = { id: string; incorporadora_id: string; conta_id: string | null };
 
 /**
  * As três formas de isto dar errado, na ordem em que aparecem na vida real.

@@ -217,7 +217,10 @@ function Confirmacao({ codigo }: { codigo: string }) {
       <div className="mt-6 flex flex-col gap-2 border-t border-emerald-200 pt-5 text-[15px] text-emerald-900">
         <p>A equipe da Trilha analisa o formato de pagamento e a qualificação do comprador.</p>
         <p>Enquanto isso a unidade segue disponível — outra proposta ainda pode chegar antes.</p>
-        <p>Assim que houver decisão, você é avisado no e-mail que informou.</p>
+        {/* Não prometer e-mail enquanto o envio não existir: o sistema ainda
+            não notifica ninguém de nada. Quando o disparo entrar, esta linha
+            volta a falar em aviso automático. */}
+        <p>A equipe da Trilha entra em contato com você pelo telefone ou e-mail informado.</p>
       </div>
 
       <p className="mt-6">
