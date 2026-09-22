@@ -130,9 +130,15 @@ export async function unidadesDoEmpreendimento(
 // -------------------------------------------------------------- simulação
 
 export type Simulacao = {
+  empreendimentoId: string;
   empreendimento: string;
+  incorporadoraId: string;
   incorporadora: string;
   unidade: UnidadeSimulavel;
+  /** O valor da unidade no momento desta leitura. A proposta congela este número. */
+  valorImovel: number;
+  /** De onde saíram as condições — vai congelado junto, na proposta. */
+  escopo: "incorporadora" | "empreendimento";
   condicoes: Condicao[];
 };
 
@@ -179,7 +185,7 @@ export async function simular(
   const empreendimento = data?.empreendimento;
   if (!data || !empreendimento) return null;
 
-  const { opcoes } = await opcoesQueValem(
+  const { opcoes, origem } = await opcoesQueValem(
     supabase,
     empreendimento.incorporadora_id,
     empreendimento.id,
@@ -188,8 +194,14 @@ export async function simular(
   const comissao = empreendimento.incorporadora?.percentual_comissao ?? 0;
 
   return {
+    empreendimentoId: empreendimento.id,
     empreendimento: empreendimento.nome,
+    incorporadoraId: empreendimento.incorporadora_id,
     incorporadora: empreendimento.incorporadora?.nome ?? "",
+    valorImovel: data.valor!,
+    // "nenhuma" só acontece quando não há opção alguma — e aí `condicoes` sai
+    // vazia e ninguém chega a usar este campo.
+    escopo: origem === "empreendimento" ? "empreendimento" : "incorporadora",
     unidade: {
       id: data.id,
       identificacao: data.identificacao,

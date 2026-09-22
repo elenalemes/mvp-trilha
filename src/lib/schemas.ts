@@ -217,3 +217,48 @@ export const parceiroEdicaoSchema = z.object(dadosParceiro);
 
 export type ParceiroFormValues = z.infer<typeof parceiroSchema>;
 export type ParceiroEdicaoValues = z.infer<typeof parceiroEdicaoSchema>;
+
+// ------------------------------------------------------------- proposta
+
+/**
+ * Quem compra. CPF é obrigatório e validado: é por ele que o comprador é uma
+ * pessoa só no banco, mesmo propondo duas unidades em meses diferentes.
+ */
+const compradorSchema = z.object({
+  nome: req("Nome do comprador").min(3, "Nome muito curto"),
+  cpf: req("CPF do comprador").refine(isValidCPF, "CPF inválido"),
+  email: req("E-mail do comprador").refine(isValidEmail, "E-mail inválido"),
+  telefone: req("Telefone do comprador").refine(isValidPhone, "Telefone inválido"),
+});
+
+/**
+ * Proposta enviada por quem NÃO está logado. Os dados do corretor vêm no
+ * formulário porque ele ainda pode não existir no sistema — e se não existir,
+ * nasce como parceiro pendente.
+ *
+ * Dados bancários não entram aqui de propósito: só fazem sentido quando há
+ * comissão a pagar. Pedir no primeiro contato é atrito sem função.
+ */
+export const propostaSchema = z.object({
+  corretor: z.object({
+    nome: req("Seu nome").min(3, "Nome muito curto"),
+    documento: opt().refine(
+      (v) => !v || isValidCPF(v) || isValidCNPJ(v),
+      "Informe um CPF ou CNPJ válido",
+    ),
+    creci: opt(),
+    email: req("Seu e-mail").refine(isValidEmail, "E-mail inválido"),
+    telefone: req("Seu telefone").refine(isValidPhone, "Telefone inválido"),
+  }),
+  comprador: compradorSchema,
+  observacao: opt(),
+});
+
+/** Proposta de corretor logado: quem ele é, o sistema já sabe. */
+export const propostaLogadaSchema = z.object({
+  comprador: compradorSchema,
+  observacao: opt(),
+});
+
+export type PropostaFormValues = z.infer<typeof propostaSchema>;
+export type PropostaLogadaValues = z.infer<typeof propostaLogadaSchema>;

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-type Icone = "empresa" | "predio" | "chave" | "pagamento" | "importar" | "parceiros";
+type Icone = "empresa" | "predio" | "chave" | "pagamento" | "importar" | "parceiros" | "proposta";
 
 const CAMINHOS: Record<Icone, string> = {
   empresa: "M3 21h18M5 21V5a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v16M13 9h5a1 1 0 0 1 1 1v11M8 8h2M8 12h2M8 16h2M16 13h1M16 17h1",
@@ -12,6 +12,7 @@ const CAMINHOS: Record<Icone, string> = {
   pagamento: "M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Zm0 3h18M7 15h4",
   importar: "M12 3v11m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2",
   parceiros: "M15 19.5a3.5 3.5 0 0 0-7 0M11.5 12.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM21 18.5a3 3 0 0 0-3.3-2.6M17.2 12.2a2.5 2.5 0 0 0 .3-5",
+  proposta: "M7 4a1 1 0 0 1 1-1h5l4 4v13a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V4Zm6-1v4h4M9.5 13.5l2 2 3.5-3.5",
 };
 
 function Icone({ nome }: { nome: Icone }) {

@@ -6,15 +6,20 @@ const pct = (n: number) => `${n.toLocaleString("pt-BR", { maximumFractionDigits:
 function Linha({
   termo,
   valor,
+  nota,
   forte,
 }: {
   termo: string;
   valor: string;
+  nota?: string;
   forte?: boolean;
 }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-      <dt className="text-sm text-trilha-400">{termo}</dt>
+      <dt className="text-sm text-trilha-400">
+        {termo}
+        {nota ? <span className="ml-1 text-trilha-300">{nota}</span> : null}
+      </dt>
       <dd
         className={`ml-auto text-[15px] whitespace-nowrap tabular-nums ${forte ? "font-semibold text-trilha-700" : "text-trilha-900"}`}
       >
@@ -25,21 +30,23 @@ function Linha({
 }
 
 /**
- * Um formato de pagamento em números, para o imóvel que está sendo olhado.
+ * Uma condição de pagamento em números.
  *
- * Não é selecionável nem editável de propósito: mudar a condição é editar a
- * opção da incorporadora, e aí todos os imóveis dela mudam junto.
+ * O card é organizado por **quando o dinheiro sai** — no ato, durante a
+ * Trilha, e no saldo. É a pergunta que o corretor precisa responder de cabeça
+ * no atendimento ("quanto agora, quanto por mês, quanto depois"), e responder
+ * isso sem ele fazer conta é a função inteira desta tela.
  *
- * O modo muda O QUE aparece embaixo da parcela, e isso é regra de negócio,
- * não estilo:
+ * O título é o PRAZO, não "Opção 1". O corretor diz ao cliente "na de 24
+ * meses" — número de opção é vocabulário de cadastro, não de conversa. No modo
+ * completo o "Opção N" continua aparecendo pequeno, porque ali ele liga o card
+ * ao formulário onde a condição é editada.
+ *
+ * O modo muda o que aparece embaixo, e isso é regra de negócio, não estilo:
  *
  *   completo — Trilha e incorporadora. Veem a divisão inteira da parcela.
- *   parceiro — corretor e imobiliária. Veem a parcela do comprador e, só se
- *              clicarem, a própria comissão. O que a incorporadora recebe
- *              nunca aparece, e a comissão fica recolhida porque esta é a
- *              tela que o corretor mostra ao cliente.
- *   publico  — o comprador, no simulador. Vê o que vai pagar e mais nada:
- *              nem divisão, nem comissão, nem quem recebe o quê.
+ *   parceiro — corretor e imobiliária. Veem a própria comissão, recolhida.
+ *   publico  — o simulador. Nada: nem divisão, nem comissão.
  */
 export default function CardPagamento({
   condicao: c,
@@ -48,30 +55,52 @@ export default function CardPagamento({
   condicao: Condicao;
   modo?: "completo" | "parceiro" | "publico";
 }) {
+  // O saldo é quitado no mês seguinte ao fim da Trilha: 25º numa opção de 24
+  // meses, 13º numa de 12. Fixar "25" quebraria em todo prazo diferente.
+  const mesDoSaldo = c.prazoMeses + 1;
+
   return (
-    <article className="flex snap-start flex-col rounded-lg border border-trilha-200 bg-white p-6 shadow-[0_1px_2px_rgba(21,38,110,0.05)]">
-      <header className="flex items-baseline justify-between gap-3 border-b border-trilha-100 pb-3">
-        <h3 className="font-display text-lg font-semibold text-trilha-700">Opção {c.ordem}</h3>
-        <span className="font-display text-xs font-semibold tracking-[0.12em] text-trilha-400 uppercase">
-          {c.prazoMeses} meses de Trilha
-        </span>
+    <article className="flex snap-start flex-col rounded-lg border border-trilha-200 bg-white p-7 shadow-[0_1px_2px_rgba(21,38,110,0.05)]">
+      <header className="border-b border-trilha-100 pb-4">
+        {modo === "completo" ? (
+          <p className="font-display mb-1 text-xs font-semibold tracking-[0.12em] text-trilha-300 uppercase">
+            Opção {c.ordem}
+          </p>
+        ) : null}
+        <h3 className="font-display text-2xl font-bold text-trilha-900">{c.prazoMeses} meses</h3>
+        <p className="mt-0.5 text-sm text-trilha-400">de Trilha</p>
       </header>
 
-      {/* O número que a pessoa quer saber primeiro. */}
-      <div className="py-4">
-        <p className="font-display text-2xl font-bold text-trilha-900">
+      {/* O número que decide a conversa. */}
+      <div className="py-5">
+        <p className="font-display text-3xl font-bold text-trilha-900">
           {c.prazoMeses}× {formatBRL(c.parcela)}
         </p>
-        <p className="mt-1 text-sm text-trilha-400">
-          parcela mensal, contando com a Gestão do negócio.
-        </p>
+        <p className="mt-1 text-sm text-trilha-400">parcela mensal, com a Gestão do negócio</p>
       </div>
 
-      <dl className="flex flex-1 flex-col gap-2 border-t border-trilha-100 pt-4">
+      {/* Os três momentos, na ordem em que o dinheiro sai. */}
+      <dl className="flex flex-col gap-2.5 border-t border-trilha-100 pt-4">
+        <Linha termo="No ato" nota={`(${pct(c.percentualAto)})`} valor={formatBRL(c.ato)} />
+        <Linha
+          termo={`Durante ${c.prazoMeses} meses`}
+          valor={`${c.prazoMeses}× ${formatBRL(c.parcela)}`}
+        />
+        <Linha
+          termo="No saldo"
+          nota={`(${mesDoSaldo}º mês · ${pct(100 - c.percentualEntrada)})`}
+          valor={formatBRL(c.saldoFinanciar)}
+          forte
+        />
+      </dl>
+
+      <dl className="mt-4 flex flex-1 flex-col gap-2.5 border-t border-trilha-100 pt-4">
+        <Linha
+          termo="Entrada total"
+          nota={`(${pct(c.percentualEntrada)})`}
+          valor={formatBRL(c.entrada)}
+        />
         <Linha termo="Valor final do imóvel" valor={formatBRL(c.base)} forte />
-        <Linha termo={`Entrada total (${pct(c.percentualEntrada)})`} valor={formatBRL(c.entrada)} />
-        <Linha termo={`Ato (${pct(c.percentualAto)})`} valor={formatBRL(c.ato)} />
-        <Linha termo="A financiar no fim" valor={formatBRL(c.saldoFinanciar)} forte />
       </dl>
 
       {modo === "publico" ? null : modo === "parceiro" ? (

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   empreendimentosSimulaveis,
   simular,
@@ -9,6 +10,7 @@ import CardPagamento from "@/components/card-pagamento";
 import { BuscaEmpreendimento } from "./busca-empreendimento";
 import { caracteristicas } from "@/lib/unidade";
 import { BuscaUnidade } from "./busca-unidade";
+import Compartilhar from "./compartilhar";
 
 /**
  * O simulador é a única tela do sistema que um comprador vê. Ele é público de
@@ -84,13 +86,21 @@ export default async function SimuladorPage({
           </p>
         ) : null}
 
-        {simulacao ? <Resultado simulacao={simulacao} /> : null}
+        {simulacao && selecionado ? (
+          <Resultado simulacao={simulacao} empreendimentoId={selecionado.id} />
+        ) : null}
       </div>
     </Moldura>
   );
 }
 
-function Resultado({ simulacao }: { simulacao: NonNullable<Awaited<ReturnType<typeof simular>>> }) {
+function Resultado({
+  simulacao,
+  empreendimentoId,
+}: {
+  simulacao: NonNullable<Awaited<ReturnType<typeof simular>>>;
+  empreendimentoId: string;
+}) {
   const { unidade, empreendimento, incorporadora, condicoes } = simulacao;
 
   if (condicoes.length === 0) {
@@ -118,18 +128,40 @@ function Resultado({ simulacao }: { simulacao: NonNullable<Awaited<ReturnType<ty
       <div className="-mx-1 snap-x snap-mandatory overflow-x-auto px-1 pb-3">
         <div
           className="grid gap-4"
-          style={{ gridTemplateColumns: `repeat(${condicoes.length}, minmax(21rem, 1fr))` }}
+          style={{ gridTemplateColumns: `repeat(${condicoes.length}, minmax(20rem, 1fr))` }}
         >
+          {/* O botão fica DENTRO da coluna do card, e não num lugar comum
+              embaixo: a proposta é sempre de uma condição, e separar o "enviar"
+              do número que ele escolheu é como se manda a opção errada.
+              `grid-rows-[1fr_auto]` estica os cards à mesma altura para os
+              botões ficarem alinhados entre si. */}
           {condicoes.map((c) => (
-            <CardPagamento key={c.ordem} condicao={c} modo="publico" />
+            <div key={c.ordem} className="grid snap-start grid-rows-[1fr_auto] gap-3">
+              <CardPagamento condicao={c} modo="publico" />
+              <Link
+                href={`/simulador/proposta?e=${empreendimentoId}&u=${unidade.id}&c=${c.ordem}`}
+                className="font-display rounded-md bg-trilha-500 px-4 py-2.5 text-center text-[15px] font-semibold tracking-wide text-white transition-colors hover:bg-trilha-700"
+              >
+                Enviar proposta
+              </Link>
+            </div>
           ))}
         </div>
       </div>
 
-      <p className="mt-2 text-sm text-trilha-400">
-        Na Trilha você se muda agora e paga a entrada em parcelas. O saldo é quitado no mês
-        seguinte ao fim desse período, por financiamento bancário ou recursos próprios.
-      </p>
+      {/* No celular só um card cabe na tela, e nada indica que há outros. */}
+      {condicoes.length > 1 ? (
+        <p className="text-sm text-trilha-400 sm:hidden">
+          {condicoes.length} condições — deslize para o lado para ver as outras.
+        </p>
+      ) : null}
+
+      <Compartilhar
+        empreendimentoId={empreendimentoId}
+        unidadeId={unidade.id}
+        unidade={unidade.identificacao}
+        empreendimento={empreendimento}
+      />
     </section>
   );
 }
@@ -138,14 +170,14 @@ function Resultado({ simulacao }: { simulacao: NonNullable<Awaited<ReturnType<ty
 function Moldura({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-trilha-50/40 px-5 py-10 sm:px-8">
-      <div className="mx-auto w-full max-w-3xl">
+      <div className="mx-auto w-full max-w-4xl">
         <header className="mb-8">
           <p className="font-display text-sm font-semibold tracking-[0.18em] text-trilha-500 uppercase">
             Trilha
           </p>
           <h1 className="mt-1 text-3xl font-bold text-trilha-900">Simulador</h1>
           <p className="mt-2 max-w-xl text-[15px] text-trilha-400">
-            Escolha o empreendimento e a unidade para ver as condições de entrada parcelada.
+            Condições de pagamento por unidade.
           </p>
         </header>
 

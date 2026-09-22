@@ -1,9 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Rotas que existem sem sessão. `/simulador` é a única tela virada ao cliente
-// final: quem tem o link entra, sem conta e sem senha.
-const PUBLIC_ROUTES = ["/login", "/simulador"];
+// Rotas que existem sem sessão. `/simulador` é a ferramenta do corretor e
+// `/condicoes` é a página que ele envia ao cliente: quem tem o link entra, sem
+// conta e sem senha.
+const PUBLIC_ROUTES = ["/login", "/simulador", "/condicoes"];
 
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });

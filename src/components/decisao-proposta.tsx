@@ -1,0 +1,102 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { aceitarProposta, recusarProposta } from "@/app/actions/decisoes";
+import { Alert, Button, Textarea } from "@/components/ui";
+
+/**
+ * Aceitar ou recusar.
+ *
+ * Os dois botões abrem o mesmo passo intermediário, e isso é de propósito:
+ * aceitar trava a unidade e derruba as propostas concorrentes: é a ação mais
+ * pesada desta tela e não pode acontecer num clique perdido. O passo do meio
+ * também é onde cabe o motivo — que no caso da recusa é o que o corretor vai
+ * ler para entender o que aconteceu.
+ */
+export default function DecisaoProposta({ id, unidade }: { id: string; unidade: string }) {
+  const router = useRouter();
+  const [modo, setModo] = useState<"aceitar" | "recusar" | null>(null);
+  const [motivo, setMotivo] = useState("");
+  const [erro, setErro] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+
+  const confirmar = async () => {
+    if (!modo) return;
+    setEnviando(true);
+    setErro(null);
+
+    const r = modo === "aceitar" ? await aceitarProposta(id, motivo) : await recusarProposta(id, motivo);
+
+    setEnviando(false);
+    if (!r.ok) {
+      setErro(r.erro);
+      return;
+    }
+    setModo(null);
+    setMotivo("");
+    router.refresh();
+  };
+
+  if (!modo) {
+    return (
+      <div className="flex flex-col gap-4 rounded-lg border border-trilha-200 bg-white p-6">
+        <div className="flex flex-wrap gap-3">
+          <Button type="button" onClick={() => setModo("aceitar")}>
+            Aceitar proposta
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => setModo("recusar")}>
+            Recusar
+          </Button>
+        </div>
+        {erro ? <Alert>{erro}</Alert> : null}
+      </div>
+    );
+  }
+
+  const aceitando = modo === "aceitar";
+
+  return (
+    <div className="flex flex-col gap-4 rounded-lg border border-trilha-200 bg-white p-6">
+      <div>
+        <h2 className="font-display text-lg font-semibold text-trilha-900">
+          {aceitando ? "Aceitar esta proposta?" : "Recusar esta proposta?"}
+        </h2>
+        <p className="mt-1 text-[15px] text-trilha-400">
+          {aceitando ? (
+            <>
+              A unidade <strong className="text-trilha-700">{unidade}</strong> sai do estoque
+              disponível e entra em negociação. As outras propostas abertas desta unidade são
+              invalidadas na mesma hora, e ela some do simulador.
+            </>
+          ) : (
+            <>
+              A unidade continua à venda e as outras propostas seguem valendo. Só esta é recusada.
+            </>
+          )}
+        </p>
+      </div>
+
+      <label className="flex flex-col gap-1.5">
+        <span className="font-display text-sm font-semibold tracking-wide text-trilha-700 uppercase">
+          Motivo
+          <span className="font-body ml-1.5 text-xs font-normal normal-case text-trilha-400">
+            {aceitando ? "opcional" : "o corretor vai ler"}
+          </span>
+        </span>
+        <Textarea rows={3} value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+      </label>
+
+      {erro ? <Alert>{erro}</Alert> : null}
+
+      <div className="flex flex-wrap gap-3">
+        <Button type="button" onClick={confirmar} disabled={enviando}>
+          {enviando ? "Aguarde…" : aceitando ? "Confirmar e aceitar" : "Confirmar recusa"}
+        </Button>
+        <Button type="button" variant="ghost" onClick={() => setModo(null)} disabled={enviando}>
+          Voltar
+        </Button>
+      </div>
+    </div>
+  );
+}

@@ -14,14 +14,20 @@ export default async function PainelLayout({ children }: { children: React.React
   // A incorporadora tem item próprio porque só lida com as opções dela. Para o
   // admin isso não teria contexto — "opções de qual incorporadora?" —, então
   // do lado da Trilha elas vivem na ficha de cada incorporadora.
+  // "Parceiros", ao contrário das opções, faz sentido nos dois lados: "todos os
+  // parceiros" é pergunta legítima da Trilha, e a coluna da incorporadora dá o
+  // contexto que falta. A ficha de cada um segue morando sob a incorporadora
+  // dele — o item de menu é porta de entrada, não uma segunda casa.
   // O parceiro imobiliário só enxerga o estoque. Nada de opções de pagamento
   // no menu: ele não define nem edita condição nenhuma, e um item que só
   // mostra o que não é dele para editar seria promessa falsa.
   const links = admin
     ? [
+        { href: "/propostas", label: "Propostas", icone: "proposta" as const },
         { href: "/importacao", label: "Importação de estoque", icone: "importar" as const },
         { href: "/incorporadoras", label: "Incorporadoras", icone: "empresa" as const },
         { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
+        { href: "/parceiros", label: "Parceiros imobiliários", icone: "parceiros" as const },
       ]
     : parceiro
       ? [{ href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const }]

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { UnidadeSimulavel } from "@/lib/simulador";
 import { caracteristicas } from "@/lib/unidade";
@@ -38,6 +38,9 @@ export function BuscaUnidade({
   const [texto, setTexto] = useState(nomeEscolhido);
   const [aberto, setAberto] = useState(false);
   const campo = useRef<HTMLInputElement>(null);
+  // Escolher recarrega a página no servidor. Sem sinal nenhum, o toque parece
+  // não ter funcionado — e quem está usando isto está na frente de um cliente.
+  const [buscando, iniciar] = useTransition();
 
   // Quando a escolha muda no servidor, o campo acompanha. Ajustar o estado
   // durante a renderização, e não num efeito, é o padrão que o próprio React
@@ -67,14 +70,14 @@ export function BuscaUnidade({
   const escolher = (u: UnidadeSimulavel) => {
     setAberto(false);
     campo.current?.blur();
-    router.replace(`/simulador?e=${empreendimentoId}&u=${u.id}`);
+    iniciar(() => router.replace(`/simulador?e=${empreendimentoId}&u=${u.id}`));
   };
 
   const limpar = () => {
     setTexto("");
     setAberto(true);
     campo.current?.focus();
-    if (selecionada) router.replace(`/simulador?e=${empreendimentoId}`);
+    if (selecionada) iniciar(() => router.replace(`/simulador?e=${empreendimentoId}`));
   };
 
   return (
@@ -89,18 +92,32 @@ export function BuscaUnidade({
       </label>
 
       <div className="relative">
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-trilha-300"
-          aria-hidden="true"
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-3.5-3.5" />
-        </svg>
+        {buscando ? (
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 animate-spin text-trilha-500"
+            aria-label="Buscando"
+          >
+            <path d="M12 3a9 9 0 1 0 9 9" />
+          </svg>
+        ) : (
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-trilha-300"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+        )}
 
         <input
           ref={campo}
@@ -118,9 +135,7 @@ export function BuscaUnidade({
             e.target.select();
           }}
           onBlur={() => setTimeout(() => { setAberto(false); setTexto(nomeEscolhido); }, 150)}
-          placeholder={
-            desativado ? "Escolha o empreendimento primeiro" : "Digite a unidade — ex.: 302"
-          }
+          placeholder={desativado ? "Escolha o empreendimento" : "Ex.: 302"}
           className="w-full rounded-md border border-trilha-200 bg-white py-2.5 pr-10 pl-10 text-[15px] text-trilha-900 placeholder:text-trilha-300 transition-colors hover:border-trilha-300 focus:border-trilha-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-trilha-50 disabled:text-trilha-400 disabled:hover:border-trilha-200"
         />
 
