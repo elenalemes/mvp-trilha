@@ -12,7 +12,7 @@
  */
 
 export type Ator = "trilha" | "incorporadora" | "parceiro";
-export type TipoTarefa = "documento" | "confirmacao" | "veredito";
+export type TipoTarefa = "documento" | "confirmacao" | "veredito" | "formulario";
 export type StatusTarefa = "pendente" | "concluido" | "nao_se_aplica" | "reprovado";
 
 export type Tarefa = {
@@ -25,6 +25,9 @@ export type Tarefa = {
   tipo: TipoTarefa;
   exige_validade: boolean;
   interna: boolean;
+  instrucoes: string | null;
+  /** Documento do comprador que também exige o do cônjuge, quando há cônjuge. */
+  pede_conjuge: boolean;
   status: StatusTarefa;
   arquivo_path: string | null;
   referencia_externa: string | null;
@@ -136,4 +139,43 @@ export function validade(tarefa: Tarefa): { dias: number; venceu: boolean } | nu
 
   const dias = Math.ceil((new Date(tarefa.valido_ate).getTime() - Date.now()) / 86_400_000);
   return { dias, venceu: dias < 0 };
+}
+
+/** Um arquivo anexado a uma tarefa. O conteúdo mora no bucket `fechamento`. */
+export type Arquivo = {
+  id: string;
+  checklist_item_id: string;
+  nome_original: string;
+  tipo_mime: string | null;
+  tamanho_bytes: number | null;
+  /** Nos documentos do comprador: de quem é o arquivo. Nulo nas demais tarefas. */
+  pessoa: Pessoa | null;
+  created_at: string;
+};
+
+export type Pessoa = "comprador" | "conjuge";
+
+export const NOME_DA_PESSOA: Record<Pessoa, string> = {
+  comprador: "Comprador",
+  conjuge: "Cônjuge",
+};
+
+/** Tarefas que recebem anexo. Confirmação não leva arquivo. */
+export const recebeArquivo = (t: Tarefa) => t.tipo === "documento" || t.tipo === "veredito";
+
+/**
+ * Se o ator que está olhando consegue ABRIR os arquivos desta tarefa.
+ *
+ * Espelho de `pode_ler_arquivo_tarefa` no banco — é ele quem decide de
+ * verdade; aqui serve para a tela explicar por que não há anexo à vista, em
+ * vez de mostrar uma tarefa concluída com a lista vazia:
+ *
+ *   documento do comprador (tarefa do corretor) → Trilha e corretor
+ *   tarefa interna                              → só a Trilha
+ *   o resto                                     → todos do negócio
+ */
+export function podeAbrirArquivos(tarefa: Tarefa, ator: Ator | null): boolean {
+  if (ator === "trilha") return true;
+  if (ator !== null && tarefa.ator === ator) return true;
+  return !tarefa.interna && tarefa.ator !== "parceiro";
 }

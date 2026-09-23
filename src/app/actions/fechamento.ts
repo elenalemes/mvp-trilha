@@ -33,6 +33,8 @@ const texto = (v: string | undefined) => v?.trim() || null;
 const data = (v: string | undefined) => (v && v.trim() ? v : null);
 
 function falhou(error: { code?: string; message?: string } | null): string {
+  // Documento sem anexo: o trigger do banco explica, e a frase dele serve.
+  if (error?.code === "23514" && error.message) return error.message;
   if (error?.code === "42501" || error?.code === "PGRST116") {
     return "Esta tarefa não é sua. Só quem é responsável por ela pode marcá-la.";
   }
@@ -169,6 +171,53 @@ export async function reabrirTarefa(
       concluido_por: null,
       concluido_em: null,
     })
+    .eq("id", tarefaId)
+    .select("id")
+    .maybeSingle<{ id: string }>();
+
+  if (error || !linha) return { ok: false, erro: falhou(error) };
+
+  revalidar(negocioId);
+  return { ok: true };
+}
+
+/**
+ * Corrigir a validade de um documento.
+ *
+ * Ao anexar, o banco preenche 30 dias a partir do envio — uma estimativa. Quem
+ * tem o papel na mão sabe a data real, e é por aqui que ela entra.
+ */
+export async function definirValidade(
+  tarefaId: string,
+  negocioId: string,
+  validoAte: string,
+): Promise<ResultadoTarefa> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(validoAte)) return { ok: false, erro: "Data inválida." };
+
+  const supabase = await createClient();
+  const { data: linha, error } = await supabase
+    .from("checklist_item")
+    .update({ valido_ate: validoAte })
+    .eq("id", tarefaId)
+    .select("id")
+    .maybeSingle<{ id: string }>();
+
+  if (error || !linha) return { ok: false, erro: falhou(error) };
+
+  revalidar(negocioId);
+  return { ok: true };
+}
+
+/** Nº da apólice, link do Autentique, id da cobrança — o que servir para achar depois. */
+export async function salvarReferencia(
+  tarefaId: string,
+  negocioId: string,
+  referencia: string,
+): Promise<ResultadoTarefa> {
+  const supabase = await createClient();
+  const { data: linha, error } = await supabase
+    .from("checklist_item")
+    .update({ referencia_externa: texto(referencia) })
     .eq("id", tarefaId)
     .select("id")
     .maybeSingle<{ id: string }>();

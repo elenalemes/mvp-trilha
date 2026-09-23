@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isValidCNPJ, isValidCPF, isValidEmail, isValidPhone, parseDecimal } from "@/lib/br";
+import { isValidCNPJ, isValidCPF, isValidEmail, isValidPhone, parseDecimal, telefoneNacional, temConjuge } from "@/lib/br";
 import { MAX_OPCOES_PAGAMENTO, PRAZO_TRILHA_MAX, PRAZO_TRILHA_MIN } from "@/lib/trilha";
 
 const req = (label: string) => z.string().trim().min(1, `${label} é obrigatório`);
@@ -275,3 +275,66 @@ export const propostaLogadaSchema = z.object({
 
 export type PropostaFormValues = z.infer<typeof propostaSchema>;
 export type PropostaLogadaValues = z.infer<typeof propostaLogadaSchema>;
+
+// ------------------------------------------------ ficha de qualificação
+
+const telefoneFicha = (label: string) =>
+  req(label).refine((v) => isValidPhone(telefoneNacional(v)), "Telefone inválido");
+
+/** Os dados de uma pessoa na ficha. Titular e cônjuge pedem os mesmos. */
+const pessoaFicha = (quem: string) => ({
+  nome: req(`Nome ${quem}`).min(3, "Nome muito curto"),
+  email: req(`E-mail ${quem}`).refine(isValidEmail, "E-mail inválido"),
+  telefone: telefoneFicha(`Telefone ${quem}`),
+  cpf: req(`CPF ${quem}`).refine(isValidCPF, "CPF inválido"),
+  rg: req(`RG ${quem}`),
+  rg_emissor: req("Órgão emissor"),
+  endereco: req(`Endereço ${quem}`),
+  profissao: req(`Profissão ${quem}`),
+});
+
+const pessoaFichaObj = (quem: string) => z.object(pessoaFicha(quem));
+
+/**
+ * A ficha que o corretor preenche no fechamento.
+ *
+ * O cônjuge e o regime de bens só existem para quem é CASADO ou vive em
+ * UNIÃO ESTÁVEL — é a mesma trava `ficha_conjuge` do banco. Os campos ficam no formulário mesmo quando
+ * escondidos; por isso a validação deles é condicional, e não um `optional()`
+ * que deixaria passar um casado sem cônjuge.
+ */
+export const fichaSchema = z
+  .object({
+    comprador: pessoaFichaObj("do comprador").extend({
+      estado_civil: z.enum(["solteiro", "casado", "uniao_estavel", "divorciado", "viuvo"], {
+        message: "Escolha o estado civil",
+      }),
+      regime_bens: z.string().optional(),
+    }),
+    conjuge: z.object({
+      nome: z.string(),
+      email: z.string(),
+      telefone: z.string(),
+      cpf: z.string(),
+      rg: z.string(),
+      rg_emissor: z.string(),
+      endereco: z.string(),
+      profissao: z.string(),
+    }),
+  })
+  .superRefine((v, ctx) => {
+    if (!temConjuge(v.comprador.estado_civil)) return;
+
+    if (!v.comprador.regime_bens) {
+      ctx.addIssue({ code: "custom", path: ["comprador", "regime_bens"], message: "Escolha o regime de bens" });
+    }
+
+    const conjuge = pessoaFichaObj("do cônjuge").safeParse(v.conjuge);
+    if (!conjuge.success) {
+      for (const issue of conjuge.error.issues) {
+        ctx.addIssue({ code: "custom", path: ["conjuge", ...issue.path], message: issue.message });
+      }
+    }
+  });
+
+export type FichaValues = z.infer<typeof fichaSchema>;

@@ -22,6 +22,13 @@
 -- Os imóveis que estavam presos em negociação voltam a ficar disponíveis, e a
 -- numeração das propostas recomeça em PRP-0001.
 --
+-- OS ARQUIVOS DO FECHAMENTO NÃO SAEM POR AQUI. Os registros deles caem junto
+-- com as tarefas, mas o conteúdo mora no Storage, e o Supabase não deixa
+-- apagar arquivo por SQL. Depois de rodar este script, esvazie o bucket à mão:
+--   Storage → fechamento → selecionar tudo → Delete
+-- Sem isso eles continuam ocupando o 1 GB do plano gratuito, sem que nenhuma
+-- tela os mostre.
+--
 -- Rodar inteiro no SQL Editor do Supabase.
 -- ----------------------------------------------------------------------------
 
@@ -36,6 +43,7 @@ union all select 'propostas',             count(*)::text from public.proposta
 union all select 'compradores',           count(*)::text from public.comprador
 union all select 'parceiros',             count(*)::text from public.parceiro
 union all select 'logins de parceiro',    count(*)::text from public.conta where tipo = 'parceiro'
+union all select 'arquivos no bucket (apagar à mão depois)', count(*)::text from storage.objects where bucket_id = 'fechamento'
 union all select 'imóveis presos',        count(*)::text from public.imovel
                                           where status in ('em_negociacao', 'reservado', 'em_trilha');
 

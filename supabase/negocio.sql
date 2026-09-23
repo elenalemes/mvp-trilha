@@ -282,6 +282,11 @@ create trigger checklist_item_touch before update on public.checklist_item
 -- que não nasceu, porque ninguém repara.
 -- ----------------------------------------------------------------------------
 
+-- A versão da sprint anterior devolvia `void`; esta devolve o id do negócio.
+-- O Postgres não troca o tipo de retorno com `create or replace`, então a
+-- antiga sai antes. Sem esta linha o arquivo falha num banco montado do zero.
+drop function if exists public.aceitar_proposta(uuid, text);
+
 create or replace function public.aceitar_proposta(
   p_proposta uuid,
   p_motivo   text default null

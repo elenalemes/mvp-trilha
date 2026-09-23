@@ -66,6 +66,16 @@ export function maskPhone(value: string): string {
 
 export const stripMask = onlyDigits;
 
+/**
+ * Telefone sem o 55 do país. Quem copia o número do WhatsApp cola
+ * "55 53 99999-0000"; o banco guarda "53999990000", como no resto do
+ * sistema — o 55 entra só na hora de mandar mensagem (`numeroWhatsApp`).
+ */
+export function telefoneNacional(value: string): string {
+  const d = onlyDigits(value);
+  return (d.length === 12 || d.length === 13) && d.startsWith("55") ? d.slice(2) : d;
+}
+
 // ---- dinheiro e números ---------------------------------------------------
 
 export const formatBRL = (value?: number | string | null) =>
@@ -108,6 +118,22 @@ export const MARITAL_STATUSES = [
   { value: "viuvo", label: "Viúvo(a)" },
 ] as const;
 
+/**
+ * Estados civis em que há cônjuge na ficha: casado e união estável. Espelho da
+ * trava `ficha_conjuge` do banco.
+ */
+export const temConjuge = (estadoCivil?: string | null) =>
+  estadoCivil === "casado" || estadoCivil === "uniao_estavel";
+
+/** Regime de bens. Só se pergunta para quem tem cônjuge (casado ou união estável). */
+export const REGIMES_BENS = [
+  { value: "comunhao_parcial", label: "Comunhão parcial de bens" },
+  { value: "comunhao_universal", label: "Comunhão universal de bens" },
+  { value: "separacao_total", label: "Separação total (convencional) de bens" },
+  { value: "separacao_obrigatoria", label: "Separação obrigatória de bens" },
+  { value: "participacao_final", label: "Participação final nos aquestos" },
+] as const;
+
 export const IMOVEL_TIPOS = [
   { value: "apartamento", label: "Apartamento" },
   { value: "casa", label: "Casa" },
@@ -133,3 +159,4 @@ export const pixTypeLabel = (v?: string | null) => findLabel(PIX_KEY_TYPES, v);
 export const maritalLabel = (v?: string | null) => findLabel(MARITAL_STATUSES, v);
 export const imovelTipoLabel = (v?: string | null) => findLabel(IMOVEL_TIPOS, v);
 export const imovelStatusLabel = (v?: string | null) => findLabel(IMOVEL_STATUS, v);
+export const regimeLabel = (v?: string | null) => findLabel(REGIMES_BENS, v);

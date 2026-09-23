@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ehAdmin, ehParceiro, getSessao } from "@/lib/sessao";
 import { PageHeader } from "@/components/ui";
+import { temConjuge } from "@/lib/br";
+import { lerDadosComprador, type DadosComprador } from "@/lib/ficha";
 import ErroLeitura from "@/components/erro-leitura";
 import TarefaFechamento from "@/components/tarefa-fechamento";
 import CancelarNegocio from "@/components/cancelar-negocio";
@@ -13,8 +15,10 @@ import {
   diasParado,
   etapas,
   nivelAberto,
+  podeAbrirArquivos,
   podeMexer,
   progresso,
+  type Arquivo,
   type Ator,
   type Tarefa,
 } from "@/lib/fechamento";
@@ -45,12 +49,12 @@ type Ficha = {
   empreendimento: { nome: string } | null;
   incorporadora: { nome: string } | null;
   parceiro: { nome: string } | null;
-  comprador: { nome: string } | null;
+  comprador: { nome: string; cpf: string; email: string; telefone: string } | null;
 };
 
 const CAMPOS_TAREFA =
   `id, etapa, etapa_ordem, ordem, titulo, ator, tipo, exige_validade, interna,
-   status, arquivo_path, referencia_externa, observacao, emitido_em, valido_ate,
+   instrucoes, pede_conjuge, status, arquivo_path, referencia_externa, observacao, emitido_em, valido_ate,
    concluido_em`;
 
 export default async function NegocioPage({ params }: { params: Promise<{ id: string }> }) {
@@ -71,7 +75,7 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
        empreendimento (nome),
        incorporadora (nome),
        parceiro (nome),
-       comprador (nome)`,
+       comprador (nome, cpf, email, telefone)`,
     )
     .eq("id", id)
     .maybeSingle<Ficha>();
@@ -85,6 +89,30 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
     .returns<Tarefa[]>();
 
   if (error) return <ErroLeitura oQue="das tarefas do fechamento" erro={error} />;
+
+  // Só voltam os anexos que esta pessoa pode abrir — a policy é a mesma do
+  // bucket. Os documentos do comprador não chegam para a incorporadora.
+  const { data: anexos, error: erroAnexos } = await supabase
+    .from("checklist_arquivo")
+    .select("id, checklist_item_id, nome_original, tipo_mime, tamanho_bytes, pessoa, created_at")
+    .eq("negocio_id", id)
+    .order("created_at")
+    .returns<Arquivo[]>();
+
+  if (erroAnexos) return <ErroLeitura oQue="dos arquivos do fechamento" erro={erroAnexos} />;
+
+  // Os dados do comprador abrem dentro da tarefa, então a página já os traz.
+  // Só para quem lê a ficha — a incorporadora recebe `null` e vê "restrito".
+  // Com cônjuge, os documentos do comprador se dividem em dois grupos.
+  let dadosComprador: DadosComprador | null = null;
+  if (ator === "trilha" || ator === "parceiro") {
+    const lido = await lerDadosComprador(supabase, id, negocio.comprador);
+    if (!lido.ok) return <ErroLeitura oQue="dos dados do comprador" erro={lido.erro} />;
+    dadosComprador = lido.dados;
+  }
+  const comConjuge = temConjuge(dadosComprador?.estadoCivil);
+
+  const anexosDa = (tarefaId: string) => (anexos ?? []).filter((a) => a.checklist_item_id === tarefaId);
 
   const tarefas = data ?? [];
   const esperando = bolaCom(tarefas);
@@ -177,6 +205,12 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
                     negocioId={negocio.id}
                     podeAgir={liberada && podeMexer(t, ator)}
                     liberada={liberada}
+                    arquivos={anexosDa(t.id)}
+                    podeAbrir={podeAbrirArquivos(t, ator)}
+                    podeAbrirFicha={ator === "trilha" || ator === "parceiro"}
+                    porPessoa={comConjuge && t.ator === "parceiro"}
+                    dadosComprador={t.tipo === "formulario" ? dadosComprador : undefined}
+                    cancelado={negocio.status === "cancelado"}
                   />
                 ))}
               </ul>
