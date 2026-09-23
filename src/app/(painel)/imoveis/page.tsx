@@ -113,7 +113,7 @@ export default async function ImoveisPage({
         ) : null}
 
         {buscando ? (
-          <span className="text-sm text-trilha-400">
+          <span className="text-sm text-muted-foreground">
             {data?.length ?? 0} resultado{(data?.length ?? 0) === 1 ? "" : "s"} para “{termo}”
           </span>
         ) : null}
@@ -121,7 +121,7 @@ export default async function ImoveisPage({
         {filtrando || buscando ? (
           <Link
             href="/imoveis"
-            className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+            className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
           >
             Limpar
           </Link>
@@ -153,10 +153,10 @@ export default async function ImoveisPage({
           acao={edita ? { href: "/empreendimentos", label: "Cadastrar imóvel" } : undefined}
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-trilha-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
           <table className="w-full min-w-[860px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-trilha-100">
+              <tr className="border-b border-border">
                 {[
                   "Imóvel",
                   "Empreendimento",
@@ -169,7 +169,7 @@ export default async function ImoveisPage({
                 ].map((h, i) => (
                   <th
                     key={`${h}-${i}`}
-                    className="font-display px-5 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
+                    className="bg-muted/50 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground"
                   >
                     {h}
                   </th>
@@ -178,31 +178,31 @@ export default async function ImoveisPage({
             </thead>
             <tbody>
               {data.map((linha) => (
-                <tr key={linha.id} className="border-b border-trilha-100 last:border-0">
-                  <td className="px-5 py-4">
+                <tr key={linha.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
+                  <td className="px-4 py-3">
                     {linha.empreendimento ? (
                       <Link
                         href={`/empreendimentos/${linha.empreendimento.id}/imoveis/${linha.id}`}
-                        className="font-display text-[17px] font-semibold text-trilha-700 underline underline-offset-2 hover:text-trilha-500"
+                        className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                       >
                         {linha.identificacao}
                       </Link>
                     ) : (
-                      <span className="font-display text-[17px] font-semibold text-trilha-700">
+                      <span className="text-sm font-semibold text-foreground">
                         {linha.identificacao}
                       </span>
                     )}
-                    <span className="block text-sm text-trilha-400">
+                    <span className="block text-sm text-muted-foreground">
                       {imovelTipoLabel(linha.tipo)}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-[15px]">{linha.empreendimento?.nome ?? "—"}</td>
+                  <td className="px-4 py-3 text-sm">{linha.empreendimento?.nome ?? "—"}</td>
                   {admin ? (
-                    <td className="px-5 py-4 text-[15px]">
+                    <td className="px-4 py-3 text-sm">
                       {linha.empreendimento?.incorporadora_id ? (
                         <Link
                           href={`/incorporadoras/${linha.empreendimento.incorporadora_id}`}
-                          className="text-trilha-500 underline underline-offset-2 hover:text-trilha-700"
+                          className="text-foreground underline-offset-4 hover:underline hover:text-foreground"
                         >
                           {linha.empreendimento.incorporadora?.nome ?? "—"}
                         </Link>
@@ -211,7 +211,7 @@ export default async function ImoveisPage({
                       )}
                     </td>
                   ) : null}
-                  <td className="px-5 py-4 text-[15px] text-trilha-400">
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
                     {[
                       linha.num_quartos ? `${linha.num_quartos} dorm.` : null,
                       linha.num_vagas ? `${linha.num_vagas} vaga(s)` : null,
@@ -220,25 +220,25 @@ export default async function ImoveisPage({
                       .filter(Boolean)
                       .join(" · ") || "—"}
                   </td>
-                  <td className="px-5 py-4 text-[15px] tabular-nums text-trilha-900">
+                  <td className="px-4 py-3 text-sm tabular-nums text-foreground">
                     {formatBRL(linha.valor)}
                     {linha.valor !== null ? (
-                      <span className="block text-sm text-trilha-400">
+                      <span className="block text-sm text-muted-foreground">
                         {formatBRL(valorReajustado(linha.valor))} em {PRAZO_PADRAO_MESES} meses
                       </span>
                     ) : null}
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-4 py-3">
                     <StatusPill status={linha.status} label={imovelStatusLabel(linha.status)} />
                   </td>
-                  <td className="px-5 py-4 text-[15px] tabular-nums text-trilha-400">
+                  <td className="px-4 py-3 text-sm tabular-nums text-muted-foreground">
                     {dataCurta(linha.created_at)}
                   </td>
-                  <td className="px-5 py-4 text-right">
+                  <td className="px-4 py-3 text-right">
                     {linha.empreendimento ? (
                       <Link
                         href={`/empreendimentos/${linha.empreendimento.id}/imoveis/${linha.id}`}
-                        className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+                        className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                       >
                         Abrir
                       </Link>

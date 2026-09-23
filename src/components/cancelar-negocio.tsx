@@ -47,30 +47,28 @@ export default function CancelarNegocio({
 
   if (!aberto) {
     return (
-      <div className="mt-10 border-t border-trilha-100 pt-6">
-        <button
-          type="button"
-          onClick={() => setAberto(true)}
-          className="font-display text-sm font-semibold tracking-wide text-red-700 uppercase underline underline-offset-2 hover:text-red-800"
-        >
-          Cancelar este negócio
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={() => setAberto(true)}
+        className="w-full rounded-md px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-erro-suave"
+      >
+        Cancelar este negócio
+      </button>
     );
   }
 
   return (
-    <section className="mt-10 rounded-lg border border-red-200 bg-red-50/50 p-6">
-      <h2 className="font-display text-xl font-semibold text-red-800">Cancelar o negócio</h2>
+    <section className="flex flex-col">
+      <h2 className="text-sm font-semibold text-destructive">Cancelar o negócio</h2>
 
-      <p className="mt-2 text-[15px] text-red-800">
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
         Nada é apagado: a proposta, o negócio e as tarefas continuam no sistema, marcados como
         cancelados, com o motivo e a data. É assim que daqui a três meses ainda dá para responder o
         que aconteceu com a <strong>{unidade}</strong>.
       </p>
 
-      <label className="mt-5 flex flex-col gap-1.5">
-        <span className="font-display text-sm font-semibold tracking-wide text-red-800 uppercase">
+      <label className="mt-4 flex flex-col gap-1.5">
+        <span className="text-sm font-medium text-foreground">
           Por que está caindo?
         </span>
         <Textarea
@@ -79,7 +77,7 @@ export default function CancelarNegocio({
           onChange={(e) => setMotivo(e.target.value)}
           placeholder="Crédito reprovado, comprador desistiu, incorporadora retirou a unidade…"
         />
-        <span className="text-xs text-red-700">
+        <span className="text-xs text-muted-foreground">
           O corretor vê este texto na proposta dele. Obrigatório.
         </span>
       </label>
@@ -90,19 +88,19 @@ export default function CancelarNegocio({
         </div>
       ) : null}
 
-      <p className="font-display mt-6 text-sm font-semibold tracking-wide text-red-800 uppercase">
+      <p className="mt-4 text-sm font-medium text-foreground">
         E a unidade, o que acontece com ela?
       </p>
 
-      <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+      <div className="mt-2 flex flex-col gap-2">
         <button
           type="button"
           onClick={() => cancelar("disponivel")}
           disabled={enviando}
-          className="font-display flex-1 rounded-md border border-red-300 bg-white px-5 py-3 text-left text-[15px] font-semibold text-red-800 transition-colors hover:bg-red-50 disabled:opacity-50"
+          className="rounded-lg border px-3.5 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:border-destructive/40 hover:bg-erro-suave disabled:opacity-50"
         >
           Volta a ficar disponível
-          <span className="font-body mt-0.5 block text-sm font-normal text-red-700">
+          <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
             O negócio caiu, mas a unidade continua à venda e volta ao simulador.
           </span>
         </button>
@@ -111,10 +109,10 @@ export default function CancelarNegocio({
           type="button"
           onClick={() => cancelar("indisponivel")}
           disabled={enviando}
-          className="font-display flex-1 rounded-md border border-red-300 bg-white px-5 py-3 text-left text-[15px] font-semibold text-red-800 transition-colors hover:bg-red-50 disabled:opacity-50"
+          className="rounded-lg border px-3.5 py-2.5 text-left text-sm font-medium text-foreground transition-colors hover:border-destructive/40 hover:bg-erro-suave disabled:opacity-50"
         >
           Sai do estoque
-          <span className="font-body mt-0.5 block text-sm font-normal text-red-700">
+          <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
             A unidade não é mais para vender. Some do simulador e do painel do corretor.
           </span>
         </button>

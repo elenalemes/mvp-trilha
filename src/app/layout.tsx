@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+
+// Geist no texto inteiro, Geist Mono nos poucos lugares em que alinhar número
+// por coluna importa. `next/font` baixa as fontes no build e serve do próprio
+// domínio: sem ir ao Google em cada visita, e sem o texto "piscar" ao trocar
+// de fonte.
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
 
 export const metadata: Metadata = {
   title: "Trilha · Incorporadoras",
@@ -8,16 +16,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* eslint-disable-next-line @next/next/no-page-custom-font -- App Router: carregado uma vez no layout raiz */}
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
-        />
-      </head>
+    <html lang="pt-BR" className={`${geist.variable} ${geistMono.variable}`}>
       <body className="antialiased">{children}</body>
     </html>
   );

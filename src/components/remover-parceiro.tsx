@@ -44,7 +44,7 @@ export function RemoverParceiro({
 
   return (
     <section className="rounded-lg border border-red-200 bg-red-50/50 p-6">
-      <h2 className="font-display text-xl font-semibold text-red-800">Remover parceiro</h2>
+      <h2 className="text-xl font-semibold text-red-800">Remover parceiro</h2>
 
       {confirmando ? (
         <>
@@ -69,7 +69,7 @@ export function RemoverParceiro({
               type="button"
               onClick={remover}
               disabled={pendente}
-              className="font-display inline-flex items-center justify-center rounded-md bg-red-600 px-5 py-2.5 text-[15px] font-semibold tracking-wide text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+              className="inline-flex items-center justify-center rounded-md bg-red-600 px-5 py-2.5 text-[15px] font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
             >
               {pendente ? "Removendo…" : `Sim, remover ${nome}`}
             </button>
@@ -94,7 +94,7 @@ export function RemoverParceiro({
           <button
             type="button"
             onClick={() => setConfirmando(true)}
-            className="font-display mt-4 inline-flex items-center justify-center rounded-md border border-red-300 bg-white px-5 py-2.5 text-[15px] font-semibold tracking-wide text-red-700 transition-colors hover:bg-red-50"
+            className="mt-4 inline-flex items-center justify-center rounded-md border border-red-300 bg-white px-5 py-2.5 text-[15px] font-semibold text-red-700 transition-colors hover:bg-red-50"
           >
             Remover parceiro
           </button>

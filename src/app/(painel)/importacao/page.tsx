@@ -28,7 +28,7 @@ const COR: Record<string, string> = {
   aplicada: "border-emerald-200 bg-emerald-50 text-emerald-700",
   erro: "border-red-200 bg-red-50 text-red-700",
   descartada: "border-slate-200 bg-slate-100 text-slate-600",
-  processando: "border-trilha-200 bg-trilha-50 text-trilha-700",
+  processando: "border-border bg-muted/50 text-foreground",
 };
 
 /**
@@ -88,22 +88,22 @@ export default async function ImportacoesPage() {
         />
       )}
 
-      <h2 className="font-display mb-4 text-xl font-semibold text-trilha-700">Envios anteriores</h2>
+      <h2 className="mb-4 text-xl font-semibold text-foreground">Envios anteriores</h2>
 
       {!data || data.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-trilha-200 bg-white px-5 py-8 text-center text-[15px] text-trilha-400">
+        <p className="rounded-lg border border-dashed border-border bg-white px-5 py-8 text-center text-[15px] text-muted-foreground">
           Nenhum arquivo enviado ainda.
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-trilha-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
           <table className="w-full min-w-[760px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-trilha-100">
+              <tr className="border-b border-border">
                 {["Arquivo", "Incorporadora", "Empreendimento", "Unidades", "Situação", "Enviado em"].map(
                   (h) => (
                     <th
                       key={h}
-                      className="font-display px-5 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
+                      className="bg-muted/50 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground"
                     >
                       {h}
                     </th>
@@ -113,32 +113,32 @@ export default async function ImportacoesPage() {
             </thead>
             <tbody>
               {data.map((linha) => (
-                <tr key={linha.id} className="border-b border-trilha-100 last:border-0">
-                  <td className="px-5 py-4">
+                <tr key={linha.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
+                  <td className="px-4 py-3">
                     <Link
                       href={`/importacao/${linha.id}`}
-                      className="font-display text-[16px] font-semibold text-trilha-700 underline underline-offset-2 hover:text-trilha-500"
+                      className="text-[16px] font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                     >
                       {linha.arquivo_nome ?? "sem nome"}
                     </Link>
                   </td>
-                  <td className="px-5 py-4 text-[15px]">{linha.incorporadora?.nome ?? "—"}</td>
-                  <td className="px-5 py-4 text-[15px] text-trilha-400">
+                  <td className="px-4 py-3 text-[15px]">{linha.incorporadora?.nome ?? "—"}</td>
+                  <td className="px-4 py-3 text-[15px] text-muted-foreground">
                     {linha.empreendimento?.nome ?? "—"}
                   </td>
-                  <td className="px-5 py-4 text-[15px] tabular-nums">
+                  <td className="px-4 py-3 text-[15px] tabular-nums">
                     {linha.importacao_linha?.[0]?.count ?? 0}
                   </td>
-                  <td className="px-5 py-4">
+                  <td className="px-4 py-3">
                     <span
-                      className={`font-display inline-block rounded-full border px-2.5 py-0.5 text-sm font-semibold ${
-                        COR[linha.status] ?? "border-trilha-200 bg-trilha-50 text-trilha-700"
+                      className={`inline-block rounded-full border px-2.5 py-0.5 text-sm font-semibold ${
+                        COR[linha.status] ?? "border-border bg-muted/50 text-foreground"
                       }`}
                     >
                       {ROTULO[linha.status] ?? linha.status}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-sm tabular-nums text-trilha-400">
+                  <td className="px-4 py-3 text-sm tabular-nums text-muted-foreground">
                     {dataHora(linha.created_at)}
                   </td>
                 </tr>

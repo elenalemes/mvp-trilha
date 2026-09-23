@@ -43,7 +43,7 @@ export function Busca({ base, placeholder }: { base: string; placeholder: string
         stroke="currentColor"
         strokeWidth="1.7"
         strokeLinecap="round"
-        className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-trilha-300"
+        className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-muted-foreground/70"
         aria-hidden="true"
       >
         <circle cx="11" cy="11" r="7" />
@@ -56,7 +56,7 @@ export function Busca({ base, placeholder }: { base: string; placeholder: string
         onChange={(e) => aoDigitar(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="w-full rounded-md border border-trilha-200 bg-white py-2 pr-3 pl-10 text-[15px] text-trilha-900 placeholder:text-trilha-300 transition-colors hover:border-trilha-300"
+        className="w-full rounded-md border border-border bg-white py-2 pr-3 pl-10 text-[15px] text-foreground placeholder:text-muted-foreground transition-colors hover:border-foreground/20"
       />
     </div>
   );

@@ -182,7 +182,7 @@ export default function FormFicha({
                   onClick={() =>
                     setValue("conjuge.endereco", getValues("comprador.endereco"), { shouldValidate: true })
                   }
-                  className="self-start text-sm text-trilha-500 underline underline-offset-2 hover:text-trilha-700"
+                  className="self-start text-sm text-foreground underline-offset-4 hover:underline hover:text-foreground"
                 >
                   Mesmo endereço do comprador
                 </button>

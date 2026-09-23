@@ -56,25 +56,25 @@ export default function ReenviarConvite({
   const vencido = expiraEm ? new Date(expiraEm) < new Date() : false;
 
   return (
-    <section className="mb-6 rounded-lg border border-trilha-200 bg-white p-6">
-      <h2 className="font-display text-sm font-semibold tracking-[0.12em] text-trilha-400 uppercase">
+    <section className="mb-6 rounded-lg border border-border bg-white p-6">
+      <h2 className="text-sm font-semibold text-muted-foreground">
         Convite de primeiro acesso
       </h2>
 
-      <p className="mt-3 text-[15px] text-trilha-700">
+      <p className="mt-3 text-[15px] text-foreground">
         {enviadoEm
           ? `Enviado no WhatsApp em ${new Date(enviadoEm).toLocaleString("pt-BR")}.`
           : "O envio pelo WhatsApp não foi confirmado."}{" "}
         {vencido ? (
           <strong className="text-red-700">O link venceu — reenvie para gerar um novo.</strong>
         ) : expiraEm ? (
-          <span className="text-trilha-400">
+          <span className="text-muted-foreground">
             Vale até {new Date(expiraEm).toLocaleDateString("pt-BR")}.
           </span>
         ) : null}
       </p>
 
-      <code className="mt-3 block overflow-x-auto rounded bg-trilha-50 px-3 py-2 font-mono text-xs break-all text-trilha-700">
+      <code className="mt-3 block overflow-x-auto rounded bg-muted/50 px-3 py-2 font-mono text-xs break-all text-foreground">
         {link}
       </code>
 

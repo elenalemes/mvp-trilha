@@ -84,7 +84,7 @@ export function BuscaEmpreendimento({
     <div className="relative">
       <label
         htmlFor="busca-empreendimento"
-        className="font-display mb-1.5 block text-sm font-semibold tracking-wide text-trilha-700 uppercase"
+        className="mb-2 block text-sm font-medium text-foreground"
       >
         Empreendimento
       </label>
@@ -97,7 +97,7 @@ export function BuscaEmpreendimento({
             stroke="currentColor"
             strokeWidth="2.2"
             strokeLinecap="round"
-            className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 animate-spin text-trilha-500"
+            className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 animate-spin text-foreground"
             aria-label="Buscando"
           >
             <path d="M12 3a9 9 0 1 0 9 9" />
@@ -109,7 +109,7 @@ export function BuscaEmpreendimento({
             stroke="currentColor"
             strokeWidth="1.7"
             strokeLinecap="round"
-            className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-trilha-300"
+            className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-muted-foreground/70"
             aria-hidden="true"
           >
             <circle cx="11" cy="11" r="7" />
@@ -134,7 +134,7 @@ export function BuscaEmpreendimento({
           // O atraso deixa o clique num item acontecer antes de fechar a lista.
           onBlur={() => setTimeout(() => { setAberto(false); setTexto(nomeEscolhido); }, 150)}
           placeholder="Nome do empreendimento"
-          className="w-full rounded-md border border-trilha-200 bg-white py-2.5 pr-10 pl-10 text-[15px] text-trilha-900 placeholder:text-trilha-300 transition-colors hover:border-trilha-300 focus:border-trilha-500 focus:outline-none"
+          className="w-full h-10 rounded-md border border-input bg-card pr-10 pl-10 text-sm text-foreground shadow-xs placeholder:text-muted-foreground transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
         />
 
         {texto ? (
@@ -143,7 +143,7 @@ export function BuscaEmpreendimento({
             onMouseDown={(e) => e.preventDefault()}
             onClick={limpar}
             aria-label="Limpar empreendimento"
-            className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-trilha-300 transition-colors hover:bg-trilha-50 hover:text-trilha-700"
+            className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:bg-accent hover:text-foreground"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-4" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -154,29 +154,29 @@ export function BuscaEmpreendimento({
 
       {aberto ? (
         resultados.length > 0 ? (
-          <ul className="absolute z-20 mt-1 flex max-h-72 w-full flex-col divide-y divide-trilha-100 overflow-y-auto rounded-md border border-trilha-200 bg-white shadow-lg">
+          <ul className="absolute z-20 mt-1 flex max-h-72 w-full flex-col divide-y divide-border overflow-y-auto rounded-lg border bg-popover shadow-md">
             {resultados.map((e) => (
               <li key={e.id}>
                 <button
                   type="button"
                   onMouseDown={(ev) => ev.preventDefault()}
                   onClick={() => escolher(e)}
-                  className={`flex w-full flex-col items-start px-4 py-3 text-left transition-colors hover:bg-trilha-50 ${
-                    selecionado?.id === e.id ? "bg-trilha-50" : ""
+                  className={`flex w-full flex-col items-start px-4 py-3 text-left transition-colors hover:bg-accent ${
+                    selecionado?.id === e.id ? "bg-muted/50" : ""
                   }`}
                 >
-                  <span className="font-display text-[16px] font-semibold text-trilha-700">
+                  <span className="text-sm font-medium text-foreground">
                     {e.nome}
                   </span>
                   {e.incorporadora ? (
-                    <span className="text-sm text-trilha-400">{e.incorporadora}</span>
+                    <span className="text-sm text-muted-foreground">{e.incorporadora}</span>
                   ) : null}
                 </button>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="absolute z-20 mt-1 w-full rounded-md border border-trilha-200 bg-white px-4 py-3 text-sm text-trilha-400 shadow-lg">
+          <p className="absolute z-20 mt-1 w-full rounded-lg border bg-popover px-4 py-3 text-sm text-muted-foreground shadow-md">
             Nenhum empreendimento com esse nome.
           </p>
         )

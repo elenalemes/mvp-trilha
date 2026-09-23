@@ -1,5 +1,6 @@
 "use client";
 
+import { buttonVariants } from "@/components/shadcn/button";
 import { useState } from "react";
 
 /**
@@ -50,13 +51,13 @@ export default function Compartilhar({
   };
 
   return (
-    <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-trilha-100 pt-5">
-      <span className="text-sm text-trilha-400">Enviar ao cliente:</span>
+    <div className="mt-5 flex flex-wrap items-center gap-3 border-t border-border pt-5">
+      <span className="text-sm text-muted-foreground">Enviar ao cliente:</span>
 
       <button
         type="button"
         onClick={whatsapp}
-        className="font-display rounded-md bg-trilha-700 px-4 py-2 text-sm font-semibold text-white hover:bg-trilha-900"
+        className={buttonVariants({ variant: "default", size: "sm" })}
       >
         WhatsApp
       </button>
@@ -64,12 +65,12 @@ export default function Compartilhar({
       <button
         type="button"
         onClick={copiar}
-        className="font-display rounded-md border border-trilha-200 bg-white px-4 py-2 text-sm font-semibold text-trilha-700 hover:border-trilha-400"
+        className={buttonVariants({ variant: "outline", size: "sm" })}
       >
         {copiado ? "Link copiado!" : "Copiar link"}
       </button>
 
-      <p className="w-full text-xs text-trilha-300">
+      <p className="w-full text-xs text-muted-foreground/70">
         O cliente abre uma página só com esta unidade — sem busca e sem as outras unidades do
         empreendimento.
       </p>

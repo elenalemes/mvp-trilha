@@ -1,3 +1,6 @@
+import { AvisoPublico, MolduraPublica } from "@/components/publico";
+import { buttonVariants } from "@/components/shadcn/button";
+import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
@@ -46,9 +49,9 @@ export default async function SimuladorPage({
   } catch {
     return (
       <Moldura>
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+        <AvisoPublico>
           O simulador está indisponível no momento. Tente de novo em alguns minutos.
-        </p>
+        </AvisoPublico>
       </Moldura>
     );
   }
@@ -70,7 +73,7 @@ export default async function SimuladorPage({
         {/* As duas buscas ficam sempre visíveis e sempre editáveis, lado a lado.
             Trocar de unidade ou de empreendimento é digitar por cima — por isso
             não existe "voltar" nesta tela: nunca se saiu de lugar nenhum. */}
-        <div className="grid grid-cols-1 gap-4 rounded-lg border border-trilha-200 bg-white p-5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 rounded-xl border bg-card p-5 shadow-xs sm:grid-cols-2">
           <BuscaEmpreendimento empreendimentos={empreendimentos} selecionado={selecionado} />
           <BuscaUnidade
             empreendimentoId={selecionado?.id}
@@ -80,10 +83,10 @@ export default async function SimuladorPage({
         </div>
 
         {selecionado && u && !simulacao ? (
-          <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+          <AvisoPublico>
             Esta unidade não está mais disponível para simulação. Escolha outra ou fale com quem
             está te atendendo.
-          </p>
+          </AvisoPublico>
         ) : null}
 
         {simulacao && selecionado ? (
@@ -105,20 +108,20 @@ function Resultado({
 
   if (condicoes.length === 0) {
     return (
-      <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+      <AvisoPublico>
         As condições desta unidade estão sendo revisadas. Fale com quem está te atendendo para
         receber a simulação.
-      </p>
+      </AvisoPublico>
     );
   }
 
   return (
     <section>
       <header className="mb-4">
-        <h2 className="font-display text-xl font-semibold text-trilha-700">
+        <h2 className="text-xl font-semibold tracking-tight text-foreground">
           {unidade.identificacao} · {empreendimento}
         </h2>
-        <p className="mt-0.5 text-sm text-trilha-400">
+        <p className="mt-0.5 text-sm text-muted-foreground">
           {[caracteristicas(unidade), incorporadora].filter(Boolean).join(" · ")}
         </p>
       </header>
@@ -140,7 +143,7 @@ function Resultado({
               <CardPagamento condicao={c} modo="publico" />
               <Link
                 href={`/simulador/proposta?e=${empreendimentoId}&u=${unidade.id}&c=${c.ordem}`}
-                className="font-display rounded-md bg-trilha-500 px-4 py-2.5 text-center text-[15px] font-semibold tracking-wide text-white transition-colors hover:bg-trilha-700"
+                className={cn(buttonVariants({ variant: "default" }), "h-10 w-full")}
               >
                 Enviar proposta
               </Link>
@@ -151,7 +154,7 @@ function Resultado({
 
       {/* No celular só um card cabe na tela, e nada indica que há outros. */}
       {condicoes.length > 1 ? (
-        <p className="text-sm text-trilha-400 sm:hidden">
+        <p className="text-sm text-muted-foreground sm:hidden">
           {condicoes.length} condições — deslize para o lado para ver as outras.
         </p>
       ) : null}
@@ -166,27 +169,18 @@ function Resultado({
   );
 }
 
-/** Cabeçalho e respiro da página. É a única tela com a marca virada ao cliente. */
+/** A moldura pública, com o título da ferramenta. */
 function Moldura({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-trilha-50/40 px-5 py-10 sm:px-8">
-      <div className="mx-auto w-full max-w-4xl">
-        <header className="mb-8">
-          <p className="font-display text-sm font-semibold tracking-[0.18em] text-trilha-500 uppercase">
-            Trilha
-          </p>
-          <h1 className="mt-1 text-3xl font-bold text-trilha-900">Simulador</h1>
-          <p className="mt-2 max-w-xl text-[15px] text-trilha-400">
-            Condições de pagamento por unidade.
-          </p>
-        </header>
-
-        {children}
-
-        <footer className="mt-10 text-xs text-trilha-300">
-          Valores sujeitos a confirmação. Simulação não constitui proposta nem reserva de unidade.
-        </footer>
-      </div>
-    </main>
+    <MolduraPublica
+      contexto="Simulador"
+      rodape="Valores sujeitos a confirmação. Simulação não constitui proposta nem reserva de unidade."
+    >
+      <header className="mb-6 flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Simulador</h1>
+        <p className="text-sm text-muted-foreground">Condições de pagamento por unidade.</p>
+      </header>
+      {children}
+    </MolduraPublica>
   );
 }

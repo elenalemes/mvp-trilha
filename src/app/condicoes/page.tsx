@@ -1,3 +1,4 @@
+import { AvisoPublico, MolduraPublica, TituloPublico } from "@/components/publico";
 import type { Metadata } from "next";
 import { simular } from "@/lib/simulador";
 import CardPagamento from "@/components/card-pagamento";
@@ -41,10 +42,10 @@ export default async function CondicoesPage({
   if (!simulacao || simulacao.condicoes.length === 0) {
     return (
       <Moldura>
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+        <AvisoPublico>
           Este link não está mais válido. As condições desta unidade podem ter mudado — peça um
           link novo a quem está te atendendo.
-        </p>
+        </AvisoPublico>
       </Moldura>
     );
   }
@@ -53,14 +54,10 @@ export default async function CondicoesPage({
 
   return (
     <Moldura>
-      <header className="mb-7">
-        <h1 className="font-display text-2xl font-bold text-trilha-900 sm:text-3xl">
-          {unidade.identificacao} · {empreendimento}
-        </h1>
-        <p className="mt-1 text-sm text-trilha-400">
-          {[caracteristicas(unidade), incorporadora].filter(Boolean).join(" · ")}
-        </p>
-      </header>
+      <TituloPublico
+        titulo={`${unidade.identificacao} · ${empreendimento}`}
+        descricao={[caracteristicas(unidade), incorporadora].filter(Boolean).join(" · ")}
+      />
 
       {/* Aqui a faixa empilha em vez de rolar para o lado: quem abre sozinho não
           tem quem avise que existe mais coisa fora da tela. Na impressão vira
@@ -71,40 +68,41 @@ export default async function CondicoesPage({
         ))}
       </div>
 
-      <section className="mt-8 rounded-lg border border-trilha-200 bg-white p-6 print:break-inside-avoid">
-        <h2 className="font-display mb-3 text-xs font-semibold tracking-[0.12em] text-trilha-400 uppercase">
-          Como funciona
-        </h2>
-        <ul className="flex flex-col gap-2.5 text-[15px] text-trilha-700">
-          <li>Uma parte do valor é paga no ato.</li>
-          <li>O restante da entrada é parcelado em prestações mensais, direto com a incorporadora.</li>
-          <li>
-            Ao fim desse período, o saldo do imóvel é quitado — por financiamento bancário ou por
-            recursos próprios.
-          </li>
-          <li>As parcelas acima já incluem a gestão do negócio pela Trilha.</li>
-        </ul>
+      <section className="mt-8 rounded-xl border bg-card p-6 shadow-xs print:break-inside-avoid print:shadow-none">
+        <h2 className="mb-4 text-base font-semibold text-foreground">Como funciona</h2>
+        <ol className="flex flex-col gap-4">
+          {COMO_FUNCIONA.map((passo, i) => (
+            <li key={passo} className="flex gap-3 text-sm leading-relaxed text-foreground">
+              <span
+                aria-hidden="true"
+                className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground"
+              >
+                {i + 1}
+              </span>
+              <span className="pt-0.5">{passo}</span>
+            </li>
+          ))}
+        </ol>
       </section>
     </Moldura>
   );
 }
 
-/** Cabeçalho e respiro da página. */
+/** Os passos, na ordem em que acontecem para o comprador. */
+const COMO_FUNCIONA = [
+  "Uma parte do valor é paga no ato.",
+  "O restante da entrada é parcelado em prestações mensais, direto com a incorporadora.",
+  "Ao fim desse período, o saldo do imóvel é quitado — por financiamento bancário ou por recursos próprios.",
+  "As parcelas acima já incluem a gestão do negócio pela Trilha.",
+];
+
 function Moldura({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-trilha-50/40 px-5 py-10 sm:px-8 print:bg-white print:py-0">
-      <div className="mx-auto w-full max-w-4xl">
-        <p className="font-display mb-8 text-sm font-semibold tracking-[0.18em] text-trilha-500 uppercase">
-          Trilha
-        </p>
-
-        {children}
-
-        <footer className="mt-10 text-xs text-trilha-300">
-          Valores sujeitos a confirmação. Esta simulação não constitui proposta nem reserva de
-          unidade.
-        </footer>
-      </div>
-    </main>
+    <MolduraPublica
+      contexto="Condições de pagamento"
+      rodape="Valores sujeitos a confirmação. Esta simulação não constitui proposta nem reserva de unidade."
+    >
+      {children}
+    </MolduraPublica>
   );
 }

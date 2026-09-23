@@ -46,8 +46,8 @@ export default async function MinhasOpcoesPage() {
         voltar={{ href: "/opcoes-pagamento", label: "Opções de pagamento" }}
       />
 
-      <p className="mb-6 max-w-3xl text-[15px] text-trilha-400">
-        Estas condições valem para <strong className="text-trilha-700">todos os seus imóveis</strong>
+      <p className="mb-6 max-w-3xl text-[15px] text-muted-foreground">
+        Estas condições valem para <strong className="text-foreground">todos os seus imóveis</strong>
         . Aqui só entram percentual e prazo — os valores em reais aparecem na ficha de cada imóvel,
         porque dependem do preço da unidade. Mudou aqui, mudou em todos.
       </p>

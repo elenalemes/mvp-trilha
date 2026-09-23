@@ -16,12 +16,12 @@ function Linha({
 }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-      <dt className="text-sm text-trilha-400">
+      <dt className="text-sm text-muted-foreground">
         {termo}
-        {nota ? <span className="ml-1 text-trilha-300">{nota}</span> : null}
+        {nota ? <span className="ml-1 text-muted-foreground/70">{nota}</span> : null}
       </dt>
       <dd
-        className={`ml-auto text-[15px] whitespace-nowrap tabular-nums ${forte ? "font-semibold text-trilha-700" : "text-trilha-900"}`}
+        className={`ml-auto text-sm whitespace-nowrap tabular-nums ${forte ? "font-semibold text-foreground" : "text-foreground"}`}
       >
         {valor}
       </dd>
@@ -60,27 +60,27 @@ export default function CardPagamento({
   const mesDoSaldo = c.prazoMeses + 1;
 
   return (
-    <article className="flex snap-start flex-col rounded-lg border border-trilha-200 bg-white p-7 shadow-[0_1px_2px_rgba(21,38,110,0.05)]">
-      <header className="border-b border-trilha-100 pb-4">
+    <article className="flex snap-start flex-col rounded-xl border bg-card p-6 shadow-xs print:break-inside-avoid print:shadow-none">
+      <header className="border-b border-border pb-4">
         {modo === "completo" ? (
-          <p className="font-display mb-1 text-xs font-semibold tracking-[0.12em] text-trilha-300 uppercase">
+          <p className="mb-1 text-xs font-medium text-muted-foreground">
             Opção {c.ordem}
           </p>
         ) : null}
-        <h3 className="font-display text-2xl font-bold text-trilha-900">{c.prazoMeses} meses</h3>
-        <p className="mt-0.5 text-sm text-trilha-400">de Trilha</p>
+        <h3 className="text-lg font-semibold tracking-tight text-foreground">{c.prazoMeses} meses</h3>
+        <p className="mt-0.5 text-sm text-muted-foreground">de Trilha</p>
       </header>
 
       {/* O número que decide a conversa. */}
       <div className="py-5">
-        <p className="font-display text-3xl font-bold text-trilha-900">
+        <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">
           {c.prazoMeses}× {formatBRL(c.parcela)}
         </p>
-        <p className="mt-1 text-sm text-trilha-400">parcela mensal, com a Gestão do negócio</p>
+        <p className="mt-1 text-sm text-muted-foreground">parcela mensal, com a Gestão do negócio</p>
       </div>
 
       {/* Os três momentos, na ordem em que o dinheiro sai. */}
-      <dl className="flex flex-col gap-2.5 border-t border-trilha-100 pt-4">
+      <dl className="flex flex-col gap-2.5 border-t border-border pt-4">
         <Linha termo="No ato" nota={`(${pct(c.percentualAto)})`} valor={formatBRL(c.ato)} />
         <Linha
           termo={`Durante ${c.prazoMeses} meses`}
@@ -94,7 +94,7 @@ export default function CardPagamento({
         />
       </dl>
 
-      <dl className="mt-4 flex flex-1 flex-col gap-2.5 border-t border-trilha-100 pt-4">
+      <dl className="mt-4 flex flex-1 flex-col gap-2.5 border-t border-border pt-4">
         <Linha
           termo="Entrada total"
           nota={`(${pct(c.percentualEntrada)})`}
@@ -106,8 +106,8 @@ export default function CardPagamento({
       {modo === "publico" ? null : modo === "parceiro" ? (
         /* Recolhido de propósito: o corretor abre esta ficha na frente do
            cliente. A comissão está a um clique, mas não na tela por padrão. */
-        <details className="mt-4 border-t border-trilha-100 pt-4">
-          <summary className="font-display cursor-pointer list-none text-xs font-semibold tracking-[0.12em] text-trilha-400 uppercase underline underline-offset-2 hover:text-trilha-700">
+        <details className="mt-4 border-t border-border pt-4">
+          <summary className="cursor-pointer list-none text-xs font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground">
             Ver minha comissão
           </summary>
 
@@ -127,7 +127,7 @@ export default function CardPagamento({
             </p>
           )}
 
-          <p className="mt-3 text-xs text-trilha-400">
+          <p className="mt-3 text-xs text-muted-foreground">
             Paga ao longo dos {c.prazoMeses} meses de Trilha. Sai de dentro da entrada — não é um
             valor a mais na parcela do comprador.
           </p>
@@ -135,8 +135,8 @@ export default function CardPagamento({
       ) : (
         /* O comprador só vê a parcela cheia. Esta parte é para quem precisa
            saber quanto sobra: a incorporadora e a Trilha. */
-        <div className="mt-4 border-t border-trilha-100 pt-4">
-          <h4 className="font-display mb-2.5 text-xs font-semibold tracking-[0.12em] text-trilha-400 uppercase">
+        <div className="mt-4 border-t border-border pt-4">
+          <h4 className="mb-2.5 text-xs font-medium text-muted-foreground">
             Como a parcela se divide
           </h4>
 
@@ -161,7 +161,7 @@ export default function CardPagamento({
             </p>
           )}
 
-          <p className="mt-3 text-xs text-trilha-400">
+          <p className="mt-3 text-xs text-muted-foreground">
             A incorporadora recebe {formatBRL(c.incorporadoraNaTrilha)} durante a Trilha
             {c.ato > 0 ? ` (já contando os ${formatBRL(c.ato)} do ato)` : ""} e{" "}
             {formatBRL(c.saldoFinanciar)} no saldo — {formatBRL(c.incorporadoraTotal)} no total. A

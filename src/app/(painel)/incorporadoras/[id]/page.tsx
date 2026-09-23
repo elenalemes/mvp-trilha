@@ -37,10 +37,10 @@ type Incorporadora = {
 function Item({ label, valor }: { label: string; valor: string }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="font-display text-xs font-semibold tracking-[0.12em] text-trilha-400 uppercase">
+      <span className="text-xs font-semibold text-muted-foreground">
         {label}
       </span>
-      <span className="text-[15px] text-trilha-900">{valor}</span>
+      <span className="text-[15px] text-foreground">{valor}</span>
     </div>
   );
 }
@@ -55,13 +55,13 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-trilha-200 bg-white p-6">
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-trilha-100 pb-3">
-        <h2 className="font-display text-xl font-semibold text-trilha-700">{titulo}</h2>
+    <section className="rounded-lg border border-border bg-white p-6">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
+        <h2 className="text-xl font-semibold text-foreground">{titulo}</h2>
         {acao ? (
           <Link
             href={acao.href}
-            className="font-display rounded-md border border-trilha-200 bg-white px-3.5 py-1.5 text-sm font-semibold tracking-wide text-trilha-700 transition-colors hover:border-trilha-500 hover:bg-trilha-50"
+            className="rounded-md border border-border bg-white px-3.5 py-1.5 text-sm font-semibold text-foreground transition-colors hover:border-foreground/30 hover:bg-accent"
           >
             {acao.label}
           </Link>
@@ -81,7 +81,7 @@ function Card({
 function ErroDeLeitura({ erro }: { erro: { code?: string; message?: string } }) {
   return (
     <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
-      <p className="font-display text-[15px] font-semibold text-red-800">
+      <p className="text-[15px] font-semibold text-red-800">
         O banco recusou a leitura desta incorporadora.
       </p>
       <p className="mt-1 text-sm text-red-700">
@@ -180,7 +180,7 @@ export default async function IncorporadoraPage({ params }: { params: Promise<{ 
         >
           <div className="sm:col-span-2">
             <ListaOpcoes opcoes={padrao} percentualComissao={data.percentual_comissao} />
-            <p className="mt-4 text-sm text-trilha-400">
+            <p className="mt-4 text-sm text-muted-foreground">
               Padrão desta incorporadora: vale para todos os imóveis dela, menos os de
               empreendimentos com condições próprias. Os valores em reais aparecem na ficha de cada
               unidade.
@@ -197,7 +197,7 @@ export default async function IncorporadoraPage({ params }: { params: Promise<{ 
         >
           <div className="sm:col-span-2">
             {(parceiros?.length ?? 0) === 0 ? (
-              <p className="text-[15px] text-trilha-400">
+              <p className="text-[15px] text-muted-foreground">
                 Nenhum parceiro cadastrado. São as imobiliárias e corretores que vendem o estoque
                 desta incorporadora — cada um com acesso próprio, só de leitura.
               </p>
@@ -205,9 +205,9 @@ export default async function IncorporadoraPage({ params }: { params: Promise<{ 
               <ul className="flex flex-col gap-2">
                 {parceiros!.map((p) => (
                   <li key={p.id} className="flex items-baseline gap-2.5 text-[15px]">
-                    <span className="text-trilha-900">{p.nome}</span>
+                    <span className="text-foreground">{p.nome}</span>
                     {p.ativo ? null : (
-                      <span className="font-display rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold tracking-wide text-slate-600 uppercase">
+                      <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
                         inativo
                       </span>
                     )}
@@ -224,7 +224,7 @@ export default async function IncorporadoraPage({ params }: { params: Promise<{ 
         >
           <Item label="E-mail de login" valor={data.conta?.email ?? "sem acesso criado"} />
           <Item label="Senha" valor="não pode ser consultada, só substituída" />
-          <p className="text-sm text-trilha-400 sm:col-span-2">
+          <p className="text-sm text-muted-foreground sm:col-span-2">
             Use “Alterar acesso” para trocar o e-mail de login ou definir uma senha nova.
           </p>
         </Card>

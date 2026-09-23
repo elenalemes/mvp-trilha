@@ -17,9 +17,9 @@ export default function ListaOpcoes({
 }) {
   const rodape =
     percentualComissao === undefined ? null : (
-      <p className="mt-4 text-sm text-trilha-400">
+      <p className="mt-4 text-sm text-muted-foreground">
         Comissão do parceiro imobiliário:{" "}
-        <strong className="text-trilha-700">{pct(percentualComissao)}</strong> do valor do imóvel,
+        <strong className="text-foreground">{pct(percentualComissao)}</strong> do valor do imóvel,
         paga durante a Trilha e descontada do que a incorporadora recebe.
       </p>
     );
@@ -30,7 +30,7 @@ export default function ListaOpcoes({
   if (opcoes.length === 0) {
     return (
       <>
-        <p className="text-[15px] text-trilha-400">
+        <p className="text-[15px] text-muted-foreground">
           Nenhuma opção cadastrada. Os imóveis desta incorporadora aparecem sem formatos de
           pagamento até que alguma seja definida — o cadastro de unidades segue liberado.
         </p>
@@ -45,15 +45,15 @@ export default function ListaOpcoes({
       {opcoes.map((o) => (
         <li
           key={o.ordem}
-          className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-trilha-100 pb-3 last:border-0 last:pb-0"
+          className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border pb-3 last:border-0 last:pb-0"
         >
-          <span className="font-display text-[15px] font-semibold text-trilha-700">
+          <span className="text-[15px] font-semibold text-foreground">
             Opção {o.ordem}
           </span>
-          <span className="text-[15px] text-trilha-900">
+          <span className="text-[15px] text-foreground">
             Entrada total {pct(o.percentual_entrada)}
           </span>
-          <span className="text-sm text-trilha-400">
+          <span className="text-sm text-muted-foreground">
             {pct(o.percentual_ato)} no ato, {pct(o.percentual_entrada - o.percentual_ato)} parcelado
             em {o.prazo_meses} meses · a financiar {pct(100 - o.percentual_entrada)}
           </span>

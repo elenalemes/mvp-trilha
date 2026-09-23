@@ -128,26 +128,26 @@ function Bloco({
 
   return (
     <section>
-      <h2 className="font-display mb-3 text-sm font-semibold tracking-[0.12em] text-trilha-400 uppercase">
+      <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
         {titulo}
-        <span className="ml-2 normal-case tracking-normal text-trilha-300">
+        <span className="ml-2 normal-case tracking-normal text-muted-foreground/70">
           {propostas.length}
         </span>
       </h2>
 
       {propostas.length === 0 ? (
-        <p className="rounded-lg border border-trilha-200 bg-white px-5 py-6 text-[15px] text-trilha-400">
+        <p className="rounded-lg border border-border bg-white px-5 py-6 text-[15px] text-muted-foreground">
           {vazio}
         </p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-trilha-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
           <table className="w-full min-w-[720px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-trilha-100">
+              <tr className="border-b border-border">
                 {colunas.map((h) => (
                   <th
                     key={h}
-                    className="font-display px-5 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
+                    className="bg-muted/50 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground"
                   >
                     {h}
                   </th>
@@ -156,34 +156,34 @@ function Bloco({
             </thead>
             <tbody>
               {propostas.map((p) => (
-                <tr key={p.id} className="border-b border-trilha-100 last:border-0">
-                  <td className="px-5 py-4">
+                <tr key={p.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
+                  <td className="px-4 py-3">
                     <Link
                       href={`/propostas/${p.id}`}
-                      className="font-display text-[17px] font-semibold tabular-nums text-trilha-700 underline underline-offset-2 hover:text-trilha-500"
+                      className="text-sm font-semibold tabular-nums text-foreground underline-offset-4 hover:underline hover:text-foreground"
                     >
                       {p.codigo}
                     </Link>
-                    <span className="block text-sm text-trilha-400">
+                    <span className="block text-sm text-muted-foreground">
                       {new Date(p.created_at).toLocaleDateString("pt-BR")}
                     </span>
                   </td>
 
-                  <td className="px-5 py-4 text-[15px]">
+                  <td className="px-4 py-3 text-sm">
                     {p.imovel?.identificacao ?? "—"}
-                    <span className="block text-sm text-trilha-400">
+                    <span className="block text-sm text-muted-foreground">
                       {p.empreendimento?.nome ?? "—"}
                     </span>
                   </td>
 
                   {mostrarIncorporadora ? (
-                    <td className="px-5 py-4 text-[15px] text-trilha-400">
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
                       {p.incorporadora?.nome ?? "—"}
                     </td>
                   ) : null}
 
                   {mostrarIncorporadora ? (
-                    <td className="px-5 py-4 text-[15px]">
+                    <td className="px-4 py-3 text-sm">
                       {p.parceiro?.nome ?? "—"}
                     {/* O corretor que nasceu desta proposta ainda não tem
                         acesso. Dizer isso aqui é o que faz a fila de aprovação
@@ -196,14 +196,14 @@ function Bloco({
                     </td>
                   ) : null}
 
-                  <td className="px-5 py-4 text-[15px] tabular-nums">
+                  <td className="px-4 py-3 text-sm tabular-nums">
                     {p.prazo_meses}× {formatBRL(p.valor_parcela)}
-                    <span className="block text-sm text-trilha-400">
+                    <span className="block text-sm text-muted-foreground">
                       imóvel {formatBRL(p.valor_base)}
                     </span>
                   </td>
 
-                  <td className="px-5 py-4">
+                  <td className="px-4 py-3">
                     <SituacaoProposta status={p.status} />
                   </td>
                 </tr>

@@ -36,12 +36,12 @@ export function ImportarEstoque({
   };
 
   return (
-    <section className="mb-8 rounded-lg border border-trilha-200 bg-white p-6">
+    <section className="mb-8 rounded-lg border border-border bg-white p-6">
       <div className="mb-5">
-        <h2 className="font-display text-xl font-semibold text-trilha-700">
+        <h2 className="text-xl font-semibold text-foreground">
           Adicione a lista de estoque para cadastrar as unidades
         </h2>
-        <p className="mt-1 text-sm text-trilha-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           Planilha, PDF, Word ou print. A IA lê o arquivo e monta o cadastro — você confere antes
           de qualquer coisa entrar no sistema.
         </p>
@@ -49,14 +49,14 @@ export function ImportarEstoque({
 
       <form action={enviar} className="grid grid-cols-1 gap-4 sm:grid-cols-6">
         <div className="flex flex-col gap-1.5 sm:col-span-3">
-          <label className="font-display text-sm font-semibold tracking-wide text-trilha-700 uppercase">
+          <label className="text-sm font-semibold text-foreground">
             Incorporadora
           </label>
           <select
             name="incorporadora_id"
             required
             defaultValue={incorporadoras.length === 1 ? incorporadoras[0].id : ""}
-            className="w-full rounded-md border border-trilha-200 bg-white px-3 py-2 text-[15px] text-trilha-900 hover:border-trilha-300"
+            className="w-full rounded-md border border-border bg-white px-3 py-2 text-[15px] text-foreground hover:border-foreground/20"
           >
             <option value="" disabled>
               Selecione
@@ -70,7 +70,7 @@ export function ImportarEstoque({
         </div>
 
         <div className="flex flex-col gap-1.5 sm:col-span-3">
-          <label className="font-display text-sm font-semibold tracking-wide text-trilha-700 uppercase">
+          <label className="text-sm font-semibold text-foreground">
             Arquivo
           </label>
           <input
@@ -80,19 +80,19 @@ export function ImportarEstoque({
             required
             accept=".pdf,.xlsx,.xls,.csv,.txt,.docx,.png,.jpg,.jpeg,.webp"
             onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
-            className="w-full rounded-md border border-trilha-200 bg-white px-3 py-1.5 text-[15px] text-trilha-900 file:mr-3 file:rounded file:border-0 file:bg-trilha-100 file:px-3 file:py-1.5 file:font-semibold file:text-trilha-700 hover:border-trilha-300"
+            className="w-full rounded-md border border-border bg-white px-3 py-1.5 text-[15px] text-foreground file:mr-3 file:rounded file:border-0 file:bg-muted file:px-3 file:py-1.5 file:font-semibold file:text-foreground hover:border-foreground/20"
           />
           {arquivo ? (
-            <p className="text-xs text-trilha-400">
+            <p className="text-xs text-muted-foreground">
               {arquivo.name} · {(arquivo.size / 1024 / 1024).toFixed(2)} MB
             </p>
           ) : null}
         </div>
 
         <div className="flex flex-col gap-1.5 sm:col-span-6">
-          <label className="font-display text-sm font-semibold tracking-wide text-trilha-700 uppercase">
+          <label className="text-sm font-semibold text-foreground">
             Alguma observação sobre este arquivo?
-            <span className="font-body ml-1.5 text-xs font-normal normal-case text-trilha-400">
+            <span className="font-body ml-1.5 text-xs font-normal normal-case text-muted-foreground">
               opcional
             </span>
           </label>
@@ -100,9 +100,9 @@ export function ImportarEstoque({
             name="contexto"
             rows={2}
             placeholder="Ex.: ignore as unidades de investidor · os valores já estão com desconto · é a tabela de setembro"
-            className="w-full rounded-md border border-trilha-200 bg-white px-3 py-2 text-[15px] text-trilha-900 placeholder:text-trilha-300 hover:border-trilha-300"
+            className="w-full rounded-md border border-border bg-white px-3 py-2 text-[15px] text-foreground placeholder:text-muted-foreground hover:border-foreground/20"
           />
-          <p className="text-xs text-trilha-400">
+          <p className="text-xs text-muted-foreground">
             Use para o que o arquivo não diz. Isso vai junto na instrução da IA.
           </p>
         </div>
@@ -118,7 +118,7 @@ export function ImportarEstoque({
             {pendente ? "Lendo o arquivo…" : "Ler arquivo"}
           </Button>
           {pendente ? (
-            <span className="text-sm text-trilha-400">
+            <span className="text-sm text-muted-foreground">
               Pode levar até um minuto. Não feche a página.
             </span>
           ) : null}

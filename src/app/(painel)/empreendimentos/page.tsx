@@ -120,7 +120,7 @@ export default async function EmpreendimentosPage({
         ) : null}
 
         {buscando ? (
-          <span className="text-sm text-trilha-400">
+          <span className="text-sm text-muted-foreground">
             {data?.length ?? 0} resultado{(data?.length ?? 0) === 1 ? "" : "s"} para “{termo}”
           </span>
         ) : null}
@@ -128,7 +128,7 @@ export default async function EmpreendimentosPage({
         {filtrando || buscando ? (
           <Link
             href="/empreendimentos"
-            className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+            className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
           >
             Limpar
           </Link>
@@ -158,10 +158,10 @@ export default async function EmpreendimentosPage({
           acao={edita ? { href: "/empreendimentos/novo", label: "Cadastrar empreendimento" } : undefined}
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-trilha-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
           <table className="w-full min-w-[680px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-trilha-100">
+              <tr className="border-b border-border">
                 {[
                   "Empreendimento",
                   ...(admin ? ["Incorporadora"] : []),
@@ -171,7 +171,7 @@ export default async function EmpreendimentosPage({
                 ].map((h, i) => (
                   <th
                     key={`${h}-${i}`}
-                    className="font-display px-5 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
+                    className="bg-muted/50 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground"
                   >
                     {h}
                   </th>
@@ -180,33 +180,33 @@ export default async function EmpreendimentosPage({
             </thead>
             <tbody>
               {data.map((linha) => (
-                <tr key={linha.id} className="border-b border-trilha-100 last:border-0">
-                  <td className="px-5 py-4">
+                <tr key={linha.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
+                  <td className="px-4 py-3">
                     <Link
                       href={`/empreendimentos/${linha.id}`}
-                      className="font-display text-[17px] font-semibold text-trilha-700 underline underline-offset-2 hover:text-trilha-500"
+                      className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                     >
                       {linha.nome}
                     </Link>
                   </td>
                   {admin ? (
-                    <td className="px-5 py-4 text-[15px]">
+                    <td className="px-4 py-3 text-sm">
                       <Link
                         href={`/incorporadoras/${linha.incorporadora_id}`}
-                        className="text-trilha-500 underline underline-offset-2 hover:text-trilha-700"
+                        className="text-foreground underline-offset-4 hover:underline hover:text-foreground"
                       >
                         {linha.incorporadora?.nome ?? "—"}
                       </Link>
                     </td>
                   ) : null}
-                  <td className="px-5 py-4 text-[15px] text-trilha-400">{linha.endereco || "—"}</td>
-                  <td className="px-5 py-4 text-[15px] tabular-nums">
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{linha.endereco || "—"}</td>
+                  <td className="px-4 py-3 text-sm tabular-nums">
                     {linha.imovel?.[0]?.count ?? 0}
                   </td>
-                  <td className="px-5 py-4 text-right">
+                  <td className="px-4 py-3 text-right">
                     <Link
                       href={`/empreendimentos/${linha.id}`}
-                      className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+                      className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                     >
                       Abrir
                     </Link>

@@ -38,7 +38,7 @@ export default function LoginForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col gap-4 rounded-lg border border-trilha-200 bg-white p-6"
+      className="flex flex-col gap-5"
       noValidate
     >
       <Field label="E-mail" error={errors.email?.message} span={6}>
@@ -63,7 +63,7 @@ export default function LoginForm() {
 
       {serverError ? <Alert>{serverError}</Alert> : null}
 
-      <Button type="submit" disabled={pending} className="mt-1 w-full">
+      <Button type="submit" disabled={pending} className="mt-1 h-10 w-full">
         {pending ? "Entrando…" : "Entrar"}
       </Button>
     </form>

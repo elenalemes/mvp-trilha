@@ -9,6 +9,7 @@ import {
   registrarVeredito,
   salvarReferencia,
 } from "@/app/actions/fechamento";
+import { Check, X } from "lucide-react";
 import { NOME_DO_ATOR, recebeArquivo, validade, type Arquivo, type Tarefa } from "@/lib/fechamento";
 import { Alert, Button, Input, Textarea } from "@/components/ui";
 import ArquivosTarefa from "@/components/arquivos-tarefa";
@@ -83,8 +84,10 @@ export default function TarefaFechamento({
   };
 
   return (
-    <li className={`border-b border-trilha-100 px-5 py-4 last:border-0 ${liberada ? "" : "opacity-55"}`}>
-      <div className="flex items-start gap-3">
+    <li
+      className={`border-t px-5 py-3.5 transition-colors ${fichaAberta ? "bg-muted/40" : ""} ${liberada ? "" : "opacity-60"}`}
+    >
+      <div className="flex items-start gap-3.5">
         <Caixa
           tarefa={tarefa}
           fechada={fechada}
@@ -101,13 +104,21 @@ export default function TarefaFechamento({
         />
 
         <div className="flex min-w-0 flex-1 flex-col gap-2">
-          <div>
-            <p className={`text-[15px] ${fechada ? "text-trilha-400" : "text-trilha-900"}`}>{tarefa.titulo}</p>
-            <p className="text-sm text-trilha-400">
-              {NOME_DO_ATOR[tarefa.ator]}
-              {tarefa.interna ? " · interna" : ""}
-              {tarefa.concluido_em ? ` · ${new Date(tarefa.concluido_em).toLocaleDateString("pt-BR")}` : ""}
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p className={`text-sm font-medium ${liberada ? "text-foreground" : "text-muted-foreground"}`}>
+              {tarefa.titulo}
             </p>
+            <span className="rounded-full border px-2 text-xs leading-5 text-muted-foreground">
+              {NOME_DO_ATOR[tarefa.ator]}
+            </span>
+            {tarefa.interna ? (
+              <span className="rounded-full bg-muted px-2 text-xs leading-5 text-muted-foreground">Interna</span>
+            ) : null}
+            {tarefa.concluido_em ? (
+              <span className="ml-auto text-xs text-muted-foreground tabular-nums">
+                {new Date(tarefa.concluido_em).toLocaleDateString("pt-BR")}
+              </span>
+            ) : null}
           </div>
 
           {tarefa.instrucoes && !fechada && liberada ? <Instrucoes texto={tarefa.instrucoes} /> : null}
@@ -115,7 +126,7 @@ export default function TarefaFechamento({
           {formulario ? (
             <>
               {dadosComprador.salva && !fichaAberta ? (
-                <p className="text-sm text-trilha-500">
+                <p className="text-sm text-foreground">
                   {[
                     dadosComprador.valores.comprador.nome,
                     dadosComprador.valores.comprador.cpf,
@@ -127,7 +138,7 @@ export default function TarefaFechamento({
                 <button
                   type="button"
                   onClick={() => setFichaAberta(true)}
-                  className="self-start text-sm font-semibold text-trilha-500 underline underline-offset-2 hover:text-trilha-700"
+                  className="self-start text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                 >
                   {!podeAgir || cancelado ? "Ver dados" : dadosComprador.salva ? "Editar dados" : "Preencher dados"}
                 </button>
@@ -143,7 +154,7 @@ export default function TarefaFechamento({
               )}
             </>
           ) : tarefa.tipo === "formulario" && fechada ? (
-            <p className="text-sm text-trilha-400">Dados preenchidos · acesso restrito à Trilha e ao corretor</p>
+            <p className="text-sm text-muted-foreground">Dados preenchidos · acesso restrito à Trilha e ao corretor</p>
           ) : null}
 
           {recebeArquivo(tarefa) ? (
@@ -220,17 +231,17 @@ function Caixa({
   const visual = (
     <span
       aria-hidden="true"
-      className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border-2 text-xs font-bold transition-colors ${
+      className={`mt-px flex size-5 shrink-0 items-center justify-center rounded-md border-[1.5px] transition-colors ${
         reprovada
-          ? "border-red-600 bg-red-600 text-white"
+          ? "border-destructive bg-destructive text-white"
           : fechada
-            ? "border-emerald-600 bg-emerald-600 text-white"
+            ? "border-sucesso bg-sucesso text-white"
             : podeAgir
-              ? "border-trilha-400 bg-white group-hover:border-trilha-600"
-              : "border-trilha-200 bg-trilha-50"
+              ? "border-foreground/35 bg-card group-hover:border-foreground/60"
+              : "border-dashed border-border bg-muted/50"
       }`}
     >
-      {reprovada ? "✕" : fechada ? "✓" : ""}
+      {reprovada ? <X className="size-3.5" strokeWidth={3} /> : fechada ? <Check className="size-3.5" strokeWidth={3} /> : null}
     </span>
   );
 
@@ -284,10 +295,10 @@ function Caixa({
 /** Texto com quebras de linha e links clicáveis. Longo, fica recolhido. */
 function Instrucoes({ texto }: { texto: string }) {
   const corpo = (
-    <p className="text-sm whitespace-pre-line text-trilha-500">
+    <p className="text-sm whitespace-pre-line text-foreground">
       {texto.split(/(https?:\/\/\S+)/g).map((parte, i) =>
         /^https?:\/\//.test(parte) ? (
-          <a key={i} href={parte} target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 hover:text-trilha-700">
+          <a key={i} href={parte} target="_blank" rel="noopener noreferrer" className="underline-offset-4 hover:underline hover:text-foreground">
             {parte}
           </a>
         ) : (
@@ -301,10 +312,10 @@ function Instrucoes({ texto }: { texto: string }) {
 
   return (
     <details className="group">
-      <summary className="cursor-pointer text-sm text-trilha-500 underline underline-offset-2 hover:text-trilha-700">
+      <summary className="cursor-pointer text-sm text-foreground underline-offset-4 hover:underline hover:text-foreground">
         O que é aceito
       </summary>
-      <div className="mt-2 border-l-2 border-trilha-100 pl-3">{corpo}</div>
+      <div className="mt-2 border-l-2 border-border pl-3">{corpo}</div>
     </details>
   );
 }
@@ -328,16 +339,16 @@ function Validade({
   if (editando) {
     return (
       <div className="flex flex-wrap items-center gap-2 text-sm">
-        <span className="text-trilha-500">Válido até</span>
+        <span className="text-foreground">Válido até</span>
         <Input type="date" value={data} onChange={(e) => setData(e.target.value)} className="w-auto py-1" />
         <button
           type="button"
           onClick={async () => (await salvar(data)) && setEditando(false)}
-          className="font-semibold text-trilha-600 underline underline-offset-2"
+          className="font-semibold text-foreground underline-offset-4 hover:underline"
         >
           Salvar
         </button>
-        <button type="button" onClick={() => setEditando(false)} className="text-trilha-400 underline underline-offset-2">
+        <button type="button" onClick={() => setEditando(false)} className="text-muted-foreground underline-offset-4 hover:underline">
           Cancelar
         </button>
       </div>
@@ -349,7 +360,7 @@ function Validade({
   return (
     <p
       className={`text-sm font-semibold ${
-        prazo.venceu ? "text-red-700" : prazo.dias <= 10 ? "text-amber-700" : "text-trilha-500"
+        prazo.venceu ? "text-destructive" : prazo.dias <= 10 ? "text-aviso" : "text-foreground"
       }`}
     >
       {prazo.venceu
@@ -359,7 +370,7 @@ function Validade({
         <button
           type="button"
           onClick={() => setEditando(true)}
-          className="ml-2 font-normal text-trilha-400 underline underline-offset-2 hover:text-trilha-700"
+          className="ml-2 font-normal text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
         >
           corrigir data
         </button>
@@ -395,11 +406,11 @@ function Referencia({
         <button
           type="button"
           onClick={async () => (await salvar(texto)) && setEditando(false)}
-          className="font-semibold text-trilha-600 underline underline-offset-2"
+          className="font-semibold text-foreground underline-offset-4 hover:underline"
         >
           Salvar
         </button>
-        <button type="button" onClick={() => setEditando(false)} className="text-trilha-400 underline underline-offset-2">
+        <button type="button" onClick={() => setEditando(false)} className="text-muted-foreground underline-offset-4 hover:underline">
           Cancelar
         </button>
       </div>
@@ -409,13 +420,13 @@ function Referencia({
   if (!valor && !podeAgir) return null;
 
   return (
-    <p className="text-sm text-trilha-500">
+    <p className="text-sm text-foreground">
       {valor ? <span className="break-all">{valor}</span> : null}
       {podeAgir ? (
         <button
           type="button"
           onClick={() => setEditando(true)}
-          className={`${valor ? "ml-2" : ""} text-trilha-400 underline underline-offset-2 hover:text-trilha-700`}
+          className={`${valor ? "ml-2" : ""} text-muted-foreground underline-offset-4 hover:underline hover:text-foreground`}
         >
           {valor ? "editar" : "adicionar referência"}
         </button>
@@ -444,10 +455,10 @@ function Veredito({
 
   if (tarefa.status === "reprovado") {
     return (
-      <p className="text-sm font-semibold text-red-700">
+      <p className="text-sm font-semibold text-destructive">
         Reprovado{tarefa.observacao ? ` — ${tarefa.observacao}` : ""}
         {podeAgir ? (
-          <button type="button" onClick={desfazer} disabled={ocupado} className="ml-2 font-normal text-trilha-400 underline underline-offset-2">
+          <button type="button" onClick={desfazer} disabled={ocupado} className="ml-2 font-normal text-muted-foreground underline-offset-4 hover:underline">
             desfazer
           </button>
         ) : null}
@@ -457,10 +468,10 @@ function Veredito({
 
   if (tarefa.status === "concluido") {
     return (
-      <p className="text-sm font-semibold text-emerald-700">
+      <p className="text-sm font-semibold text-sucesso">
         Aprovado{tarefa.observacao ? ` — ${tarefa.observacao}` : ""}
         {podeAgir ? (
-          <button type="button" onClick={desfazer} disabled={ocupado} className="ml-2 font-normal text-trilha-400 underline underline-offset-2">
+          <button type="button" onClick={desfazer} disabled={ocupado} className="ml-2 font-normal text-muted-foreground underline-offset-4 hover:underline">
             desfazer
           </button>
         ) : null}
@@ -485,7 +496,7 @@ function Veredito({
             type="button"
             onClick={() => decidir(false, motivo)}
             disabled={ocupado || !motivo.trim()}
-            className="bg-red-700 hover:bg-red-800"
+            className="bg-destructive hover:bg-destructive/90"
           >
             Confirmar reprovação
           </Button>

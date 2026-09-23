@@ -20,7 +20,7 @@ export function FiltroIncorporadora({
 
   return (
     <label className="flex items-center gap-2.5">
-      <span className="font-display text-sm font-semibold tracking-wide text-trilha-400 uppercase">
+      <span className="text-sm font-semibold text-muted-foreground">
         Incorporadora
       </span>
       <select
@@ -29,7 +29,7 @@ export function FiltroIncorporadora({
           const valor = e.target.value;
           router.push(valor ? `${base}?incorporadora=${valor}` : base);
         }}
-        className="rounded-md border border-trilha-200 bg-white px-3 py-1.5 text-[15px] text-trilha-900 hover:border-trilha-300"
+        className="rounded-md border border-border bg-white px-3 py-1.5 text-[15px] text-foreground hover:border-foreground/20"
       >
         <option value="">Todas</option>
         {incorporadoras.map((i) => (

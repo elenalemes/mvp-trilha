@@ -40,7 +40,7 @@ export default function DecisaoProposta({ id, unidade }: { id: string; unidade: 
 
   if (!modo) {
     return (
-      <div className="flex flex-col gap-4 rounded-lg border border-trilha-200 bg-white p-6">
+      <div className="flex flex-col gap-4 rounded-lg border border-border bg-white p-6">
         <div className="flex flex-wrap gap-3">
           <Button type="button" onClick={() => setModo("aceitar")}>
             Aceitar proposta
@@ -57,15 +57,15 @@ export default function DecisaoProposta({ id, unidade }: { id: string; unidade: 
   const aceitando = modo === "aceitar";
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-trilha-200 bg-white p-6">
+    <div className="flex flex-col gap-4 rounded-lg border border-border bg-white p-6">
       <div>
-        <h2 className="font-display text-lg font-semibold text-trilha-900">
+        <h2 className="text-lg font-semibold text-foreground">
           {aceitando ? "Aceitar esta proposta?" : "Recusar esta proposta?"}
         </h2>
-        <p className="mt-1 text-[15px] text-trilha-400">
+        <p className="mt-1 text-[15px] text-muted-foreground">
           {aceitando ? (
             <>
-              A unidade <strong className="text-trilha-700">{unidade}</strong> sai do estoque
+              A unidade <strong className="text-foreground">{unidade}</strong> sai do estoque
               disponível e entra em negociação. As outras propostas abertas desta unidade são
               invalidadas na mesma hora, e ela some do simulador.
             </>
@@ -78,9 +78,9 @@ export default function DecisaoProposta({ id, unidade }: { id: string; unidade: 
       </div>
 
       <label className="flex flex-col gap-1.5">
-        <span className="font-display text-sm font-semibold tracking-wide text-trilha-700 uppercase">
+        <span className="text-sm font-semibold text-foreground">
           Motivo
-          <span className="font-body ml-1.5 text-xs font-normal normal-case text-trilha-400">
+          <span className="font-body ml-1.5 text-xs font-normal normal-case text-muted-foreground">
             {aceitando ? "opcional" : "o corretor vai ler"}
           </span>
         </span>

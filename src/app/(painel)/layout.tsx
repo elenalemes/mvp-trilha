@@ -1,7 +1,9 @@
-import Link from "next/link";
+import { cookies } from "next/headers";
 import { getSessao } from "@/lib/sessao";
-import { signOut } from "@/app/actions/auth";
 import { NavLateral } from "@/components/nav-lateral";
+import { Migalhas } from "@/components/migalhas";
+import { Separator } from "@/components/shadcn/separator";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/shadcn/sidebar";
 
 export default async function PainelLayout({ children }: { children: React.ReactNode }) {
   const sessao = await getSessao();
@@ -43,105 +45,29 @@ export default async function PainelLayout({ children }: { children: React.React
           { href: "/parceiros", label: "Parceiros imobiliários", icone: "parceiros" as const },
         ];
 
+  // O menu recolhido ou aberto fica num cookie, lido aqui para a página já
+  // nascer no estado certo — sem o menu "pular" ao carregar.
+  const menuAberto = (await cookies()).get("sidebar_state")?.value !== "false";
+
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
-      <aside className="flex shrink-0 flex-col gap-6 border-b border-trilha-200 bg-white px-5 py-6 lg:min-h-screen lg:w-60 lg:border-r lg:border-b-0">
-        <div className="flex items-baseline gap-2.5">
-          <span className="font-display text-lg font-bold tracking-wide text-trilha-700">
-            TRILHA
-          </span>
-          <span className="font-display rounded bg-trilha-100 px-2 py-0.5 text-xs font-semibold tracking-[0.12em] text-trilha-700 uppercase">
-            {admin ? "Admin" : parceiro ? "Parceiro" : "Incorporadora"}
-          </span>
-        </div>
-
-        <NavLateral links={links} />
-
-        {/* Atalho, não item de menu: o corretor sai do painel e vai para a
-            página que ele mostra ao cliente. Por isso é redondo, sólido e
-            separado dos demais — e abre em outra aba, para ele não perder
-            onde estava. */}
-        {parceiro ? (
-          <Link
-            href="/simulador"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-display flex items-center justify-center gap-2 rounded-full bg-trilha-500 px-4 py-2.5 text-[15px] font-semibold tracking-wide text-white transition-colors hover:bg-trilha-700"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="size-[18px] shrink-0"
-              aria-hidden="true"
-            >
-              <path d="M14 4h6v6M20 4l-8.5 8.5M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
-            </svg>
-            Simulador
-          </Link>
-        ) : null}
-
-        <div className="mt-auto flex flex-col gap-3 border-t border-trilha-100 pt-4">
-          <div className="flex flex-col">
-            <span className="truncate text-[15px] font-medium text-trilha-900" title={sessao?.email}>
-              {sessao?.conta?.nome ?? sessao?.email}
-            </span>
-            {sessao?.conta?.nome ? (
-              <span className="truncate text-xs text-trilha-400" title={sessao?.email}>
-                {sessao?.email}
-              </span>
-            ) : null}
-          </div>
-
-          {!admin && !parceiro ? (
-            <Link
-              href="/perfil"
-              className="font-display flex items-center gap-2 rounded-md px-1 py-1 text-[15px] font-semibold tracking-wide text-trilha-500 underline underline-offset-2 transition-colors hover:text-trilha-700"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="size-[18px]"
-                aria-hidden="true"
-              >
-                <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM5 20a7 7 0 0 1 14 0" />
-              </svg>
-              Meus dados
-            </Link>
-          ) : null}
-
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="font-display flex w-full items-center justify-center gap-2 rounded-md border border-trilha-200 bg-white px-4 py-2 text-[15px] font-semibold tracking-wide text-trilha-700 transition-colors hover:border-trilha-500 hover:bg-trilha-50"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="size-[18px]"
-                aria-hidden="true"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-              </svg>
-              Sair
-            </button>
-          </form>
-        </div>
-      </aside>
-
-      <main className="min-w-0 flex-1 px-6 py-10 lg:px-10">
-        <div className="mx-auto max-w-4xl">
+    <SidebarProvider defaultOpen={menuAberto}>
+      <NavLateral
+        links={links}
+        papel={admin ? "Painel da Trilha" : parceiro ? "Parceiro imobiliário" : "Incorporadora"}
+        nome={sessao?.conta?.nome ?? ""}
+        email={sessao?.email ?? ""}
+        mostrarPerfil={!admin && !parceiro}
+        mostrarSimulador={parceiro}
+      />
+      <SidebarInset>
+        <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background/95 px-4 backdrop-blur lg:px-6">
+          <SidebarTrigger className="-ml-1 text-muted-foreground" />
+          <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
+          <Migalhas />
+        </header>
+      {/* `SidebarInset` já é o <main> da página; aqui é só o miolo. */}
+      <div className="min-w-0 flex-1 px-4 py-8 lg:px-8">
+        <div className="mx-auto max-w-6xl">
           {sessao && !sessao.conta ? (
             <div className="mb-8 flex flex-col gap-2 rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
               {sessao.erroLeitura ? (
@@ -184,7 +110,8 @@ export default async function PainelLayout({ children }: { children: React.React
           ) : null}
           {children}
         </div>
-      </main>
-    </div>
+      </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

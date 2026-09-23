@@ -2,6 +2,27 @@
 
 import { forwardRef } from "react";
 import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button as BotaoShadcn, buttonVariants } from "@/components/shadcn/button";
+import { Input as InputShadcn } from "@/components/shadcn/input";
+import { Textarea as TextareaShadcn } from "@/components/shadcn/textarea";
+import { usePublicarMigalhas } from "@/components/migalhas";
+
+/**
+ * Os componentes básicos do painel.
+ *
+ * Desde a Sprint 4.2c, por dentro são os da shadcn/ui — mas os nomes e as
+ * props continuam os mesmos de antes, para as ~40 telas ganharem o visual
+ * novo sem precisar ser reescritas. Código novo pode usar estes ou os de
+ * `@/components/shadcn/*` diretamente.
+ *
+ * Regra de cor (decisão da Elena, 22/set): TEXTO sempre em preto ou cinza.
+ * O azul-marinho é fundo do botão principal; o roxo aparece só como ponto
+ * (bolinha de status, ícone ativo, foco) — nunca como cor de texto.
+ */
+
+// ------------------------------------------------------------ formulários
 
 export function Section({
   title,
@@ -13,12 +34,12 @@ export function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-trilha-200 bg-white p-6 shadow-[0_1px_2px_rgba(21,38,110,0.05)]">
-      <header className="mb-5 border-b border-trilha-100 pb-3">
-        <h2 className="font-display text-xl font-semibold text-trilha-700">{title}</h2>
-        {hint ? <p className="mt-1 text-sm text-trilha-400">{hint}</p> : null}
+    <section className="rounded-xl border bg-card p-6 shadow-xs">
+      <header className="mb-5">
+        <h2 className="text-base font-semibold text-foreground">{title}</h2>
+        {hint ? <p className="mt-1 text-sm text-muted-foreground">{hint}</p> : null}
       </header>
-      <div className="grid grid-cols-1 gap-x-5 gap-y-4 sm:grid-cols-6">{children}</div>
+      <div className="grid grid-cols-1 gap-x-4 gap-y-5 sm:grid-cols-6">{children}</div>
     </section>
   );
 }
@@ -47,35 +68,43 @@ export function Field({
   hint?: string;
 }) {
   return (
-    <div className={`flex flex-col gap-1.5 ${spanClass[span]}`}>
-      <label className="font-display text-sm font-semibold tracking-wide text-trilha-700 uppercase">
+    <div className={cn("flex flex-col gap-2", spanClass[span])}>
+      <label className="text-sm font-medium text-foreground">
         {label}
-        {optional ? (
-          <span className="font-body ml-1.5 text-xs font-normal normal-case text-trilha-400">
-            opcional
-          </span>
-        ) : null}
+        {optional ? <span className="ml-1.5 text-xs font-normal text-muted-foreground">opcional</span> : null}
       </label>
       {children}
-      {hint && !error ? <p className="text-xs text-trilha-400">{hint}</p> : null}
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {hint && !error ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+      {error ? <p className="text-xs font-medium text-destructive">{error}</p> : null}
     </div>
   );
 }
 
-const control =
-  "w-full rounded-md border border-trilha-200 bg-white px-3 py-2 text-[15px] text-trilha-900 placeholder:text-trilha-300 transition-colors hover:border-trilha-300 disabled:cursor-not-allowed disabled:bg-trilha-50 disabled:text-trilha-400 aria-[invalid=true]:border-red-400";
-
 export const Input = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-  function Input({ className = "", ...props }, ref) {
-    return <input ref={ref} className={`${control} ${className}`} {...props} />;
+  function Input({ className, ...props }, ref) {
+    return <InputShadcn ref={ref} className={cn("h-9 bg-card", className)} {...props} />;
   },
 );
 
+/**
+ * Lista suspensa nativa, com o visual dos campos da shadcn. A `<select>` do
+ * navegador foi mantida de propósito: todo formulário do projeto a usa com
+ * `register` do react-hook-form, e a lista da shadcn tem outra API.
+ */
 export const Select = forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<HTMLSelectElement>>(
-  function Select({ className = "", children, ...props }, ref) {
+  function Select({ className, children, ...props }, ref) {
     return (
-      <select ref={ref} className={`${control} ${className}`} {...props}>
+      <select
+        ref={ref}
+        className={cn(
+          "h-9 w-full min-w-0 rounded-md border border-input bg-card px-3 py-1 text-sm text-foreground shadow-xs outline-none transition-[color,box-shadow]",
+          "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+          "disabled:cursor-not-allowed disabled:opacity-50",
+          "aria-invalid:border-destructive aria-invalid:ring-destructive/20",
+          className,
+        )}
+        {...props}
+      >
         {children}
       </select>
     );
@@ -85,20 +114,20 @@ export const Select = forwardRef<HTMLSelectElement, React.SelectHTMLAttributes<H
 export const Textarea = forwardRef<
   HTMLTextAreaElement,
   React.TextareaHTMLAttributes<HTMLTextAreaElement>
->(function Textarea({ className = "", rows = 3, ...props }, ref) {
-  return <textarea ref={ref} rows={rows} className={`${control} ${className}`} {...props} />;
+>(function Textarea({ className, rows = 3, ...props }, ref) {
+  return <TextareaShadcn ref={ref} rows={rows} className={cn("min-h-0 bg-card", className)} {...props} />;
 });
 
 export const Checkbox = forwardRef<
   HTMLInputElement,
   React.InputHTMLAttributes<HTMLInputElement> & { label: string }
->(function Checkbox({ label, className = "", ...props }, ref) {
+>(function Checkbox({ label, className, ...props }, ref) {
   return (
-    <label className="flex cursor-pointer items-center gap-2.5 py-2 text-[15px] text-trilha-900">
+    <label className="flex cursor-pointer items-center gap-2.5 py-2 text-sm text-foreground">
       <input
         ref={ref}
         type="checkbox"
-        className={`size-4 rounded border-trilha-300 accent-trilha-500 ${className}`}
+        className={cn("size-4 rounded border-input accent-primary", className)}
         {...props}
       />
       {label}
@@ -106,19 +135,21 @@ export const Checkbox = forwardRef<
   );
 });
 
+// ------------------------------------------------------------ ações
+
+/**
+ * `primary` = a ação principal da tela (azul-marinho); `ghost` = a
+ * secundária (contornado, fundo branco). Mesmos nomes de antes da 4.2c.
+ */
 export function Button({
   variant = "primary",
-  className = "",
+  className,
   ...props
 }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: "primary" | "ghost" }) {
-  const styles =
-    variant === "primary"
-      ? "bg-trilha-500 text-white hover:bg-trilha-700 disabled:bg-trilha-300"
-      : "border border-trilha-200 bg-white text-trilha-700 hover:bg-trilha-50 disabled:text-trilha-300";
-
   return (
-    <button
-      className={`font-display inline-flex items-center justify-center rounded-md px-5 py-2.5 text-[15px] font-semibold tracking-wide transition-colors disabled:cursor-not-allowed ${styles} ${className}`}
+    <BotaoShadcn
+      variant={variant === "primary" ? "default" : "outline"}
+      className={cn("h-9 px-4", className)}
       {...props}
     />
   );
@@ -131,12 +162,22 @@ export function Alert({
   children: React.ReactNode;
   tone?: "erro" | "ok";
 }) {
-  const styles =
-    tone === "erro"
-      ? "border-red-200 bg-red-50 text-red-700"
-      : "border-emerald-200 bg-emerald-50 text-emerald-800";
-  return <p className={`rounded-md border px-4 py-3 text-sm ${styles}`}>{children}</p>;
+  return (
+    <p
+      role={tone === "erro" ? "alert" : "status"}
+      className={cn(
+        "rounded-lg border px-4 py-3 text-sm",
+        tone === "erro"
+          ? "border-destructive/20 bg-erro-suave text-destructive"
+          : "border-sucesso/20 bg-sucesso-suave text-sucesso",
+      )}
+    >
+      {children}
+    </p>
+  );
 }
+
+// ------------------------------------------------------------ página
 
 type Acao = { href: string; label: string };
 
@@ -153,36 +194,36 @@ export function PageHeader({
   acao?: Acao;
   acaoSecundaria?: Acao;
 }) {
+  // A trilha do cabeçalho ("Negócios / Apto 302") sai daqui: título e voltar.
+  usePublicarMigalhas(titulo, voltar);
+
   return (
-    <div className="mb-8">
+    <div className="mb-8 flex flex-col gap-3">
+      {/* No computador quem leva de volta é a trilha do cabeçalho. No celular
+          ela mostra só a página atual, então o "voltar" continua aqui. */}
       {voltar ? (
         <Link
           href={voltar.href}
-          className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+          className="-ml-1 inline-flex w-fit items-center gap-1 rounded-md px-1 text-sm text-muted-foreground transition-colors hover:text-foreground sm:hidden"
         >
-          ← {voltar.label}
+          <ChevronLeft className="size-4" aria-hidden="true" />
+          {voltar.label}
         </Link>
       ) : null}
-      <div className="mt-3 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-trilha-900">{titulo}</h1>
-          {descricao ? <p className="mt-1 text-[15px] text-trilha-400">{descricao}</p> : null}
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{titulo}</h1>
+          {descricao ? <p className="text-sm text-muted-foreground">{descricao}</p> : null}
         </div>
         {acao || acaoSecundaria ? (
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             {acaoSecundaria ? (
-              <Link
-                href={acaoSecundaria.href}
-                className="font-display rounded-md border border-trilha-200 bg-white px-5 py-2.5 text-[15px] font-semibold tracking-wide text-trilha-700 transition-colors hover:bg-trilha-50"
-              >
+              <Link href={acaoSecundaria.href} className={buttonVariants({ variant: "outline" })}>
                 {acaoSecundaria.label}
               </Link>
             ) : null}
             {acao ? (
-              <Link
-                href={acao.href}
-                className="font-display rounded-md bg-trilha-500 px-5 py-2.5 text-[15px] font-semibold tracking-wide text-white transition-colors hover:bg-trilha-700"
-              >
+              <Link href={acao.href} className={buttonVariants({ variant: "default" })}>
                 {acao.label}
               </Link>
             ) : null}
@@ -203,14 +244,11 @@ export function EmptyState({
   acao?: { href: string; label: string };
 }) {
   return (
-    <div className="rounded-lg border border-dashed border-trilha-200 bg-white px-6 py-16 text-center">
-      <p className="font-display text-xl font-semibold text-trilha-700">{titulo}</p>
-      <p className="mx-auto mt-2 max-w-md text-[15px] text-trilha-400">{texto}</p>
+    <div className="rounded-xl border border-dashed bg-card px-6 py-16 text-center">
+      <p className="text-base font-semibold text-foreground">{titulo}</p>
+      <p className="mx-auto mt-1.5 max-w-md text-sm text-muted-foreground">{texto}</p>
       {acao ? (
-        <Link
-          href={acao.href}
-          className="font-display mt-6 inline-block rounded-md bg-trilha-500 px-5 py-2.5 text-[15px] font-semibold tracking-wide text-white transition-colors hover:bg-trilha-700"
-        >
+        <Link href={acao.href} className={cn(buttonVariants({ variant: "default" }), "mt-6")}>
           {acao.label}
         </Link>
       ) : null}
@@ -218,29 +256,37 @@ export function EmptyState({
   );
 }
 
-const STATUS_CORES: Record<string, string> = {
-  disponivel: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  reservado: "bg-amber-50 text-amber-700 border-amber-200",
-  em_negociacao: "bg-trilha-100 text-trilha-700 border-trilha-200",
-  em_trilha: "bg-trilha-500 text-white border-trilha-500",
-  indisponivel: "bg-slate-100 text-slate-600 border-slate-200",
+// ------------------------------------------------------------ status e números
+
+/** A cor do status vai na BOLINHA; o texto fica neutro. */
+const PONTO_STATUS: Record<string, string> = {
+  disponivel: "bg-sucesso",
+  reservado: "bg-aviso",
+  em_negociacao: "bg-destaque",
+  em_trilha: "bg-primary",
+  indisponivel: "bg-muted-foreground/50",
 };
 
 export function StatusPill({ status, label }: { status: string; label: string }) {
   return (
-    <span
-      className={`font-display inline-block rounded-full border px-2.5 py-0.5 text-sm font-semibold tracking-wide ${
-        STATUS_CORES[status] ?? "border-trilha-200 bg-trilha-50 text-trilha-700"
-      }`}
-    >
+    <span className="inline-flex h-6 items-center gap-1.5 rounded-full border bg-card px-2.5 text-xs font-medium whitespace-nowrap text-foreground">
+      <span aria-hidden="true" className={cn("size-1.5 rounded-full", PONTO_STATUS[status] ?? "bg-muted-foreground/50")} />
       {label}
     </span>
   );
 }
 
+const PONTO_TOM = {
+  padrao: null,
+  positivo: "bg-sucesso",
+  atencao: "bg-aviso",
+  destaque: "bg-destaque",
+} as const;
+
 /**
  * Cartão de número. Vira link quando há para onde ir — é assim que os
- * contadores levam para a lista já filtrada.
+ * contadores levam para a lista já filtrada. O tom vira uma bolinha ao lado
+ * do rótulo; o número fica sempre em preto.
  */
 export function Stat({
   valor,
@@ -253,36 +299,23 @@ export function Stat({
   href?: string;
   tom?: "padrao" | "positivo" | "atencao" | "destaque";
 }) {
-  const cores = {
-    padrao: "text-trilha-700",
-    positivo: "text-emerald-600",
-    atencao: "text-amber-600",
-    destaque: "text-trilha-500",
-  } as const;
-  const cor = cores[tom];
-  const base = "group flex flex-col gap-1 rounded-lg border border-trilha-200 bg-white p-5";
-
-  const conteudo = (clicavel: boolean) => (
+  const ponto = PONTO_TOM[tom];
+  const conteudo = (
     <>
-      <span className={`font-display text-3xl font-bold tabular-nums ${cor}`}>{valor}</span>
-      <span
-        className={`font-display text-[13px] leading-tight font-semibold tracking-[0.08em] text-trilha-400 uppercase group-hover:text-trilha-500 ${
-          clicavel ? "underline underline-offset-2" : ""
-        }`}
-      >
+      <span className="flex items-center gap-2 text-sm text-muted-foreground">
+        {ponto ? <span aria-hidden="true" className={cn("size-2 rounded-full", ponto)} /> : null}
         {label}
       </span>
+      <span className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">{valor}</span>
     </>
   );
+  const base = "flex flex-col gap-1.5 rounded-xl border bg-card px-5 py-4 shadow-xs";
 
   return href ? (
-    <Link
-      href={href}
-      className={`${base} transition-colors hover:border-trilha-500 hover:bg-trilha-50`}
-    >
-      {conteudo(true)}
+    <Link href={href} className={cn(base, "transition-colors hover:border-foreground/20 hover:bg-accent/40")}>
+      {conteudo}
     </Link>
   ) : (
-    <div className={base}>{conteudo(false)}</div>
+    <div className={base}>{conteudo}</div>
   );
 }

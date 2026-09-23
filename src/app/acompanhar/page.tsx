@@ -1,3 +1,5 @@
+import { Check } from "lucide-react";
+import { AvisoPublico, MolduraPublica, TituloPublico } from "@/components/publico";
 import type { Metadata } from "next";
 import { lerAcompanhamento, type EtapaPublica } from "@/lib/acompanhamento";
 import { NOME_DO_ATOR } from "@/lib/fechamento";
@@ -33,11 +35,11 @@ export default async function AcompanharPage({
   if (!dados) {
     return (
       <Moldura>
-        <div className="rounded-lg border border-trilha-200 bg-white p-8">
-          <h1 className="font-display text-2xl font-bold text-trilha-900">
+        <div className="rounded-xl border bg-card p-8 shadow-xs">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
             Não encontrei este acompanhamento
           </h1>
-          <p className="mt-3 text-[15px] text-trilha-400">
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             Confira se o link veio inteiro na mensagem. Se o problema continuar, fale com quem está
             te atendendo.
           </p>
@@ -51,15 +53,11 @@ export default async function AcompanharPage({
   if (dados.cancelado) {
     return (
       <Moldura>
-        <div className="rounded-lg border border-trilha-200 bg-white p-8">
-          <h1 className="font-display text-2xl font-bold text-trilha-900">
-            {dados.unidade} · {dados.empreendimento}
-          </h1>
-          <p className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-[15px] text-amber-800">
-            Este acompanhamento foi encerrado. Quem está te atendendo pode explicar o que houve e
-            quais são os próximos passos.
-          </p>
-        </div>
+        <TituloPublico titulo={`${dados.unidade} · ${dados.empreendimento}`} />
+        <AvisoPublico>
+          Este acompanhamento foi encerrado. Quem está te atendendo pode explicar o que houve e
+          quais são os próximos passos.
+        </AvisoPublico>
       </Moldura>
     );
   }
@@ -68,27 +66,24 @@ export default async function AcompanharPage({
 
   return (
     <Moldura>
-      <header className="mb-8">
-        <h1 className="font-display text-2xl font-bold text-trilha-900 sm:text-3xl">
-          {dados.unidade} · {dados.empreendimento}
-        </h1>
-        {dados.incorporadora ? (
-          <p className="mt-1 text-[15px] text-trilha-400">{dados.incorporadora}</p>
-        ) : null}
-      </header>
+      <TituloPublico
+        titulo={`${dados.unidade} · ${dados.empreendimento}`}
+        descricao={dados.incorporadora || undefined}
+      />
 
       {/* A resposta à primeira pergunta: em que pé está. */}
-      <section className="mb-8 rounded-lg border border-trilha-200 bg-white p-6">
+      <section className="mb-6 rounded-xl border bg-card p-6 shadow-xs">
+        <p className="mb-1 text-sm text-muted-foreground">Situação do seu processo</p>
         {dados.progresso === 100 ? (
-          <p className="font-display text-xl font-semibold text-emerald-700">
+          <p className="text-xl font-semibold tracking-tight text-sucesso">
             Tudo pronto do nosso lado.
           </p>
         ) : emAndamento.length > 0 ? (
           <>
-            <p className="font-display text-xl font-semibold text-trilha-900">
+            <p className="text-xl font-semibold tracking-tight text-foreground">
               Agora: {emAndamento.map((e) => e.nome.toLowerCase()).join(" e ")}
             </p>
-            <p className="mt-1 text-[15px] text-trilha-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               Cuidando disso:{" "}
               {[...new Set(emAndamento.flatMap((e) => e.responsaveis))]
                 .map((a) => NOME_DO_ATOR[a])
@@ -97,34 +92,35 @@ export default async function AcompanharPage({
             </p>
           </>
         ) : (
-          <p className="font-display text-xl font-semibold text-trilha-900">
+          <p className="text-xl font-semibold tracking-tight text-foreground">
             Seu processo está em andamento.
           </p>
         )}
 
         <div className="mt-5 flex items-center gap-3">
-          <div className="h-2 flex-1 overflow-hidden rounded-full bg-trilha-100">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-trilha-500 transition-all"
+              className="h-full rounded-full bg-destaque transition-all"
               style={{ width: `${dados.progresso}%` }}
             />
           </div>
-          <span className="text-sm tabular-nums text-trilha-400">{dados.progresso}%</span>
+          <span className="text-sm tabular-nums text-muted-foreground">{dados.progresso}%</span>
         </div>
       </section>
 
       {/* A segunda: o que está acontecendo, e de quem depende. */}
-      <ol className="flex flex-col gap-3">
-        {dados.etapas.map((e) => (
-          <Etapa key={e.nome} etapa={e} />
-        ))}
-      </ol>
+      <section className="rounded-xl border bg-card p-6 shadow-xs">
+        <h2 className="mb-5 text-base font-semibold text-foreground">Etapas</h2>
+        <ol className="flex flex-col">
+          {dados.etapas.map((e, i) => (
+            <Etapa key={e.nome} etapa={e} ultima={i === dados.etapas.length - 1} />
+          ))}
+        </ol>
+      </section>
 
       {dados.condicao ? (
-        <section className="mt-8 rounded-lg border border-trilha-200 bg-white p-6">
-          <h2 className="font-display mb-3 text-xs font-semibold tracking-[0.12em] text-trilha-400 uppercase">
-            O que foi combinado
-          </h2>
+        <section className="mt-6 rounded-xl border bg-card p-6 shadow-xs">
+          <h2 className="mb-4 text-base font-semibold text-foreground">O que foi combinado</h2>
           <dl className="flex flex-col gap-2.5">
             <Linha
               termo="No ato"
@@ -142,7 +138,7 @@ export default async function AcompanharPage({
         </section>
       ) : null}
 
-      <p className="mt-8 rounded-lg bg-trilha-50 px-5 py-4 text-[15px] text-trilha-700">
+      <p className="mt-6 rounded-xl bg-muted px-5 py-4 text-sm leading-relaxed text-foreground">
         Guarde este link — ele é seu e continua funcionando até a entrega das chaves. Sempre que
         quiser saber como está, é só abrir de novo.
       </p>
@@ -150,42 +146,48 @@ export default async function AcompanharPage({
   );
 }
 
-const CORES: Record<EtapaPublica["situacao"], string> = {
-  concluida: "border-emerald-200 bg-emerald-50",
-  andamento: "border-trilha-300 bg-white",
-  aguardando: "border-trilha-100 bg-white",
-};
-
-function Etapa({ etapa }: { etapa: EtapaPublica }) {
+/**
+ * Uma etapa na linha do tempo. O traço que liga as bolinhas fica verde até a
+ * última concluída — é o "quanto já andou" sem precisar ler número.
+ */
+function Etapa({ etapa, ultima }: { etapa: EtapaPublica; ultima: boolean }) {
   const concluida = etapa.situacao === "concluida";
+  const andamento = etapa.situacao === "andamento";
 
   return (
-    <li className={`flex items-start gap-4 rounded-lg border p-5 ${CORES[etapa.situacao]}`}>
+    <li className="relative flex gap-4 pb-6 last:pb-0">
+      {!ultima ? (
+        <span
+          aria-hidden="true"
+          className={`absolute top-7 bottom-0 left-[13px] w-0.5 ${concluida ? "bg-sucesso" : "bg-border"}`}
+        />
+      ) : null}
+
       <span
-        className={`mt-0.5 text-lg ${
-          concluida
-            ? "text-emerald-600"
-            : etapa.situacao === "andamento"
-              ? "text-trilha-500"
-              : "text-trilha-200"
-        }`}
         aria-hidden="true"
+        className={`relative z-10 flex size-7 shrink-0 items-center justify-center rounded-full border-2 ${
+          concluida
+            ? "border-sucesso bg-sucesso text-white"
+            : andamento
+              ? "border-destaque bg-card"
+              : "border-border bg-card"
+        }`}
       >
-        {concluida ? "✓" : etapa.situacao === "andamento" ? "◔" : "○"}
+        {concluida ? (
+          <Check className="size-4" strokeWidth={3} />
+        ) : andamento ? (
+          <span className="size-2.5 rounded-full bg-destaque" />
+        ) : null}
       </span>
 
-      <div className="min-w-0 flex-1">
-        <p
-          className={`font-display text-[17px] font-semibold ${
-            etapa.situacao === "aguardando" ? "text-trilha-400" : "text-trilha-900"
-          }`}
-        >
+      <div className="min-w-0 flex-1 pt-0.5">
+        <p className={`text-sm font-semibold ${etapa.situacao === "aguardando" ? "text-muted-foreground" : "text-foreground"}`}>
           {etapa.nome}
         </p>
-        <p className="mt-0.5 text-sm text-trilha-400">
+        <p className="mt-0.5 text-sm text-muted-foreground">
           {concluida
             ? "Concluída"
-            : etapa.situacao === "andamento"
+            : andamento
               ? `Em andamento · ${etapa.feitas} de ${etapa.total} · com ${etapa.responsaveis.map((a) => NOME_DO_ATOR[a]).join(" e ")}`
               : "Ainda não começou"}
         </p>
@@ -197,8 +199,8 @@ function Etapa({ etapa }: { etapa: EtapaPublica }) {
 function Linha({ termo, valor }: { termo: string; valor: string }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-      <dt className="text-sm text-trilha-400">{termo}</dt>
-      <dd className="ml-auto text-[15px] whitespace-nowrap tabular-nums text-trilha-900">
+      <dt className="text-sm text-muted-foreground">{termo}</dt>
+      <dd className="ml-auto text-sm font-medium whitespace-nowrap tabular-nums text-foreground">
         {valor}
       </dd>
     </div>
@@ -207,19 +209,12 @@ function Linha({ termo, valor }: { termo: string; valor: string }) {
 
 function Moldura({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-trilha-50/40 px-5 py-10 sm:px-8">
-      <div className="mx-auto w-full max-w-2xl">
-        <p className="font-display mb-8 text-sm font-semibold tracking-[0.18em] text-trilha-500 uppercase">
-          Trilha
-        </p>
-
-        {children}
-
-        <footer className="mt-10 text-xs text-trilha-300">
-          Esta página mostra o andamento do seu processo. Dúvidas sobre valores ou documentos: fale
-          com quem está te atendendo.
-        </footer>
-      </div>
-    </main>
+    <MolduraPublica
+      contexto="Acompanhamento"
+      largura="2xl"
+      rodape="Esta página mostra o andamento do seu processo. Dúvidas sobre valores ou documentos: fale com quem está te atendendo."
+    >
+      {children}
+    </MolduraPublica>
   );
 }

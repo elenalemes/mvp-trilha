@@ -35,7 +35,7 @@ export default async function OpcoesDoEmpreendimentoPage({
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
-        <p className="font-display text-[15px] font-semibold text-red-800">
+        <p className="text-[15px] font-semibold text-red-800">
           O banco recusou a leitura deste empreendimento.
         </p>
         <p className="mt-1 text-sm text-red-700">
@@ -59,15 +59,15 @@ export default async function OpcoesDoEmpreendimentoPage({
         voltar={{ href: `/empreendimentos/${id}`, label: data.nome }}
       />
 
-      <p className="mb-6 max-w-3xl text-[15px] text-trilha-400">
-        O que estiver aqui vale <strong className="text-trilha-700">só para este empreendimento</strong>{" "}
+      <p className="mb-6 max-w-3xl text-[15px] text-muted-foreground">
+        O que estiver aqui vale <strong className="text-foreground">só para este empreendimento</strong>{" "}
         e substitui o padrão da incorporadora por inteiro — as duas listas nunca se misturam. Deixar
         vazio é voltar a usar o padrão.
       </p>
 
       {padrao.length > 0 ? (
-        <section className="mb-6 rounded-lg border border-trilha-200 bg-trilha-50/60 p-5">
-          <h2 className="font-display mb-3 text-sm font-semibold tracking-[0.12em] text-trilha-400 uppercase">
+        <section className="mb-6 rounded-lg border border-border bg-muted/40 p-5">
+          <h2 className="mb-3 text-sm font-semibold text-muted-foreground">
             O padrão de {data.incorporadora?.nome ?? "a incorporadora"}, para comparar
           </h2>
           <ListaOpcoes opcoes={padrao} />

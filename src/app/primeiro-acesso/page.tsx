@@ -1,3 +1,6 @@
+import { TelaDeEntrada } from "@/components/publico";
+import { buttonVariants } from "@/components/shadcn/button";
+import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { lerConvite } from "@/lib/convite";
@@ -32,45 +35,34 @@ export default async function PrimeiroAcessoPage({
   const convite = t ? await lerConvite(t) : ({ ok: false, motivo: "invalido" } as const);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-trilha-50/40 px-5 py-12">
-      <div className="w-full max-w-md">
-        <p className="font-display mb-8 text-sm font-semibold tracking-[0.18em] text-trilha-500 uppercase">
-          Trilha
-        </p>
+    <TelaDeEntrada>
+      {!convite.ok ? (
+        <div className="flex flex-col gap-1.5">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Convite indisponível</h1>
+          <p className="text-sm leading-relaxed text-muted-foreground">{RECADO[convite.motivo]}</p>
+          <Link href="/login" className={cn(buttonVariants({ variant: "default" }), "mt-6 h-10 w-full")}>
+            Ir para o login
+          </Link>
+        </div>
+      ) : (
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Bem-vindo, {convite.parceiro.nome.trim().split(/\s+/)[0]}
+          </h1>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+            Defina uma senha para entrar na plataforma e acompanhar as suas propostas
+            {convite.parceiro.incorporadora ? ` na ${convite.parceiro.incorporadora}` : ""}.
+          </p>
 
-        {!convite.ok ? (
-          <div className="rounded-lg border border-trilha-200 bg-white p-8">
-            <h1 className="font-display text-2xl font-bold text-trilha-900">Convite indisponível</h1>
-            <p className="mt-3 text-[15px] text-trilha-400">{RECADO[convite.motivo]}</p>
-            <p className="mt-6">
-              <Link
-                href="/login"
-                className="font-display font-semibold text-trilha-700 underline underline-offset-2"
-              >
-                Ir para o login
-              </Link>
-            </p>
+          <p className="mt-5 rounded-lg bg-muted px-4 py-3 text-sm text-foreground">
+            Seu e-mail de acesso: <strong className="font-semibold">{convite.parceiro.email}</strong>
+          </p>
+
+          <div className="mt-6">
+            <FormPrimeiroAcesso token={t!} />
           </div>
-        ) : (
-          <div className="rounded-lg border border-trilha-200 bg-white p-8">
-            <h1 className="font-display text-2xl font-bold text-trilha-900">
-              Bem-vindo, {convite.parceiro.nome.trim().split(/\s+/)[0]}
-            </h1>
-            <p className="mt-2 text-[15px] text-trilha-400">
-              Defina uma senha para entrar na plataforma e acompanhar as suas propostas
-              {convite.parceiro.incorporadora ? ` na ${convite.parceiro.incorporadora}` : ""}.
-            </p>
-
-            <p className="mt-4 rounded-md bg-trilha-50 px-4 py-3 text-sm text-trilha-700">
-              Seu e-mail de acesso: <strong>{convite.parceiro.email}</strong>
-            </p>
-
-            <div className="mt-6">
-              <FormPrimeiroAcesso token={t!} />
-            </div>
-          </div>
-        )}
-      </div>
-    </main>
+        </div>
+      )}
+    </TelaDeEntrada>
   );
 }

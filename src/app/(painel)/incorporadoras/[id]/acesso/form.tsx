@@ -81,7 +81,7 @@ export default function FormAcesso({ id, emailAtual }: { id: string; emailAtual:
         </Button>
         <Link
           href={`/incorporadoras/${id}`}
-          className="font-display px-2 text-[15px] font-semibold tracking-wide text-trilha-400 underline underline-offset-2 hover:text-trilha-700"
+          className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
         >
           Voltar
         </Link>

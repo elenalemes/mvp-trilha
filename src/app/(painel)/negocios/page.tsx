@@ -101,15 +101,15 @@ export default async function NegociosPage() {
           texto="Um negócio nasce quando a Trilha aceita uma proposta. A partir daí, cada parte faz a sua parte do fechamento aqui."
         />
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-trilha-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
           <table className="w-full min-w-[900px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-trilha-100">
+              <tr className="border-b border-border">
                 {["Unidade", admin ? "Incorporadora" : "Corretor", "Esperando", "Andamento", "Situação"].map(
                   (h) => (
                     <th
                       key={h}
-                      className="font-display px-5 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
+                      className="bg-muted/50 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground"
                     >
                       {h}
                     </th>
@@ -125,44 +125,44 @@ export default async function NegociosPage() {
                 const dias = diasParado(lista, n.created_at);
 
                 return (
-                  <tr key={n.id} className="border-b border-trilha-100 last:border-0">
-                    <td className="px-5 py-4">
+                  <tr key={n.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
+                    <td className="px-4 py-3">
                       <Link
                         href={`/negocios/${n.id}`}
-                        className="font-display text-[17px] font-semibold text-trilha-700 underline underline-offset-2 hover:text-trilha-500"
+                        className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                       >
                         {n.imovel?.identificacao ?? "—"}
                       </Link>
-                      <span className="block text-sm text-trilha-400">
+                      <span className="block text-sm text-muted-foreground">
                         {n.empreendimento?.nome ?? "—"}
                         {n.proposta ? ` · ${n.proposta.codigo}` : ""}
                       </span>
                     </td>
 
-                    <td className="px-5 py-4 text-[15px] text-trilha-400">
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
                       {admin ? (n.incorporadora?.nome ?? "—") : (n.parceiro?.nome ?? "—")}
                     </td>
 
-                    <td className="px-5 py-4 text-[15px]">
+                    <td className="px-4 py-3 text-sm">
                       {esperando.length === 0 ? (
                         <span className="text-emerald-700">nada — tudo feito</span>
                       ) : (
                         <>
-                          <span className="font-semibold text-trilha-900">
+                          <span className="font-semibold text-foreground">
                             {esperando.map((a) => NOME_DO_ATOR[a]).join(" e ")}
                           </span>
-                          <span className="block text-sm text-trilha-400">
+                          <span className="block text-sm text-muted-foreground">
                             {dias === 0 ? "hoje" : `há ${dias} dia(s)`}
                           </span>
                         </>
                       )}
                     </td>
 
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <Barra pct={pct} />
                     </td>
 
-                    <td className="px-5 py-4 text-[15px] text-trilha-400 whitespace-nowrap">
+                    <td className="px-4 py-3 text-sm text-muted-foreground whitespace-nowrap">
                       {ROTULO_STATUS[n.status] ?? n.status}
                     </td>
                   </tr>
@@ -179,10 +179,10 @@ export default async function NegociosPage() {
 function Barra({ pct }: { pct: number }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-trilha-100">
-        <div className="h-full rounded-full bg-trilha-500" style={{ width: `${pct}%` }} />
+      <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
+        <div className="h-full rounded-full bg-destaque" style={{ width: `${pct}%` }} />
       </div>
-      <span className="text-sm tabular-nums text-trilha-400">{pct}%</span>
+      <span className="text-sm tabular-nums text-muted-foreground">{pct}%</span>
     </div>
   );
 }

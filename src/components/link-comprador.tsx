@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, Link as LinkIcon, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui";
 
 /**
@@ -47,24 +48,23 @@ export default function LinkComprador({
   };
 
   return (
-    <section className="mt-10 rounded-lg border border-trilha-200 bg-white p-6">
-      <h2 className="font-display text-sm font-semibold tracking-[0.12em] text-trilha-400 uppercase">
-        Acompanhamento do comprador
-      </h2>
-
-      <p className="mt-3 text-[15px] text-trilha-700">
-        Um link só dele, permanente, que mostra em que etapa o processo está e com quem. Não mostra
-        tarefa, documento nem resultado de análise.
-      </p>
-
-      <div className="mt-4 flex flex-wrap gap-3">
-        <Button type="button" onClick={whatsapp}>
+    <div className="flex flex-col gap-3">
+      <div>
+        <p className="text-sm font-semibold text-foreground">Link do comprador</p>
+        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+          Mostra a etapa e com quem ela está. Não mostra documento nem análise.
+        </p>
+      </div>
+      <div className="flex flex-col gap-2">
+        <Button type="button" onClick={whatsapp} className="w-full">
+          <MessageCircle aria-hidden="true" />
           Enviar no WhatsApp
         </Button>
-        <Button type="button" variant="ghost" onClick={copiar}>
-          {copiado ? "Link copiado!" : "Copiar link"}
+        <Button type="button" variant="ghost" onClick={copiar} className="w-full">
+          {copiado ? <Check aria-hidden="true" /> : <LinkIcon aria-hidden="true" />}
+          {copiado ? "Link copiado" : "Copiar link"}
         </Button>
       </div>
-    </section>
+    </div>
   );
 }

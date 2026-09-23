@@ -157,7 +157,7 @@ export default function FormImovel({
           <Input
             readOnly
             tabIndex={-1}
-            className="bg-trilha-50 text-trilha-500"
+            className="bg-muted/50 text-foreground"
             value={reajustado === null ? "—" : formatBRL(reajustado)}
           />
         </Field>
@@ -241,7 +241,7 @@ export default function FormImovel({
         )}
         <Link
           href={destino}
-          className="font-display px-2 text-[15px] font-semibold tracking-wide text-trilha-400 underline underline-offset-2 hover:text-trilha-700"
+          className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
         >
           Cancelar
         </Link>

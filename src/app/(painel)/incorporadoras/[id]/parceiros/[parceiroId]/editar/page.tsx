@@ -48,7 +48,7 @@ export default async function EditarParceiroPage({
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
-        <p className="font-display text-[15px] font-semibold text-red-800">
+        <p className="text-[15px] font-semibold text-red-800">
           O banco recusou a leitura deste parceiro.
         </p>
         <p className="mt-1 text-sm text-red-700">

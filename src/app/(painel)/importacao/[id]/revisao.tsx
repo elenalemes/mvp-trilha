@@ -115,13 +115,13 @@ export function Revisao({
 
   if (!empreendimentoId || !plano) {
     return (
-      <section className="rounded-lg border border-trilha-200 bg-white p-6">
-        <h2 className="font-display text-xl font-semibold text-trilha-700">
+      <section className="rounded-lg border border-border bg-white p-6">
+        <h2 className="text-xl font-semibold text-foreground">
           A qual empreendimento estas {linhas.length} unidades pertencem?
         </h2>
-        <p className="mt-1 text-sm text-trilha-400">
+        <p className="mt-1 text-sm text-muted-foreground">
           A IA leu no arquivo:{" "}
-          <span className="font-medium text-trilha-700">
+          <span className="font-medium text-foreground">
             {empreendimentoDetectado ?? "nada identificável"}
           </span>
           {enderecoDetectado ? ` · ${enderecoDetectado}` : ""}
@@ -131,41 +131,41 @@ export function Revisao({
           {empreendimentos.map((e) => (
             <label
               key={e.id}
-              className="flex cursor-pointer items-center gap-3 rounded-md border border-trilha-200 px-4 py-3 hover:bg-trilha-50"
+              className="flex cursor-pointer items-center gap-3 rounded-md border border-border px-4 py-3 hover:bg-accent"
             >
               <input
                 type="radio"
                 name="empreendimento"
                 checked={escolha === e.id}
                 onChange={() => setEscolha(e.id)}
-                className="accent-trilha-500"
+                className="accent-primary"
               />
-              <span className="text-[15px] text-trilha-900">{e.nome}</span>
+              <span className="text-[15px] text-foreground">{e.nome}</span>
               {sugestao?.id === e.id ? (
-                <span className="font-display rounded-full bg-trilha-100 px-2 py-0.5 text-xs font-semibold tracking-wide text-trilha-700 uppercase">
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
                   parece este
                 </span>
               ) : null}
             </label>
           ))}
 
-          <label className="flex cursor-pointer flex-col gap-2 rounded-md border border-trilha-200 px-4 py-3 hover:bg-trilha-50">
+          <label className="flex cursor-pointer flex-col gap-2 rounded-md border border-border px-4 py-3 hover:bg-accent">
             <span className="flex items-center gap-3">
               <input
                 type="radio"
                 name="empreendimento"
                 checked={escolha === "novo"}
                 onChange={() => setEscolha("novo")}
-                className="accent-trilha-500"
+                className="accent-primary"
               />
-              <span className="text-[15px] text-trilha-900">Criar um empreendimento novo</span>
+              <span className="text-[15px] text-foreground">Criar um empreendimento novo</span>
             </span>
             {escolha === "novo" ? (
               <input
                 value={nomeNovo}
                 onChange={(e) => setNomeNovo(e.target.value)}
                 placeholder="Nome do empreendimento"
-                className="ml-7 rounded-md border border-trilha-200 px-3 py-2 text-[15px]"
+                className="ml-7 rounded-md border border-border px-3 py-2 text-[15px]"
               />
             ) : null}
           </label>
@@ -185,7 +185,7 @@ export function Revisao({
             type="button"
             onClick={descartar}
             disabled={pendente}
-            className="font-display px-2 text-[15px] font-semibold tracking-wide text-trilha-400 underline underline-offset-2 hover:text-trilha-700"
+            className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
           >
             Descartar importação
           </button>
@@ -208,7 +208,7 @@ export function Revisao({
       </div>
 
       {desaparecidas.length > 0 ? (
-        <p className="rounded-md border border-trilha-200 bg-trilha-50 px-4 py-3 text-sm text-trilha-700">
+        <p className="rounded-md border border-border bg-muted/50 px-4 py-3 text-sm text-foreground">
           <span className="font-semibold">
             {desaparecidas.length} unidade{desaparecidas.length === 1 ? "" : "s"} que estava
             {desaparecidas.length === 1 ? "" : "m"} disponível no sistema não veio neste arquivo
@@ -225,15 +225,15 @@ export function Revisao({
         </p>
       ) : null}
 
-      <div className="overflow-x-auto rounded-lg border border-trilha-200 bg-white">
+      <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
         <table className="w-full min-w-[900px] border-collapse text-left">
           <thead>
-            <tr className="border-b border-trilha-100">
+            <tr className="border-b border-border">
               {["", "Unidade", "Valor", "Tipologia", "Características", "O que vai acontecer", "No arquivo"].map(
                 (h, i) => (
                   <th
                     key={`${h}-${i}`}
-                    className="font-display px-4 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
+                    className="bg-muted/50 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground"
                   >
                     {h}
                   </th>
@@ -245,7 +245,7 @@ export function Revisao({
             {itens.map(({ linha, acao, valorAntigo }) => (
               <tr
                 key={linha.id}
-                className={`border-b border-trilha-100 last:border-0 ${
+                className={`border-b border-border last:border-0 ${
                   linha.incluir ? "" : "opacity-40"
                 }`}
               >
@@ -254,7 +254,7 @@ export function Revisao({
                     type="checkbox"
                     checked={linha.incluir}
                     onChange={(e) => mudarLinha(linha.id, { incluir: e.target.checked })}
-                    className="size-4 accent-trilha-500"
+                    className="size-4 accent-primary"
                     aria-label="incluir"
                   />
                 </td>
@@ -266,7 +266,7 @@ export function Revisao({
                         mudarLinha(linha.id, { identificacao: e.target.value });
                       }
                     }}
-                    className="font-display w-32 rounded border border-transparent bg-transparent px-1.5 py-1 text-[16px] font-semibold text-trilha-700 hover:border-trilha-200 focus:border-trilha-300"
+                    className="w-32 rounded border border-transparent bg-transparent px-1.5 py-1 text-[16px] font-semibold text-foreground hover:border-border focus:border-ring"
                   />
                 </td>
                 <td className="px-4 py-3">
@@ -278,16 +278,16 @@ export function Revisao({
                         mudarLinha(linha.id, { valor: e.target.value });
                       }
                     }}
-                    className="w-32 rounded border border-transparent bg-transparent px-1.5 py-1 text-[15px] tabular-nums text-trilha-900 hover:border-trilha-200 focus:border-trilha-300"
+                    className="w-32 rounded border border-transparent bg-transparent px-1.5 py-1 text-[15px] tabular-nums text-foreground hover:border-border focus:border-ring"
                   />
                   {valorAntigo !== undefined && valorAntigo !== null && valorAntigo !== linha.valor ? (
-                    <span className="block text-xs text-trilha-400 line-through">
+                    <span className="block text-xs text-muted-foreground line-through">
                       {formatBRL(valorAntigo)}
                     </span>
                   ) : null}
                 </td>
                 <td className="px-4 py-3 text-[15px]">{linha.tipologia ?? "—"}</td>
-                <td className="px-4 py-3 text-sm text-trilha-400">
+                <td className="px-4 py-3 text-sm text-muted-foreground">
                   {[
                     linha.num_quartos ? `${linha.num_quartos} dorm.` : null,
                     linha.num_vagas ? `${linha.num_vagas} vaga(s)` : null,
@@ -299,7 +299,7 @@ export function Revisao({
                 </td>
                 <td className="px-4 py-3">
                   <span
-                    className={`font-display inline-block rounded-full border px-2.5 py-0.5 text-sm font-semibold ${COR_ACAO[acao]}`}
+                    className={`inline-block rounded-full border px-2.5 py-0.5 text-sm font-semibold ${COR_ACAO[acao]}`}
                   >
                     {ROTULO_ACAO[acao]}
                   </span>
@@ -309,7 +309,7 @@ export function Revisao({
                     </span>
                   ) : null}
                 </td>
-                <td className="max-w-xs px-4 py-3 text-xs text-trilha-400">
+                <td className="max-w-xs px-4 py-3 text-xs text-muted-foreground">
                   {linha.origem ?? "—"}
                 </td>
               </tr>
@@ -328,7 +328,7 @@ export function Revisao({
           type="button"
           onClick={descartar}
           disabled={pendente}
-          className="font-display px-2 text-[15px] font-semibold tracking-wide text-trilha-400 underline underline-offset-2 hover:text-trilha-700"
+          className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
         >
           Descartar importação
         </button>

@@ -1,43 +1,156 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
-@theme {
-  --color-trilha-50: #f3f4fc;
-  --color-trilha-100: #e8eaf9;
-  --color-trilha-200: #c7cbf3;
-  --color-trilha-300: #a2a9ec;
-  --color-trilha-400: #8f83d0;
-  --color-trilha-500: #646ed1;
-  --color-trilha-700: #15266e;
-  --color-trilha-900: #000d45;
-  --color-trilha-mint: #a0d5a6;
+@custom-variant dark (&:is(.dark *));
 
-  --font-sans: "Rajdhani", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-}
+/* ============================================================================
+   A base visual da Trilha (Sprint 4.2)
+
+   Sóbria: branco, preto e cinzas. TEXTO É SEMPRE PRETO OU CINZA — nunca
+   azul nem roxo (decisão da Elena, 22/set).
+
+   O azul-marinho é a cor da AÇÃO principal, como fundo de botão ("Salvar",
+   "Aprovar"). O roxo é o ponto de DESTAQUE em elementos que não são texto:
+   ícone do item ativo do menu, barra de andamento, anel de foco. O roxo não
+   vai em botão com texto branco: o contraste fica abaixo do recomendado.
+
+   Os nomes seguem a convenção da shadcn/ui (background, primary, muted…),
+   para os componentes dela funcionarem sem ajuste. Os que são só nossos
+   ficam em português: destaque, sucesso, aviso.
+   ========================================================================== */
 
 :root {
-  color-scheme: light;
+  --radius: 0.625rem;
+
+  --background: #fafafa; /* fundo da página */
+  --foreground: #09090b;
+  --card: #ffffff;
+  --card-foreground: #09090b;
+  --popover: #ffffff;
+  --popover-foreground: #09090b;
+
+  --primary: #15266e; /* azul-marinho: ação principal */
+  --primary-foreground: #ffffff;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5; /* hover neutro de botões e menus */
+  --accent-foreground: #18181b;
+  --destructive: #b91c1c;
+
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+  --ring: #646ed1; /* foco em roxo */
+
+  --destaque: #646ed1;
+  --destaque-suave: #eef0fb;
+  --destaque-texto: #4c55b8; /* reservado; texto não usa roxo */
+  --sucesso: #15803d;
+  --sucesso-suave: #f0fdf4;
+  --aviso: #b45309;
+  --aviso-suave: #fffbeb;
+  --erro-suave: #fef2f2;
+
+  --sidebar: #ffffff;
+  --sidebar-foreground: #3f3f46;
+  --sidebar-primary: #15266e;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4f4f5; /* item ativo e hover do menu: cinza */
+  --sidebar-accent-foreground: #09090b;
+  --sidebar-border: #e4e4e7;
+  --sidebar-ring: #646ed1;
 }
 
-body {
-  background: var(--color-trilha-50);
-  color: #2f3763;
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* Até a 4.2c, as telas ainda usam `font-display` e `font-body`. As duas
+     apontam para a Geist: a Rajdhani saiu. */
+  --font-display: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-destaque: var(--destaque);
+  --color-destaque-suave: var(--destaque-suave);
+  --color-destaque-texto: var(--destaque-texto);
+  --color-sucesso: var(--sucesso);
+  --color-sucesso-suave: var(--sucesso-suave);
+  --color-aviso: var(--aviso);
+  --color-aviso-suave: var(--aviso-suave);
+  --color-erro-suave: var(--erro-suave);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 }
 
-h1,
-h2,
-h3,
-.font-display {
-  font-family: var(--font-sans);
-  letter-spacing: 0.01em;
+/* A paleta antiga continua existindo enquanto as telas não migram (4.2c–e),
+   mas REMAPEADA para preto e cinzas: as telas antigas pintavam texto de roxo
+   e azul com estas classes, e assim todas ficam neutras de uma vez, sem
+   mexer página por página. Os valores seguem a escala de cinzas do Tailwind
+   (zinc). Nada novo deve usar `trilha-*`: use os nomes acima. */
+@theme {
+  --color-trilha-50: #fafafa;
+  --color-trilha-100: #f4f4f5;
+  --color-trilha-200: #e4e4e7;
+  --color-trilha-300: #d4d4d8;
+  --color-trilha-400: #71717a; /* texto secundário: 4,8:1 no branco */
+  --color-trilha-500: #3f3f46;
+  --color-trilha-700: #18181b;
+  --color-trilha-900: #09090b;
+  --color-trilha-mint: #a0d5a6;
 }
 
-input:focus-visible,
-select:focus-visible,
-button:focus-visible,
-a:focus-visible {
-  outline: 2px solid var(--color-trilha-500);
-  outline-offset: 2px;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    color-scheme: light;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+    -webkit-font-smoothing: antialiased;
+    /* Números de largura igual: valores em coluna ficam alinhados. */
+    font-feature-settings: "tnum" 1;
+  }
+  /* Foco visível para os controles das telas antigas, que não trazem anel
+     de foco próprio. Os componentes da shadcn têm o deles. */
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible,
+  a:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }

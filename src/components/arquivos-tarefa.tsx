@@ -1,5 +1,6 @@
 "use client";
 
+import { Paperclip, X } from "lucide-react";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { marcarPessoa, registrarArquivo, removerArquivo } from "@/app/actions/arquivos";
@@ -86,7 +87,7 @@ export default function ArquivosTarefa({
   // vez de uma lista vazia que parece defeito.
   if (!podeAbrir) {
     return concluida ? (
-      <p className="text-sm text-trilha-400">Documento entregue · acesso restrito à Trilha e ao corretor</p>
+      <p className="text-sm text-muted-foreground">Documento entregue · acesso restrito à Trilha e ao corretor</p>
     ) : null;
   }
 
@@ -161,100 +162,106 @@ function Grupo({
   return (
     <div className="flex flex-col gap-1.5">
       {titulo ? (
-        <p className="text-xs font-semibold tracking-wide text-trilha-500 uppercase">
+        <p className="text-xs font-medium text-muted-foreground">
           {titulo}
-          {faltando ? <span className="ml-2 font-semibold normal-case tracking-normal text-amber-700">· falta anexar</span> : null}
-          {opcional ? <span className="ml-2 font-normal normal-case tracking-normal text-trilha-400">· opcional</span> : null}
+          {faltando ? <span className="ml-1.5 font-semibold text-aviso">· falta anexar</span> : null}
+          {opcional ? <span className="ml-1.5">· opcional</span> : null}
         </p>
       ) : null}
 
-      {arquivos.length > 0 ? (
-        <ul className="flex flex-col gap-1.5">
-          {arquivos.map((a) => (
-            <li key={a.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-              <IconeArquivo pdf={a.tipo_mime === "application/pdf"} />
-              <a
-                href={`/arquivos/${a.id}`}
-                target="_blank"
-                rel="noopener"
-                className="min-w-0 truncate text-trilha-700 underline underline-offset-2 hover:text-trilha-900"
+      {/* Arquivos e o botão de anexar na mesma faixa: cada arquivo é uma
+          "pílula" com as ações dela; o anexar é a última, tracejada. */}
+      <div className="flex flex-wrap items-center gap-2">
+        {arquivos.map((a) => (
+          <span
+            key={a.id}
+            className="inline-flex h-8 max-w-full items-center gap-2 rounded-lg border bg-card pr-1 pl-2.5 text-sm"
+          >
+            <IconeArquivo pdf={a.tipo_mime === "application/pdf"} />
+            <a
+              href={`/arquivos/${a.id}`}
+              target="_blank"
+              rel="noopener"
+              className="min-w-0 max-w-[14rem] truncate font-medium text-foreground underline-offset-4 hover:underline"
+              title={a.nome_original}
+            >
+              {a.nome_original}
+            </a>
+            <span className="text-xs text-muted-foreground tabular-nums">{formatarTamanho(a.tamanho_bytes)}</span>
+
+            {podeEnviar && mover && confirmando !== a.id ? (
+              <button
+                type="button"
+                onClick={() => mover.acao(a.id)}
+                className="rounded-md px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
               >
-                {a.nome_original}
-              </a>
-              <span className="text-trilha-400">{formatarTamanho(a.tamanho_bytes)}</span>
+                {mover.rotulo}
+              </button>
+            ) : null}
 
-              {podeEnviar && mover ? (
-                <button
-                  type="button"
-                  onClick={() => mover.acao(a.id)}
-                  className="text-trilha-400 underline underline-offset-2 hover:text-trilha-700"
-                >
-                  {mover.rotulo}
-                </button>
-              ) : null}
-
-              {podeEnviar ? (
-                confirmando === a.id ? (
-                  <span className="flex items-center gap-2">
-                    <span className="text-trilha-500">Remover?</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setConfirmando(null);
-                        remover(a.id);
-                      }}
-                      className="font-semibold text-red-700 underline underline-offset-2"
-                    >
-                      Sim
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmando(null)}
-                      className="text-trilha-500 underline underline-offset-2"
-                    >
-                      Não
-                    </button>
-                  </span>
-                ) : (
+            {podeEnviar ? (
+              confirmando === a.id ? (
+                <span className="flex items-center gap-1 text-xs">
+                  <span className="text-muted-foreground">Remover?</span>
                   <button
                     type="button"
-                    onClick={() => setConfirmando(a.id)}
-                    className="text-trilha-400 underline underline-offset-2 hover:text-red-700"
+                    onClick={() => {
+                      setConfirmando(null);
+                      remover(a.id);
+                    }}
+                    className="rounded-md px-1.5 py-0.5 font-semibold text-destructive hover:bg-erro-suave"
                   >
-                    Remover
+                    Sim
                   </button>
-                )
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setConfirmando(null)}
+                    className="rounded-md px-1.5 py-0.5 text-foreground hover:bg-accent"
+                  >
+                    Não
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmando(a.id)}
+                  aria-label={`Remover ${a.nome_original}`}
+                  className="flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-erro-suave hover:text-destructive"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )
+            ) : null}
+          </span>
+        ))}
 
-      {podeEnviar ? (
-        <div>
-          <input
-            ref={seletor}
-            id={idSeletor}
-            type="file"
-            multiple
-            accept={ACEITE_DO_SELETOR}
-            className="hidden"
-            onChange={(e) => {
-              enviar(e.target.files);
-              e.target.value = "";
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => seletor.current?.click()}
-            disabled={enviando !== null}
-            className="font-display inline-flex items-center gap-2 rounded-md border border-dashed border-trilha-300 px-3 py-1.5 text-sm font-semibold tracking-wide text-trilha-500 hover:border-trilha-500 hover:text-trilha-700 disabled:cursor-wait disabled:opacity-60"
-          >
-            {enviando ? `Enviando ${enviando}…` : arquivos.length ? "Anexar mais" : "Anexar arquivo"}
-          </button>
-          <span className="ml-3 text-xs text-trilha-400">PDF ou foto, até 10 MB</span>
-        </div>
-      ) : null}
+        {podeEnviar ? (
+          <>
+            <input
+              ref={seletor}
+              id={idSeletor}
+              type="file"
+              multiple
+              accept={ACEITE_DO_SELETOR}
+              className="hidden"
+              onChange={(e) => {
+                enviar(e.target.files);
+                e.target.value = "";
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => seletor.current?.click()}
+              disabled={enviando !== null}
+              title="PDF ou foto, até 10 MB"
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-dashed border-foreground/25 px-2.5 text-sm font-medium text-foreground transition-colors hover:border-foreground/50 hover:bg-accent disabled:cursor-wait disabled:opacity-60"
+            >
+              <Paperclip className="size-3.5" aria-hidden="true" />
+              {enviando ? `Enviando ${enviando}…` : arquivos.length ? "Anexar mais" : "Anexar"}
+            </button>
+          </>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -268,7 +275,7 @@ function IconeArquivo({ pdf }: { pdf: boolean }) {
       strokeWidth="1.6"
       strokeLinecap="round"
       strokeLinejoin="round"
-      className="size-4 shrink-0 text-trilha-400"
+      className="size-4 shrink-0 text-muted-foreground"
       aria-label={pdf ? "PDF" : "Imagem"}
     >
       {pdf ? (

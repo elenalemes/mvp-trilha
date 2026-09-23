@@ -86,14 +86,14 @@ export default function FormProposta({
         hint={
           corretor
             ? "Estes são os seus dados de cadastro. A proposta sai em seu nome."
-            : "Se você ainda não tem cadastro na Trilha, ele é criado a partir daqui e a nossa equipe libera o seu acesso."
+            : "Se você ainda não tem cadastro na Trilha, ele é criado a partir daqui e você recebe no WhatsApp o link para criar sua senha."
         }
       >
         <Field label="Nome" span={6} error={errors.corretor?.nome?.message}>
           <Input
             {...register("corretor.nome")}
             readOnly={Boolean(corretor)}
-            className={corretor ? "bg-trilha-50 text-trilha-500" : ""}
+            className={corretor ? "bg-muted/50 text-foreground" : ""}
             placeholder="Nome do corretor ou da imobiliária"
             aria-invalid={Boolean(errors.corretor?.nome)}
           />
@@ -103,7 +103,7 @@ export default function FormProposta({
           <Input
             {...register("corretor.documento")}
             readOnly={Boolean(corretor)}
-            className={corretor ? "bg-trilha-50 text-trilha-500" : ""}
+            className={corretor ? "bg-muted/50 text-foreground" : ""}
             aria-invalid={Boolean(errors.corretor?.documento)}
           />
         </Field>
@@ -112,7 +112,7 @@ export default function FormProposta({
           <Input
             {...register("corretor.creci")}
             readOnly={Boolean(corretor)}
-            className={corretor ? "bg-trilha-50 text-trilha-500" : ""}
+            className={corretor ? "bg-muted/50 text-foreground" : ""}
           />
         </Field>
 
@@ -121,7 +121,7 @@ export default function FormProposta({
             type="email"
             {...register("corretor.email")}
             readOnly={Boolean(corretor)}
-            className={corretor ? "bg-trilha-50 text-trilha-500" : ""}
+            className={corretor ? "bg-muted/50 text-foreground" : ""}
             aria-invalid={Boolean(errors.corretor?.email)}
           />
         </Field>
@@ -130,7 +130,7 @@ export default function FormProposta({
           <Input
             {...register("corretor.telefone")}
             readOnly={Boolean(corretor)}
-            className={corretor ? "bg-trilha-50 text-trilha-500" : ""}
+            className={corretor ? "bg-muted/50 text-foreground" : ""}
             aria-invalid={Boolean(errors.corretor?.telefone)}
           />
         </Field>
@@ -176,7 +176,7 @@ export default function FormProposta({
           {erro.precisaLogin ? (
             <>
               {" "}
-              <Link href="/login" className="font-semibold underline underline-offset-2">
+              <Link href="/login" className="font-semibold underline-offset-4 hover:underline">
                 Fazer login
               </Link>
               .
@@ -189,7 +189,7 @@ export default function FormProposta({
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Enviando…" : "Enviar proposta"}
         </Button>
-        <span className="text-sm text-trilha-400">Enviar não reserva a unidade.</span>
+        <span className="text-sm text-muted-foreground">Enviar não reserva a unidade.</span>
       </div>
     </form>
   );
@@ -204,17 +204,17 @@ export default function FormProposta({
  */
 function Confirmacao({ codigo }: { codigo: string }) {
   return (
-    <section className="rounded-lg border border-emerald-200 bg-emerald-50 p-8">
-      <h2 className="font-display text-xl font-semibold text-emerald-900">Proposta enviada</h2>
+    <section className="rounded-xl border border-sucesso/20 bg-sucesso-suave p-8">
+      <h2 className="text-xl font-semibold tracking-tight text-foreground">Proposta enviada</h2>
 
-      <p className="font-display mt-4 text-3xl font-bold tracking-wide text-emerald-900 tabular-nums">
+      <p className="mt-4 text-3xl font-semibold tracking-tight text-foreground tabular-nums">
         {codigo}
       </p>
-      <p className="mt-1 text-sm text-emerald-800">
+      <p className="mt-1 text-sm text-muted-foreground">
         Anote este código. É por ele que a gente encontra a sua proposta.
       </p>
 
-      <div className="mt-6 flex flex-col gap-2 border-t border-emerald-200 pt-5 text-[15px] text-emerald-900">
+      <div className="mt-6 flex flex-col gap-2 border-t border-sucesso/20 pt-5 text-sm text-foreground">
         <p>A equipe da Trilha analisa o formato de pagamento e a qualificação do comprador.</p>
         <p>Enquanto isso a unidade segue disponível — outra proposta ainda pode chegar antes.</p>
         {/* Não prometer e-mail enquanto o envio não existir: o sistema ainda
@@ -226,7 +226,7 @@ function Confirmacao({ codigo }: { codigo: string }) {
       <p className="mt-6">
         <Link
           href="/simulador"
-          className="font-display font-semibold text-emerald-900 underline underline-offset-2"
+          className="font-semibold text-foreground underline-offset-4 hover:underline"
         >
           Voltar ao simulador
         </Link>

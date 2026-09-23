@@ -64,9 +64,9 @@ export default async function ParceirosPage() {
         acao={{ href: "/parceiros/novo", label: "Cadastrar parceiro" }}
       />
 
-      <p className="mb-6 max-w-3xl text-[15px] text-trilha-400">
+      <p className="mb-6 max-w-3xl text-[15px] text-muted-foreground">
         Cada parceiro entra com o próprio login e enxerga{" "}
-        <strong className="text-trilha-700">somente as unidades disponíveis</strong> da incorporadora
+        <strong className="text-foreground">somente as unidades disponíveis</strong> da incorporadora
         dele, com as condições de pagamento de cada uma. Ele não cadastra nem altera nada — nem
         imóvel, nem empreendimento, nem condição de pagamento.
       </p>

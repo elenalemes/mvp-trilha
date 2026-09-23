@@ -65,7 +65,7 @@ export default async function IncorporadorasPage({
           <Busca base="/incorporadoras" placeholder="Buscar por nome, responsável ou CNPJ" />
         </Suspense>
         {buscando ? (
-          <span className="text-sm text-trilha-400">
+          <span className="text-sm text-muted-foreground">
             {data?.length ?? 0} resultado{(data?.length ?? 0) === 1 ? "" : "s"} para “{termo}”
           </span>
         ) : null}
@@ -86,14 +86,14 @@ export default async function IncorporadorasPage({
           />
         )
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-trilha-200 bg-white">
+        <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
           <table className="w-full min-w-[720px] border-collapse text-left">
             <thead>
-              <tr className="border-b border-trilha-100">
+              <tr className="border-b border-border">
                 {["Incorporadora", "CNPJ", "Responsável", "Empreendimentos", ""].map((h, i) => (
                   <th
                     key={`${h}-${i}`}
-                    className="font-display px-5 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
+                    className="bg-muted/50 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground"
                   >
                     {h}
                   </th>
@@ -104,38 +104,38 @@ export default async function IncorporadorasPage({
               {data.map((linha) => (
                 <tr
                   key={linha.id}
-                  className="border-b border-trilha-100 last:border-0 hover:bg-trilha-50"
+                  className="border-b border-border last:border-0 hover:bg-accent"
                 >
-                  <td className="px-5 py-4">
+                  <td className="px-4 py-3">
                     <Link
                       href={`/incorporadoras/${linha.id}`}
-                      className="font-display text-[17px] font-semibold text-trilha-700 underline underline-offset-2 hover:text-trilha-500"
+                      className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                     >
                       {linha.nome}
                     </Link>
-                    <span className="block text-sm text-trilha-400">{linha.email}</span>
+                    <span className="block text-sm text-muted-foreground">{linha.email}</span>
                   </td>
-                  <td className="px-5 py-4 text-[15px] tabular-nums text-trilha-400">
+                  <td className="px-4 py-3 text-sm tabular-nums text-muted-foreground">
                     {maskCNPJ(linha.cnpj)}
                   </td>
-                  <td className="px-5 py-4 text-[15px]">
+                  <td className="px-4 py-3 text-sm">
                     {linha.resp_nome}
-                    <span className="block text-sm tabular-nums text-trilha-400">
+                    <span className="block text-sm tabular-nums text-muted-foreground">
                       {maskPhone(linha.telefone)}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-[15px] tabular-nums">
+                  <td className="px-4 py-3 text-sm tabular-nums">
                     <Link
                       href={`/empreendimentos?incorporadora=${linha.id}`}
-                      className="text-trilha-500 underline underline-offset-2 hover:text-trilha-700"
+                      className="text-foreground underline-offset-4 hover:underline hover:text-foreground"
                     >
                       {linha.empreendimento?.[0]?.count ?? 0}
                     </Link>
                   </td>
-                  <td className="px-5 py-4 text-right">
+                  <td className="px-4 py-3 text-right">
                     <Link
                       href={`/incorporadoras/${linha.id}/editar`}
-                      className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+                      className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                     >
                       Editar
                     </Link>

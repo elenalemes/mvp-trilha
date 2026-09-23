@@ -87,7 +87,7 @@ export default async function AcessoParceiroPage({
       ) : null}
 
       {link ? (
-        <p className="mb-4 max-w-3xl text-[15px] text-trilha-400">
+        <p className="mb-4 max-w-3xl text-[15px] text-muted-foreground">
           Se preferir não esperar o corretor usar o link, você pode criar o acesso à mão aqui
           embaixo e entregar a senha a ele.
         </p>

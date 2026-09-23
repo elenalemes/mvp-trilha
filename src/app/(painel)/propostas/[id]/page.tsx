@@ -97,7 +97,7 @@ export default async function PropostaDetalhePage({
         voltar={{ href: "/propostas", label: "Propostas" }}
       />
 
-      <div className="mb-6 flex flex-wrap items-center gap-3 text-sm text-trilha-400">
+      <div className="mb-6 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
         <SituacaoProposta status={data.status} />
         <span>
           enviada em {new Date(data.created_at).toLocaleString("pt-BR")}
@@ -110,7 +110,7 @@ export default async function PropostaDetalhePage({
       <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
         <div className="lg:sticky lg:top-8">
           <CardPagamento condicao={data.condicao} modo="completo" />
-          <p className="mt-3 text-xs text-trilha-400">
+          <p className="mt-3 text-xs text-muted-foreground">
             Números congelados no envio. Condição{" "}
             {data.escopo === "empreendimento" ? "própria do empreendimento" : "padrão da incorporadora"}.
           </p>
@@ -121,17 +121,17 @@ export default async function PropostaDetalhePage({
             <DecisaoProposta id={data.id} unidade={imovel?.identificacao ?? "—"} />
           ) : aberta && corretor ? (
             <Bloco titulo="Situação">
-              <p className="text-[15px] text-trilha-900">
+              <p className="text-[15px] text-foreground">
                 A equipe da Trilha está analisando esta proposta — o formato de pagamento e a
                 qualificação do comprador. Assim que houver decisão, ela aparece aqui.
               </p>
-              <p className="mt-2 text-sm text-trilha-400">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Enquanto isso a unidade segue disponível: outra proposta ainda pode chegar antes.
               </p>
             </Bloco>
           ) : data.motivo_decisao ? (
             <Bloco titulo="Motivo da decisão">
-              <p className="text-[15px] text-trilha-900">{data.motivo_decisao}</p>
+              <p className="text-[15px] text-foreground">{data.motivo_decisao}</p>
             </Bloco>
           ) : null}
 
@@ -144,7 +144,7 @@ export default async function PropostaDetalhePage({
                 <Dado termo="Telefone" valor={maskPhone(comprador.telefone)} />
               </dl>
             ) : (
-              <p className="text-[15px] text-trilha-400">Sem dados.</p>
+              <p className="text-[15px] text-muted-foreground">Sem dados.</p>
             )}
           </Bloco>
 
@@ -170,7 +170,7 @@ export default async function PropostaDetalhePage({
                 <p className="mt-4">
                   <Link
                     href={`/parceiros/${parceiro.id}/editar`}
-                    className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+                    className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                   >
                     Abrir ficha do parceiro
                   </Link>
@@ -178,13 +178,13 @@ export default async function PropostaDetalhePage({
                 ) : null}
               </>
             ) : (
-              <p className="text-[15px] text-trilha-400">Sem dados.</p>
+              <p className="text-[15px] text-muted-foreground">Sem dados.</p>
             )}
           </Bloco>
 
           {data.observacao ? (
             <Bloco titulo="Observação do corretor">
-              <p className="text-[15px] whitespace-pre-line text-trilha-900">{data.observacao}</p>
+              <p className="text-[15px] whitespace-pre-line text-foreground">{data.observacao}</p>
             </Bloco>
           ) : null}
 
@@ -197,7 +197,7 @@ export default async function PropostaDetalhePage({
               <p className="mt-4">
                 <Link
                   href={`/empreendimentos/${empreendimento.id}/imoveis/${imovel.id}`}
-                  className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+                  className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                 >
                   Abrir a unidade
                 </Link>
@@ -212,8 +212,8 @@ export default async function PropostaDetalhePage({
 
 function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-trilha-200 bg-white p-6">
-      <h2 className="font-display mb-4 text-sm font-semibold tracking-[0.12em] text-trilha-400 uppercase">
+    <section className="rounded-lg border border-border bg-white p-6">
+      <h2 className="mb-4 text-sm font-semibold text-muted-foreground">
         {titulo}
       </h2>
       {children}
@@ -224,8 +224,8 @@ function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode
 function Dado({ termo, valor }: { termo: string; valor: string }) {
   return (
     <div>
-      <dt className="text-sm text-trilha-400">{termo}</dt>
-      <dd className="text-[15px] text-trilha-900">{valor}</dd>
+      <dt className="text-sm text-muted-foreground">{termo}</dt>
+      <dd className="text-[15px] text-foreground">{valor}</dd>
     </div>
   );
 }

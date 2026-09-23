@@ -41,18 +41,18 @@ type Registro = {
 function Item({ label, valor }: { label: string; valor: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="font-display text-xs font-semibold tracking-[0.12em] text-trilha-400 uppercase">
+      <span className="text-xs font-semibold text-muted-foreground">
         {label}
       </span>
-      <span className="text-[15px] text-trilha-900">{valor}</span>
+      <span className="text-[15px] text-foreground">{valor}</span>
     </div>
   );
 }
 
 function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-trilha-200 bg-white p-6">
-      <h2 className="font-display mb-5 border-b border-trilha-100 pb-3 text-xl font-semibold text-trilha-700">
+    <section className="rounded-lg border border-border bg-white p-6">
+      <h2 className="mb-5 border-b border-border pb-3 text-xl font-semibold text-foreground">
         {titulo}
       </h2>
       <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">{children}</div>
@@ -64,12 +64,12 @@ function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode
 function Pendencia({ titulo, texto, acao }: { titulo: string; texto: string; acao?: { href: string; label: string } }) {
   return (
     <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4">
-      <p className="font-display text-[15px] font-semibold text-amber-900">{titulo}</p>
+      <p className="text-[15px] font-semibold text-amber-900">{titulo}</p>
       <p className="mt-1 text-sm text-amber-800">{texto}</p>
       {acao ? (
         <Link
           href={acao.href}
-          className="font-display mt-3 inline-block rounded-md border border-amber-300 bg-white px-3.5 py-1.5 text-sm font-semibold tracking-wide text-amber-900 transition-colors hover:bg-amber-100"
+          className="mt-3 inline-block rounded-md border border-amber-300 bg-white px-3.5 py-1.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100"
         >
           {acao.label}
         </Link>
@@ -108,7 +108,7 @@ export default async function ImovelPage({
   if (error) {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
-        <p className="font-display text-[15px] font-semibold text-red-800">
+        <p className="text-[15px] font-semibold text-red-800">
           O banco recusou a leitura deste imóvel.
         </p>
         <p className="mt-1 text-sm text-red-700">
@@ -187,11 +187,11 @@ export default async function ImovelPage({
 
         <section>
           <div className="mb-4">
-            <h2 className="font-display text-xl font-semibold text-trilha-700">
+            <h2 className="text-xl font-semibold text-foreground">
               Opções de pagamento para este imóvel
             </h2>
             {condicoes.length ? (
-              <p className="mt-0.5 text-sm text-trilha-400">
+              <p className="mt-0.5 text-sm text-muted-foreground">
                 {origem === "empreendimento"
                   ? "Condições próprias deste empreendimento."
                   : `Padrão de ${data.empreendimento?.incorporadora?.nome ?? "a incorporadora"}.`}

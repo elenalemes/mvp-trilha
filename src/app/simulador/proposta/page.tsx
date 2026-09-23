@@ -1,3 +1,5 @@
+import { ChevronLeft } from "lucide-react";
+import { AvisoPublico, MolduraPublica } from "@/components/publico";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { simular } from "@/lib/simulador";
@@ -41,14 +43,14 @@ export default async function PropostaPage({
   if (!simulacao || !condicao) {
     return (
       <Moldura>
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+        <AvisoPublico>
           Não encontrei esta condição. A unidade pode ter saído do estoque ou as condições podem ter
           mudado desde que você abriu o simulador.
-        </p>
+        </AvisoPublico>
         <p className="mt-4">
           <Link
             href="/simulador"
-            className="font-display font-semibold text-trilha-700 underline underline-offset-2"
+            className="font-semibold text-foreground underline-offset-4 hover:underline"
           >
             Voltar ao simulador
           </Link>
@@ -77,17 +79,18 @@ export default async function PropostaPage({
 
   return (
     <Moldura>
-      <header className="mb-7">
+      <header className="mb-6 flex flex-col gap-1">
         <Link
           href={`/simulador?e=${simulacao.empreendimentoId}&u=${unidade.id}`}
-          className="font-display text-sm font-semibold tracking-wide text-trilha-500 uppercase underline underline-offset-2 hover:text-trilha-700"
+          className="-ml-1 mb-2 inline-flex w-fit items-center gap-1 rounded-md px-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
-          ← Voltar à simulação
+          <ChevronLeft className="size-4" aria-hidden="true" />
+          Voltar à simulação
         </Link>
-        <h1 className="font-display mt-3 text-2xl font-bold text-trilha-900 sm:text-3xl">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           Enviar proposta
         </h1>
-        <p className="mt-1 text-[15px] text-trilha-400">
+        <p className="text-sm text-muted-foreground">
           {unidade.identificacao} · {empreendimento}
           {[caracteristicas(unidade), incorporadora].filter(Boolean).length
             ? ` · ${[caracteristicas(unidade), incorporadora].filter(Boolean).join(" · ")}`
@@ -96,7 +99,7 @@ export default async function PropostaPage({
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
-        <div className="lg:sticky lg:top-8">
+        <div className="lg:sticky lg:top-6">
           <CardPagamento condicao={condicao} modo="publico" />
         </div>
 
@@ -113,18 +116,12 @@ export default async function PropostaPage({
 
 function Moldura({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-trilha-50/40 px-5 py-10 sm:px-8">
-      <div className="mx-auto w-full max-w-5xl">
-        <p className="font-display mb-8 text-sm font-semibold tracking-[0.18em] text-trilha-500 uppercase">
-          Trilha
-        </p>
-
-        {children}
-
-        <footer className="mt-10 text-xs text-trilha-300">
-          A proposta passa por análise da equipe da Trilha. Enviar não reserva a unidade.
-        </footer>
-      </div>
-    </main>
+    <MolduraPublica
+      contexto="Proposta"
+      largura="6xl"
+      rodape="A proposta passa por análise da equipe da Trilha. Enviar não reserva a unidade."
+    >
+      {children}
+    </MolduraPublica>
   );
 }

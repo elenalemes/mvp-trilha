@@ -34,13 +34,13 @@ function Bloco({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-trilha-200 bg-white p-6 shadow-[0_1px_2px_rgba(21,38,110,0.05)]">
-      <header className="mb-5 flex items-center justify-between gap-3 border-b border-trilha-100 pb-3">
-        <h2 className="font-display text-xl font-semibold text-trilha-700">{titulo}</h2>
+    <section className="rounded-lg border border-border bg-white p-6 shadow-[0_1px_2px_rgba(21,38,110,0.05)]">
+      <header className="mb-5 flex items-center justify-between gap-3 border-b border-border pb-3">
+        <h2 className="text-xl font-semibold text-foreground">{titulo}</h2>
         <button
           type="button"
           onClick={aoRemover}
-          className="font-display text-sm font-semibold tracking-wide text-trilha-400 uppercase transition-colors hover:text-red-600"
+          className="text-sm font-semibold text-muted-foreground transition-colors hover:text-red-600"
         >
           Remover
         </button>
@@ -124,7 +124,7 @@ export default function FormOpcoesPagamento({
               {...register("percentual_comissao")}
             />
           </Field>
-          <p className="text-sm text-trilha-400 sm:col-span-4">
+          <p className="text-sm text-muted-foreground sm:col-span-4">
             Sai de dentro da entrada e é paga ao parceiro parcelada ao longo da Trilha. O que a
             incorporadora recebe durante a Trilha é a entrada menos a comissão; o saldo do fim não
             tem desconto.
@@ -133,11 +133,11 @@ export default function FormOpcoesPagamento({
       )}
 
       {fields.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-trilha-200 bg-white px-6 py-10 text-center">
-          <p className="font-display text-lg font-semibold text-trilha-700">
+        <div className="rounded-lg border border-dashed border-border bg-white px-6 py-10 text-center">
+          <p className="text-lg font-semibold text-foreground">
             Nenhuma opção de pagamento
           </p>
-          <p className="mx-auto mt-1 max-w-lg text-[15px] text-trilha-400">
+          <p className="mx-auto mt-1 max-w-lg text-[15px] text-muted-foreground">
             {empreendimentoId
               ? "Sem condições próprias, este empreendimento usa o padrão da incorporadora. Salvar assim, vazio, é como voltar a usar o padrão."
               : "Enquanto não houver nenhuma, os imóveis desta incorporadora aparecem sem formatos de pagamento. O cadastro continua liberado."}
@@ -197,13 +197,13 @@ export default function FormOpcoesPagamento({
               />
             </Field>
 
-            <p className="text-sm text-trilha-400 sm:col-span-6">
+            <p className="text-sm text-muted-foreground sm:col-span-6">
               {fecha ? (
                 <>
-                  Durante a Trilha: <strong className="text-trilha-700">{pct(ato)}</strong> no ato,{" "}
-                  <strong className="text-trilha-700">{pct(entrada - ato)}</strong> parcelado em{" "}
-                  <strong className="text-trilha-700">{prazo}</strong> meses · A financiar no fim:{" "}
-                  <strong className="text-trilha-700">{pct(100 - entrada)}</strong> do valor.
+                  Durante a Trilha: <strong className="text-foreground">{pct(ato)}</strong> no ato,{" "}
+                  <strong className="text-foreground">{pct(entrada - ato)}</strong> parcelado em{" "}
+                  <strong className="text-foreground">{prazo}</strong> meses · A financiar no fim:{" "}
+                  <strong className="text-foreground">{pct(100 - entrada)}</strong> do valor.
                 </>
               ) : (
                 "Preencha a entrada e o prazo para ver como a condição fecha."
@@ -238,7 +238,7 @@ export default function FormOpcoesPagamento({
         </Button>
         <Link
           href={voltarPara}
-          className="font-display px-2 text-[15px] font-semibold tracking-wide text-trilha-400 underline underline-offset-2 hover:text-trilha-700"
+          className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
         >
           Voltar
         </Link>

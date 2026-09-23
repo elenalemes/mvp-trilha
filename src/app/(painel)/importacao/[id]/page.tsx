@@ -131,7 +131,7 @@ export default async function ImportacaoPage({ params }: { params: Promise<{ id:
 
       <div className="mb-6 flex flex-wrap items-center gap-3 text-sm">
         <span
-          className={`font-display rounded-full border px-3 py-1 font-semibold tracking-wide ${
+          className={`rounded-full border px-3 py-1 font-semibold ${
             importacao.metodo_leitura === "documento"
               ? "border-amber-200 bg-amber-50 text-amber-700"
               : "border-emerald-200 bg-emerald-50 text-emerald-700"
@@ -141,7 +141,7 @@ export default async function ImportacaoPage({ params }: { params: Promise<{ id:
             ? "Lido como documento · valores interpretados por IA"
             : "Lido como planilha · valores extraídos direto"}
         </span>
-        <span className="text-trilha-400">
+        <span className="text-muted-foreground">
           {importacao.metodo_leitura === "documento"
             ? "Confira com atenção."
             : "Confiança alta, mas passe o olho."}
@@ -149,7 +149,7 @@ export default async function ImportacaoPage({ params }: { params: Promise<{ id:
       </div>
 
       {importacao.contexto ? (
-        <p className="mb-6 rounded-md border border-trilha-200 bg-trilha-50 px-4 py-3 text-sm text-trilha-700">
+        <p className="mb-6 rounded-md border border-border bg-muted/50 px-4 py-3 text-sm text-foreground">
           <span className="font-semibold">Observação enviada com o arquivo:</span>{" "}
           {importacao.contexto}
         </p>

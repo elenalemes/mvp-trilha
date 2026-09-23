@@ -48,7 +48,7 @@ export default function FormPrimeiroAcesso({ token }: { token: string }) {
   return (
     <form onSubmit={enviar} className="flex flex-col gap-4">
       <label className="flex flex-col gap-1.5">
-        <span className="font-display text-sm font-semibold tracking-wide text-trilha-700 uppercase">
+        <span className="text-sm font-medium text-foreground">
           Crie uma senha
         </span>
         <Input
@@ -57,11 +57,11 @@ export default function FormPrimeiroAcesso({ token }: { token: string }) {
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
         />
-        <span className="text-xs text-trilha-400">Mínimo de 8 caracteres.</span>
+        <span className="text-xs text-muted-foreground">Mínimo de 8 caracteres.</span>
       </label>
 
       <label className="flex flex-col gap-1.5">
-        <span className="font-display text-sm font-semibold tracking-wide text-trilha-700 uppercase">
+        <span className="text-sm font-medium text-foreground">
           Repita a senha
         </span>
         <Input

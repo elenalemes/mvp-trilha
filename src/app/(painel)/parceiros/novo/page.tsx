@@ -70,15 +70,15 @@ async function EscolherIncorporadora() {
           ela vem primeiro.
         </p>
       ) : (
-        <ul className="flex flex-col overflow-hidden rounded-lg border border-trilha-200 bg-white">
+        <ul className="flex flex-col overflow-hidden rounded-lg border border-border bg-white">
           {incorporadoras.map((i) => (
-            <li key={i.id} className="border-b border-trilha-100 last:border-0">
+            <li key={i.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
               <Link
                 href={`/incorporadoras/${i.id}/parceiros/novo`}
-                className="font-display flex items-center justify-between gap-4 px-5 py-4 text-[17px] font-semibold text-trilha-700 transition-colors hover:bg-trilha-50"
+                className="flex items-center justify-between gap-4 px-5 py-4 text-[17px] font-semibold text-foreground transition-colors hover:bg-accent"
               >
                 {i.nome}
-                <span aria-hidden="true" className="text-trilha-300">
+                <span aria-hidden="true" className="text-muted-foreground/70">
                   →
                 </span>
               </Link>

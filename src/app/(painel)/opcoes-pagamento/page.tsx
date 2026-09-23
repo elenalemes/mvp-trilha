@@ -16,7 +16,7 @@ function Editar({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="font-display rounded-md border border-trilha-200 bg-white px-3.5 py-1.5 text-sm font-semibold tracking-wide text-trilha-700 transition-colors hover:border-trilha-500 hover:bg-trilha-50"
+      className="rounded-md border border-border bg-white px-3.5 py-1.5 text-sm font-semibold text-foreground transition-colors hover:border-foreground/30 hover:bg-accent"
     >
       {label}
     </Link>
@@ -85,11 +85,11 @@ export default async function OpcoesPagamentoPage() {
         descricao="Defina opções de pagamento para os imóveis à venda com a Trilha."
       />
 
-      <section className="rounded-lg border border-trilha-200 bg-white p-6">
+      <section className="rounded-lg border border-border bg-white p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="font-display text-xl font-semibold text-trilha-700">Padrão</h2>
-            <p className="mt-0.5 text-sm text-trilha-400">
+            <h2 className="text-xl font-semibold text-foreground">Padrão</h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
               Vale para todos os seus imóveis, menos os de empreendimentos com condições próprias.
             </p>
           </div>
@@ -101,9 +101,9 @@ export default async function OpcoesPagamentoPage() {
         <ListaOpcoes opcoes={padrao} percentualComissao={minhaFicha?.percentual_comissao} />
 
         {[...porEmpreendimento].map(([empId, emp]) => (
-          <div key={empId} className="mt-6 border-t border-trilha-100 pt-5">
+          <div key={empId} className="mt-6 border-t border-border pt-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <h3 className="font-display text-sm font-semibold tracking-[0.12em] text-trilha-400 uppercase">
+              <h3 className="text-sm font-semibold text-muted-foreground">
                 {emp.nome} — condições próprias
               </h3>
               <Editar href={`/empreendimentos/${empId}/opcoes-pagamento`} label="Editar condições" />

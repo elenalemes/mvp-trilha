@@ -51,16 +51,16 @@ export default function ListaParceiros({
     : ["Parceiro", "CPF / CNPJ", "Contato", "Acesso", "Situação", ""];
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-trilha-200 bg-white">
+    <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
       <table
         className={`w-full border-collapse text-left ${mostrarIncorporadora ? "min-w-[980px]" : "min-w-[820px]"}`}
       >
         <thead>
-          <tr className="border-b border-trilha-100">
+          <tr className="border-b border-border">
             {colunas.map((h, i) => (
               <th
                 key={`${h}-${i}`}
-                className="font-display px-5 py-3 text-sm font-semibold tracking-wide text-trilha-400 uppercase"
+                className="bg-muted/50 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground"
               >
                 {h}
               </th>
@@ -71,42 +71,42 @@ export default function ListaParceiros({
           {parceiros.map((p) => {
             const rota = base;
             return (
-              <tr key={p.id} className="border-b border-trilha-100 last:border-0">
-                <td className="px-5 py-4">
+              <tr key={p.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
+                <td className="px-4 py-3">
                   <Link
                     href={`${rota}/${p.id}/editar`}
-                    className="font-display text-[17px] font-semibold text-trilha-700 underline underline-offset-2 hover:text-trilha-500"
+                    className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
                   >
                     {p.nome}
                   </Link>
-                  {p.creci ? <span className="block text-sm text-trilha-400">{p.creci}</span> : null}
+                  {p.creci ? <span className="block text-sm text-muted-foreground">{p.creci}</span> : null}
                 </td>
 
                 {mostrarIncorporadora ? (
-                  <td className="px-5 py-4 text-[15px]">
+                  <td className="px-4 py-3 text-sm">
                     {p.incorporadora ? (
                       <Link
                         href={`/incorporadoras/${p.incorporadora.id}`}
-                        className="text-trilha-700 underline underline-offset-2 hover:text-trilha-500"
+                        className="text-foreground underline-offset-4 hover:underline hover:text-foreground"
                       >
                         {p.incorporadora.nome}
                       </Link>
                     ) : (
-                      <span className="text-trilha-300">—</span>
+                      <span className="text-muted-foreground/70">—</span>
                     )}
                   </td>
                 ) : null}
 
-                <td className="px-5 py-4 text-[15px] tabular-nums text-trilha-400">
+                <td className="px-4 py-3 text-sm tabular-nums text-muted-foreground">
                   {documentoFormatado(p.documento)}
                 </td>
-                <td className="px-5 py-4 text-[15px]">
+                <td className="px-4 py-3 text-sm">
                   {p.email}
-                  <span className="block text-sm tabular-nums text-trilha-400">
+                  <span className="block text-sm tabular-nums text-muted-foreground">
                     {maskPhone(p.telefone)}
                   </span>
                 </td>
-                <td className="px-5 py-4 text-[15px] text-trilha-400">
+                <td className="px-4 py-3 text-sm text-muted-foreground">
                   {/* Sem conta_id não há login. Com conta_id mas sem e-mail legível,
                       o acesso existe e quem está olhando é que não pode lê-lo. */}
                   {p.conta_id
@@ -115,9 +115,9 @@ export default function ListaParceiros({
                       ? "convite enviado, não usado"
                       : "sem acesso criado"}
                 </td>
-                <td className="px-5 py-4">
+                <td className="px-4 py-3">
                   <span
-                    className={`font-display inline-block rounded-full border px-2.5 py-0.5 text-sm font-semibold ${
+                    className={`inline-block rounded-full border px-2.5 py-0.5 text-sm font-semibold ${
                       p.ativo
                         ? "border-emerald-200 bg-emerald-50 text-emerald-700"
                         : "border-slate-200 bg-slate-100 text-slate-600"
@@ -126,11 +126,11 @@ export default function ListaParceiros({
                     {p.ativo ? "Ativo" : "Inativo"}
                   </span>
                 </td>
-                <td className="px-5 py-4 text-right whitespace-nowrap">
+                <td className="px-4 py-3 text-right whitespace-nowrap">
                   <Link
                     href={`${rota}/${p.id}/acesso`}
-                    className={`font-display text-sm font-semibold tracking-wide uppercase underline underline-offset-2 hover:text-trilha-700 ${
-                      p.conta_id ? "text-trilha-500" : "text-amber-700"
+                    className={`text-sm font-semibold underline-offset-4 hover:underline hover:text-foreground ${
+                      p.conta_id ? "text-foreground" : "text-amber-700"
                     }`}
                   >
                     {/* Três situações, três rótulos. Um "Acesso" genérico

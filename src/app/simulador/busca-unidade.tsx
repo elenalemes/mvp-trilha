@@ -84,8 +84,8 @@ export function BuscaUnidade({
     <div className="relative">
       <label
         htmlFor="busca-unidade"
-        className={`font-display mb-1.5 block text-sm font-semibold tracking-wide uppercase ${
-          desativado ? "text-trilha-300" : "text-trilha-700"
+        className={`mb-2 block text-sm font-medium ${
+          desativado ? "text-muted-foreground/70" : "text-foreground"
         }`}
       >
         Unidade
@@ -99,7 +99,7 @@ export function BuscaUnidade({
             stroke="currentColor"
             strokeWidth="2.2"
             strokeLinecap="round"
-            className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 animate-spin text-trilha-500"
+            className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 animate-spin text-foreground"
             aria-label="Buscando"
           >
             <path d="M12 3a9 9 0 1 0 9 9" />
@@ -111,7 +111,7 @@ export function BuscaUnidade({
             stroke="currentColor"
             strokeWidth="1.7"
             strokeLinecap="round"
-            className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-trilha-300"
+            className="pointer-events-none absolute top-1/2 left-3 size-[18px] -translate-y-1/2 text-muted-foreground/70"
             aria-hidden="true"
           >
             <circle cx="11" cy="11" r="7" />
@@ -136,7 +136,7 @@ export function BuscaUnidade({
           }}
           onBlur={() => setTimeout(() => { setAberto(false); setTexto(nomeEscolhido); }, 150)}
           placeholder={desativado ? "Escolha o empreendimento" : "Ex.: 302"}
-          className="w-full rounded-md border border-trilha-200 bg-white py-2.5 pr-10 pl-10 text-[15px] text-trilha-900 placeholder:text-trilha-300 transition-colors hover:border-trilha-300 focus:border-trilha-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-trilha-50 disabled:text-trilha-400 disabled:hover:border-trilha-200"
+          className="w-full h-10 rounded-md border border-input bg-card pr-10 pl-10 text-sm text-foreground shadow-xs placeholder:text-muted-foreground transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:hover:border-border"
         />
 
         {texto && !desativado ? (
@@ -145,7 +145,7 @@ export function BuscaUnidade({
             onMouseDown={(e) => e.preventDefault()}
             onClick={limpar}
             aria-label="Limpar unidade"
-            className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-trilha-300 transition-colors hover:bg-trilha-50 hover:text-trilha-700"
+            className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground/70 transition-colors hover:bg-accent hover:text-foreground"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-4" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12" />
@@ -155,7 +155,7 @@ export function BuscaUnidade({
       </div>
 
       {!desativado && unidades.length > 0 ? (
-        <p className="mt-1.5 text-xs text-trilha-400">
+        <p className="mt-1.5 text-xs text-muted-foreground">
           {unidades.length} unidade{unidades.length === 1 ? "" : "s"} disponíve
           {unidades.length === 1 ? "l" : "is"} neste empreendimento
         </p>
@@ -163,29 +163,29 @@ export function BuscaUnidade({
 
       {aberto && !desativado ? (
         resultados.length > 0 ? (
-          <ul className="absolute z-20 mt-1 flex max-h-72 w-full flex-col divide-y divide-trilha-100 overflow-y-auto rounded-md border border-trilha-200 bg-white shadow-lg">
+          <ul className="absolute z-20 mt-1 flex max-h-72 w-full flex-col divide-y divide-border overflow-y-auto rounded-lg border bg-popover shadow-md">
             {resultados.map((u) => (
               <li key={u.id}>
                 <button
                   type="button"
                   onMouseDown={(ev) => ev.preventDefault()}
                   onClick={() => escolher(u)}
-                  className={`flex w-full flex-col items-start px-4 py-3 text-left transition-colors hover:bg-trilha-50 ${
-                    selecionada?.id === u.id ? "bg-trilha-50" : ""
+                  className={`flex w-full flex-col items-start px-4 py-3 text-left transition-colors hover:bg-accent ${
+                    selecionada?.id === u.id ? "bg-muted/50" : ""
                   }`}
                 >
-                  <span className="font-display text-[16px] font-semibold text-trilha-700">
+                  <span className="text-sm font-medium text-foreground">
                     {u.identificacao}
                   </span>
                   {caracteristicas(u) ? (
-                    <span className="text-sm text-trilha-400">{caracteristicas(u)}</span>
+                    <span className="text-sm text-muted-foreground">{caracteristicas(u)}</span>
                   ) : null}
                 </button>
               </li>
             ))}
           </ul>
         ) : (
-          <p className="absolute z-20 mt-1 w-full rounded-md border border-trilha-200 bg-white px-4 py-3 text-sm text-trilha-400 shadow-lg">
+          <p className="absolute z-20 mt-1 w-full rounded-lg border bg-popover px-4 py-3 text-sm text-muted-foreground shadow-md">
             Nenhuma unidade com esse texto.
           </p>
         )

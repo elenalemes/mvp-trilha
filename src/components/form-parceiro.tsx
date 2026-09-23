@@ -171,7 +171,7 @@ export default function FormParceiro({
         {editando ? (
           <div className="sm:col-span-6">
             <Checkbox label="Parceiro ativo" {...register("dados.ativo")} />
-            <p className="text-sm text-trilha-400">
+            <p className="text-sm text-muted-foreground">
               Desmarcado, o login continua existindo mas não enxerga mais nada do estoque. É a
               forma de desligar um parceiro sem apagar o cadastro dele.
             </p>
@@ -242,7 +242,7 @@ export default function FormParceiro({
         </Button>
         <Link
           href={voltarPara}
-          className="font-display px-2 text-[15px] font-semibold tracking-wide text-trilha-400 underline underline-offset-2 hover:text-trilha-700"
+          className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
         >
           {editando ? "Voltar" : "Cancelar"}
         </Link>
