@@ -1,5 +1,5 @@
 import { formatBRL } from "@/lib/br";
-import type { Condicao } from "@/lib/pagamento";
+import type { Condicao, DivisaoComissao } from "@/lib/pagamento";
 
 const pct = (n: number) => `${n.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`;
 
@@ -51,9 +51,18 @@ function Linha({
 export default function CardPagamento({
   condicao: c,
   modo = "completo",
+  vendaDireta = false,
+  divisao,
+  especial = false,
 }: {
   condicao: Condicao;
   modo?: "completo" | "parceiro" | "publico";
+  /** Negócio sem corretor: a parte da comissão é da Trilha. Os números não mudam. */
+  vendaDireta?: boolean;
+  /** Comissão dividida entre corretores (condição especial). Só no modo completo. */
+  divisao?: DivisaoComissao;
+  /** Condição definida à mão pela Trilha. */
+  especial?: boolean;
 }) {
   // O saldo é quitado no mês seguinte ao fim da Trilha: 25º numa opção de 24
   // meses, 13º numa de 12. Fixar "25" quebraria em todo prazo diferente.
@@ -62,12 +71,20 @@ export default function CardPagamento({
   return (
     <article className="flex snap-start flex-col rounded-xl border bg-card p-6 shadow-xs print:break-inside-avoid print:shadow-none">
       <header className="border-b border-border pb-4">
-        {modo === "completo" ? (
+        {modo === "completo" && !especial ? (
           <p className="mb-1 text-xs font-medium text-muted-foreground">
             Opção {c.ordem}
           </p>
         ) : null}
-        <h3 className="text-lg font-semibold tracking-tight text-foreground">{c.prazoMeses} meses</h3>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="text-lg font-semibold tracking-tight text-foreground">{c.prazoMeses} meses</h3>
+          {especial ? (
+            <span className="inline-flex h-6 items-center gap-1.5 rounded-full border px-2.5 text-xs font-medium text-foreground">
+              <span aria-hidden="true" className="size-1.5 rounded-full bg-aviso" />
+              Condição especial
+            </span>
+          ) : null}
+        </div>
         <p className="mt-0.5 text-sm text-muted-foreground">de Trilha</p>
       </header>
 
@@ -121,7 +138,7 @@ export default function CardPagamento({
               <Linha termo="Total ao fim da Trilha" valor={formatBRL(c.comissaoTotal)} />
             </dl>
           ) : (
-            <p className="mt-3 text-sm text-red-700">
+            <p className="mt-3 text-sm text-destructive">
               Esta condição não fecha com a comissão atual. Fale com a incorporadora antes de
               oferecê-la ao cliente.
             </p>
@@ -147,14 +164,32 @@ export default function CardPagamento({
                 valor={`${c.prazoMeses}× ${formatBRL(c.incorporadoraMensal)}`}
                 forte
               />
-              <Linha
-                termo={`Parceiro imobiliário (${pct(c.percentualComissao)})`}
-                valor={`${c.prazoMeses}× ${formatBRL(c.comissaoMensal)}`}
-              />
+              {divisao ? (
+                <>
+                  {divisao.corretores.map((d) => (
+                    <Linha
+                      key={d.parceiroId}
+                      termo={`${d.nome || "Corretor"} (${pct(d.pontos)})`}
+                      valor={`${c.prazoMeses}× ${formatBRL(d.mensal)}`}
+                    />
+                  ))}
+                  {divisao.trilha.total > 0 ? (
+                    <Linha
+                      termo={`Trilha · comissão (${pct(divisao.trilha.pontos)})`}
+                      valor={`${c.prazoMeses}× ${formatBRL(divisao.trilha.mensal)}`}
+                    />
+                  ) : null}
+                </>
+              ) : (
+                <Linha
+                  termo={`${vendaDireta ? "Trilha · venda direta" : "Parceiro imobiliário"} (${pct(c.percentualComissao)})`}
+                  valor={`${c.prazoMeses}× ${formatBRL(c.comissaoMensal)}`}
+                />
+              )}
               <Linha termo="Gestão Trilha" valor={`${c.prazoMeses}× ${formatBRL(c.gestao)}`} />
             </dl>
           ) : (
-            <p className="text-sm text-red-700">
+            <p className="text-sm text-destructive">
               A comissão de {pct(c.percentualComissao)} ({formatBRL(c.comissaoTotal)}) é maior que o
               que se paga parcelado nesta opção ({formatBRL(c.totalNaTrilha)}). Do jeito que está, a
               incorporadora receberia menos que zero durante a Trilha.

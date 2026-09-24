@@ -55,23 +55,23 @@ export default async function ImportacaoPage({ params }: { params: Promise<{ id:
         />
 
         {ocupada ? (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-6">
-            <p className="text-[15px] text-amber-900">
+          <div className="rounded-lg border border-aviso/20 bg-aviso-suave p-6">
+            <p className="text-sm text-aviso">
               O seu arquivo está bem — quem não respondeu foi o Google. O plano gratuito do Gemini
               fica indisponível quando há muita gente usando, e isso costuma passar em alguns
               minutos.
             </p>
-            <p className="mt-3 text-[15px] text-amber-900">
+            <p className="mt-3 text-sm text-aviso">
               <strong>O que fazer:</strong> envie o arquivo de novo daqui a pouco. Se acontecer
               com frequência, vale trocar para uma chave paga — o custo é de centavos por arquivo
               e não tem fila.
             </p>
-            <p className="mt-4 font-mono text-xs break-all text-amber-700">{detalhe}</p>
+            <p className="mt-4 font-mono text-xs break-all text-aviso">{detalhe}</p>
           </div>
         ) : (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-            <p className="text-[15px] text-red-800">{detalhe}</p>
-            <p className="mt-3 text-sm text-red-700">
+          <div className="rounded-lg border border-destructive/20 bg-erro-suave p-6">
+            <p className="text-sm text-destructive">{detalhe}</p>
+            <p className="mt-3 text-sm text-destructive">
               Se o arquivo estiver num formato que não dá para ler, o caminho é cadastrar as
               unidades à mão pelo empreendimento.
             </p>
@@ -94,7 +94,7 @@ export default async function ImportacaoPage({ params }: { params: Promise<{ id:
               : undefined
           }
         />
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-5 py-4 text-[15px] text-emerald-800">
+        <p className="rounded-lg border border-sucesso/20 bg-sucesso-suave px-5 py-4 text-sm text-sucesso">
           As unidades deste arquivo já foram gravadas.
         </p>
       </>
@@ -133,8 +133,8 @@ export default async function ImportacaoPage({ params }: { params: Promise<{ id:
         <span
           className={`rounded-full border px-3 py-1 font-semibold ${
             importacao.metodo_leitura === "documento"
-              ? "border-amber-200 bg-amber-50 text-amber-700"
-              : "border-emerald-200 bg-emerald-50 text-emerald-700"
+              ? "border-aviso/20 bg-aviso-suave text-aviso"
+              : "border-sucesso/20 bg-sucesso-suave text-sucesso"
           }`}
         >
           {importacao.metodo_leitura === "documento"
@@ -156,7 +156,7 @@ export default async function ImportacaoPage({ params }: { params: Promise<{ id:
       ) : null}
 
       {(linhas?.length ?? 0) === 0 ? (
-        <p className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-[15px] text-amber-800">
+        <p className="rounded-lg border border-aviso/20 bg-aviso-suave px-5 py-4 text-sm text-aviso">
           Nenhuma unidade com preço foi encontrada neste arquivo.{" "}
           <Link href="/incorporadoras" className="underline">
             Voltar

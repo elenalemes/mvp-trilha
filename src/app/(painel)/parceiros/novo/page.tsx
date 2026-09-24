@@ -26,7 +26,7 @@ export default async function NovoParceiroPage() {
 
   if (!sessao?.incorporadoraId) {
     return (
-      <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+      <p className="rounded-md border border-aviso/20 bg-aviso-suave px-5 py-4 text-sm text-aviso">
         Esta conta não está ligada a nenhuma incorporadora.
       </p>
     );
@@ -36,7 +36,7 @@ export default async function NovoParceiroPage() {
     <>
       <PageHeader
         titulo="Cadastrar parceiro"
-        descricao="Ele vai enxergar as suas unidades disponíveis, sem poder alterar nada."
+        descricao="Acesso só de leitura ao estoque disponível."
         voltar={{ href: "/parceiros", label: "Parceiros" }}
       />
       <FormParceiro modo="criar" incorporadoraId={sessao.incorporadoraId} voltarPara="/parceiros" />
@@ -49,6 +49,8 @@ async function EscolherIncorporadora() {
   const { data, error } = await supabase
     .from("incorporadora")
     .select("id, nome")
+    // Proprietário PF tem menu próprio.
+    .eq("tipo", "incorporadora")
     .order("nome")
     .returns<{ id: string; nome: string }[]>();
 
@@ -65,12 +67,12 @@ async function EscolherIncorporadora() {
       />
 
       {incorporadoras.length === 0 ? (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+        <p className="rounded-md border border-aviso/20 bg-aviso-suave px-5 py-4 text-sm text-aviso">
           Nenhuma incorporadora cadastrada ainda. O parceiro vende as unidades de uma delas, então
           ela vem primeiro.
         </p>
       ) : (
-        <ul className="flex flex-col overflow-hidden rounded-lg border border-border bg-white">
+        <ul className="flex flex-col overflow-hidden rounded-lg border border-border bg-card">
           {incorporadoras.map((i) => (
             <li key={i.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
               <Link
@@ -86,6 +88,17 @@ async function EscolherIncorporadora() {
           ))}
         </ul>
       )}
+
+      <p className="mt-4 text-sm text-muted-foreground">
+        Corretor independente, sem incorporadora?{" "}
+        <Link
+          href="/parceiro-trilha/novo"
+          className="font-semibold text-foreground underline-offset-4 hover:underline"
+        >
+          Cadastre como Parceiro Trilha
+        </Link>
+        .
+      </p>
     </>
   );
 }

@@ -40,13 +40,19 @@ type Corretor = {
 
 type Comprador = { nome: string; cpf: string; email: string; telefone: string };
 
-type ParceiroExistente = { id: string; incorporadora_id: string; conta_id: string | null };
+type ParceiroExistente = { id: string; incorporadora_id: string | null; conta_id: string | null };
 
 type Entrada = {
   empreendimentoId: string;
   imovelId: string;
   ordem: number;
   corretor?: Corretor;
+  /**
+   * Só para quem não está logado: o corretor diz se é da incorporadora da
+   * unidade ou Parceiro Trilha (independente). Quem está logado já tem isso
+   * no cadastro.
+   */
+  vinculo?: "incorporadora" | "trilha";
   comprador: Comprador;
   observacao?: string;
 };
@@ -60,15 +66,18 @@ export async function enviarProposta(entrada: Entrada): Promise<ResultadoPropost
   // Se o corretor entrou pelo atalho do painel, os cookies vieram junto.
   const sessao = await getSessao();
   let parceiroId: string | null = null;
+  // `undefined` = não logado; `null` = Parceiro Trilha; texto = incorporadora dele.
+  let incorporadoraDoLogado: string | null | undefined = undefined;
 
   if (sessao?.conta?.tipo === "parceiro") {
     const supabase = await createClient();
     const { data } = await supabase
       .from("parceiro")
-      .select("id")
+      .select("id, incorporadora_id")
       .eq("conta_id", sessao.usuarioId)
-      .maybeSingle<{ id: string }>();
+      .maybeSingle<{ id: string; incorporadora_id: string | null }>();
     parceiroId = data?.id ?? null;
+    if (data) incorporadoraDoLogado = data.incorporadora_id;
   }
 
   // ---------------------------------------------------------- o formulário
@@ -94,6 +103,10 @@ export async function enviarProposta(entrada: Entrada): Promise<ResultadoPropost
     corretor = r.data.corretor;
     comprador = r.data.comprador;
     observacao = r.data.observacao;
+
+    if (entrada.vinculo !== "incorporadora" && entrada.vinculo !== "trilha") {
+      return { ok: false, erro: "Diga qual é o seu vínculo: corretor da incorporadora ou Parceiro Trilha." };
+    }
   }
 
   // ------------------------------------------------------------- a unidade
@@ -115,6 +128,15 @@ export async function enviarProposta(entrada: Entrada): Promise<ResultadoPropost
     };
   }
 
+  // Corretor de incorporadora vende o estoque DELA. Quem trabalha com mais de
+  // uma é cadastrado como Parceiro Trilha, que vende qualquer unidade.
+  if (typeof incorporadoraDoLogado === "string" && incorporadoraDoLogado !== simulacao.incorporadoraId) {
+    return {
+      ok: false,
+      erro: "Seu cadastro é de parceiro de outra incorporadora. Para vender esta unidade, fale com a Trilha sobre ser Parceiro Trilha.",
+    };
+  }
+
   const admin = createAdminClient();
 
   // ------------------------------------------------------------- o corretor
@@ -123,7 +145,11 @@ export async function enviarProposta(entrada: Entrada): Promise<ResultadoPropost
   let convite: Convite | null = null;
 
   if (!parceiroId && corretor) {
-    const resolvido = await resolverParceiro(admin, corretor, simulacao.incorporadoraId);
+    const resolvido = await resolverParceiro(
+      admin,
+      corretor,
+      entrada.vinculo === "trilha" ? null : simulacao.incorporadoraId,
+    );
     if ("erro" in resolvido) return resolvido;
     parceiroId = resolvido.id;
     convite = resolvido.convite ?? null;
@@ -259,7 +285,8 @@ const primeiroErro = (issues: { message: string }[]) =>
 async function resolverParceiro(
   admin: Admin,
   corretor: Corretor,
-  incorporadoraId: string,
+  /** Nulo = Parceiro Trilha. */
+  incorporadoraId: string | null,
 ): Promise<
   { id: string; convite?: Convite } | { ok: false; erro: string; precisaLogin: boolean }
 > {

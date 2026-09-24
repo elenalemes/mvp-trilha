@@ -62,18 +62,23 @@ function montarCampos(d: Dados) {
  * qualquer uma, e a própria incorporadora, na dela. A mesma regra vale no
  * banco — isto aqui existe para dar mensagem melhor que "permission denied".
  */
-async function podeGerenciar(incorporadoraId: string) {
+async function podeGerenciar(incorporadoraId: string | null) {
   const sessao = await getSessao();
   if (!sessao?.conta) return { ok: false as const, erro: "Sessão expirada. Entre de novo." };
   if (ehAdmin(sessao)) return { ok: true as const };
+  // Parceiro Trilha (sem incorporadora) é assunto só da Trilha.
+  if (incorporadoraId === null) {
+    return { ok: false as const, erro: "Só a Trilha gerencia os Parceiros Trilha." };
+  }
   if (sessao.incorporadoraId === incorporadoraId) return { ok: true as const };
   return { ok: false as const, erro: "Você só pode gerenciar os parceiros da sua incorporadora." };
 }
 
 // --------------------------------------------------------------- criar
 
+/** `incorporadoraId` nulo cria um Parceiro Trilha (só o admin pode). */
 export async function criarParceiro(
-  incorporadoraId: string,
+  incorporadoraId: string | null,
   bruto: unknown,
 ): Promise<Resultado> {
   const permissao = await podeGerenciar(incorporadoraId);
@@ -147,7 +152,12 @@ export async function criarParceiro(
   if (erroParceiro || !parceiro) {
     await desfazer();
     if (erroParceiro?.code === "23505") {
-      return { id: null, erro: "Já existe um parceiro com esse CPF/CNPJ nesta incorporadora." };
+      return {
+        id: null,
+        erro: incorporadoraId
+          ? "Já existe um parceiro com esse CPF/CNPJ nesta incorporadora."
+          : "Já existe um Parceiro Trilha com esse CPF/CNPJ.",
+      };
     }
     if (erroParceiro?.code === "42501") {
       return { id: null, erro: "Você não tem permissão para cadastrar parceiros aqui." };
@@ -155,9 +165,12 @@ export async function criarParceiro(
     return { id: null, erro: detalhar("Não foi possível salvar o parceiro.", erroParceiro) };
   }
 
-  revalidatePath(`/incorporadoras/${incorporadoraId}`);
-  revalidatePath(`/incorporadoras/${incorporadoraId}/parceiros`);
+  if (incorporadoraId) {
+    revalidatePath(`/incorporadoras/${incorporadoraId}`);
+    revalidatePath(`/incorporadoras/${incorporadoraId}/parceiros`);
+  }
   revalidatePath("/parceiros");
+  revalidatePath("/parceiro-trilha");
   return { id: parceiro.id, erro: null };
 }
 
@@ -183,7 +196,7 @@ export async function atualizarParceiro(id: string, bruto: unknown): Promise<Res
     .update(montarCampos(parsed.data))
     .eq("id", id)
     .select("id, incorporadora_id")
-    .maybeSingle<{ id: string; incorporadora_id: string }>();
+    .maybeSingle<{ id: string; incorporadora_id: string | null }>();
 
   if (error) {
     if (error.code === "23505") {
@@ -201,6 +214,7 @@ export async function atualizarParceiro(id: string, bruto: unknown): Promise<Res
 
   revalidatePath(`/incorporadoras/${data.incorporadora_id}/parceiros`);
   revalidatePath("/parceiros");
+  revalidatePath("/parceiro-trilha");
   return { id: data.id, erro: null };
 }
 
@@ -241,7 +255,7 @@ export async function criarAcessoParceiro(id: string, bruto: unknown): Promise<R
       nome: string;
       telefone: string;
       conta_id: string | null;
-      incorporadora_id: string;
+      incorporadora_id: string | null;
     }>();
 
   if (!parceiro) {
@@ -317,6 +331,7 @@ export async function criarAcessoParceiro(id: string, bruto: unknown): Promise<R
 
   revalidatePath(`/incorporadoras/${parceiro.incorporadora_id}/parceiros`);
   revalidatePath("/parceiros");
+  revalidatePath("/parceiro-trilha");
   return { id, erro: null };
 }
 
@@ -338,7 +353,7 @@ export async function atualizarAcessoParceiro(id: string, bruto: unknown): Promi
     .from("parceiro")
     .select("conta_id, incorporadora_id")
     .eq("id", id)
-    .maybeSingle<{ conta_id: string | null; incorporadora_id: string }>();
+    .maybeSingle<{ conta_id: string | null; incorporadora_id: string | null }>();
 
   if (!parceiro) {
     return { id: null, erro: "Parceiro não encontrado, ou sem permissão para alterá-lo." };
@@ -389,6 +404,7 @@ export async function atualizarAcessoParceiro(id: string, bruto: unknown): Promi
 
   revalidatePath(`/incorporadoras/${parceiro.incorporadora_id}/parceiros`);
   revalidatePath("/parceiros");
+  revalidatePath("/parceiro-trilha");
   return { id, erro: null };
 }
 
@@ -454,6 +470,7 @@ export async function removerParceiro(id: string): Promise<Resultado> {
   }
 
   revalidatePath("/parceiros");
+  revalidatePath("/parceiro-trilha");
   revalidatePath("/incorporadoras");
   return { id: data.id, erro: null };
 }

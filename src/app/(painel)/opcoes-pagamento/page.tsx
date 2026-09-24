@@ -16,7 +16,7 @@ function Editar({ href, label }: { href: string; label: string }) {
   return (
     <Link
       href={href}
-      className="rounded-md border border-border bg-white px-3.5 py-1.5 text-sm font-semibold text-foreground transition-colors hover:border-foreground/30 hover:bg-accent"
+      className="rounded-md border border-border bg-card px-3.5 py-1.5 text-sm font-semibold text-foreground transition-colors hover:border-foreground/30 hover:bg-accent"
     >
       {label}
     </Link>
@@ -38,7 +38,7 @@ export default async function OpcoesPagamentoPage() {
 
   if (!sessao?.incorporadoraId) {
     return (
-      <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+      <p className="rounded-md border border-aviso/20 bg-aviso-suave px-5 py-4 text-sm text-aviso">
         Esta conta não está ligada a nenhuma incorporadora.
       </p>
     );
@@ -82,15 +82,14 @@ export default async function OpcoesPagamentoPage() {
     <>
       <PageHeader
         titulo="Opções de pagamento"
-        descricao="Defina opções de pagamento para os imóveis à venda com a Trilha."
       />
 
-      <section className="rounded-lg border border-border bg-white p-6">
+      <section className="rounded-xl border bg-card p-6 shadow-xs">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold text-foreground">Padrão</h2>
             <p className="mt-0.5 text-sm text-muted-foreground">
-              Vale para todos os seus imóveis, menos os de empreendimentos com condições próprias.
+              Vale para todos os empreendimentos sem condições próprias.
             </p>
           </div>
           <Editar

@@ -40,7 +40,7 @@ export default function ListaParceiros({
     return (
       <EmptyState
         titulo="Nenhum parceiro cadastrado"
-        texto="Imobiliárias e corretores que vendem estas unidades. Cada um recebe um acesso próprio, somente de leitura."
+        texto="Cadastre imobiliárias e corretores que vendem estas unidades."
         acao={{ href: `${base}/novo`, label: "Cadastrar o primeiro" }}
       />
     );
@@ -119,8 +119,8 @@ export default function ListaParceiros({
                   <span
                     className={`inline-block rounded-full border px-2.5 py-0.5 text-sm font-semibold ${
                       p.ativo
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                        : "border-slate-200 bg-slate-100 text-slate-600"
+                        ? "border-sucesso/20 bg-sucesso-suave text-sucesso"
+                        : "border-border bg-muted text-muted-foreground"
                     }`}
                   >
                     {p.ativo ? "Ativo" : "Inativo"}
@@ -130,7 +130,7 @@ export default function ListaParceiros({
                   <Link
                     href={`${rota}/${p.id}/acesso`}
                     className={`text-sm font-semibold underline-offset-4 hover:underline hover:text-foreground ${
-                      p.conta_id ? "text-foreground" : "text-amber-700"
+                      p.conta_id ? "text-foreground" : "text-aviso"
                     }`}
                   >
                     {/* Três situações, três rótulos. Um "Acesso" genérico

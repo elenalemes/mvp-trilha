@@ -19,6 +19,8 @@ export default async function NovoEmpreendimentoPage({
   const { data } = await supabase
     .from("incorporadora")
     .select("id, nome")
+    // Proprietário PF tem menu próprio.
+    .eq("tipo", "incorporadora")
     .order("nome")
     .returns<{ id: string; nome: string }[]>();
 
@@ -28,14 +30,13 @@ export default async function NovoEmpreendimentoPage({
     <>
       <PageHeader
         titulo="Novo empreendimento"
-        descricao="O prédio ou condomínio ao qual os imóveis vão pertencer."
         voltar={{ href: "/empreendimentos", label: "Empreendimentos" }}
       />
 
       {lista.length === 0 ? (
         <EmptyState
           titulo="Cadastre uma incorporadora primeiro"
-          texto="Todo empreendimento pertence a uma incorporadora."
+          texto="Cadastre uma incorporadora primeiro."
           acao={admin ? { href: "/incorporadoras/nova", label: "Cadastrar incorporadora" } : undefined}
         />
       ) : (

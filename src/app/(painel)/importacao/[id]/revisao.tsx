@@ -19,9 +19,9 @@ const ROTULO_ACAO: Record<string, string> = {
 };
 
 const COR_ACAO: Record<string, string> = {
-  criar: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  atualizar: "border-amber-200 bg-amber-50 text-amber-700",
-  ignorar: "border-slate-200 bg-slate-100 text-slate-600",
+  criar: "border-sucesso/20 bg-sucesso-suave text-sucesso",
+  atualizar: "border-aviso/20 bg-aviso-suave text-aviso",
+  ignorar: "border-border bg-muted text-muted-foreground",
 };
 
 /** Semelhança grosseira entre nomes, para sugerir o empreendimento certo. */
@@ -115,7 +115,7 @@ export function Revisao({
 
   if (!empreendimentoId || !plano) {
     return (
-      <section className="rounded-lg border border-border bg-white p-6">
+      <section className="rounded-xl border bg-card p-6 shadow-xs">
         <h2 className="text-xl font-semibold text-foreground">
           A qual empreendimento estas {linhas.length} unidades pertencem?
         </h2>
@@ -140,7 +140,7 @@ export function Revisao({
                 onChange={() => setEscolha(e.id)}
                 className="accent-primary"
               />
-              <span className="text-[15px] text-foreground">{e.nome}</span>
+              <span className="text-sm text-foreground">{e.nome}</span>
               {sugestao?.id === e.id ? (
                 <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-foreground">
                   parece este
@@ -158,14 +158,14 @@ export function Revisao({
                 onChange={() => setEscolha("novo")}
                 className="accent-primary"
               />
-              <span className="text-[15px] text-foreground">Criar um empreendimento novo</span>
+              <span className="text-sm text-foreground">Criar um empreendimento novo</span>
             </span>
             {escolha === "novo" ? (
               <input
                 value={nomeNovo}
                 onChange={(e) => setNomeNovo(e.target.value)}
                 placeholder="Nome do empreendimento"
-                className="ml-7 rounded-md border border-border px-3 py-2 text-[15px]"
+                className="ml-7 rounded-md border border-border px-3 py-2 text-sm"
               />
             ) : null}
           </label>
@@ -185,7 +185,7 @@ export function Revisao({
             type="button"
             onClick={descartar}
             disabled={pendente}
-            className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+            className="px-2 text-sm font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
           >
             Descartar importação
           </button>
@@ -219,7 +219,7 @@ export function Revisao({
       ) : null}
 
       {resumo.ignorar > 0 ? (
-        <p className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+        <p className="rounded-md border border-border bg-muted px-4 py-3 text-sm text-foreground">
           Unidades marcadas como <strong>intocáveis</strong> já estão Em Trilha, Em negociação ou
           reservadas no sistema. A importação não altera nenhuma delas.
         </p>
@@ -278,7 +278,7 @@ export function Revisao({
                         mudarLinha(linha.id, { valor: e.target.value });
                       }
                     }}
-                    className="w-32 rounded border border-transparent bg-transparent px-1.5 py-1 text-[15px] tabular-nums text-foreground hover:border-border focus:border-ring"
+                    className="w-32 rounded border border-transparent bg-transparent px-1.5 py-1 text-sm tabular-nums text-foreground hover:border-border focus:border-ring"
                   />
                   {valorAntigo !== undefined && valorAntigo !== null && valorAntigo !== linha.valor ? (
                     <span className="block text-xs text-muted-foreground line-through">
@@ -286,7 +286,7 @@ export function Revisao({
                     </span>
                   ) : null}
                 </td>
-                <td className="px-4 py-3 text-[15px]">{linha.tipologia ?? "—"}</td>
+                <td className="px-4 py-3 text-sm">{linha.tipologia ?? "—"}</td>
                 <td className="px-4 py-3 text-sm text-muted-foreground">
                   {[
                     linha.num_quartos ? `${linha.num_quartos} dorm.` : null,
@@ -304,7 +304,7 @@ export function Revisao({
                     {ROTULO_ACAO[acao]}
                   </span>
                   {linha.alertas.length > 0 ? (
-                    <span className="mt-1 block text-xs text-red-600">
+                    <span className="mt-1 block text-xs text-destructive">
                       {linha.alertas.join(" · ")}
                     </span>
                   ) : null}
@@ -328,7 +328,7 @@ export function Revisao({
           type="button"
           onClick={descartar}
           disabled={pendente}
-          className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+          className="px-2 text-sm font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
         >
           Descartar importação
         </button>

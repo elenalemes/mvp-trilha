@@ -9,7 +9,16 @@ import { acessoSchema, type AcessoFormValues } from "@/lib/schemas";
 import { atualizarAcesso } from "@/app/actions/incorporadoras";
 import { Alert, Button, Field, Input, Section } from "@/components/ui";
 
-export default function FormAcesso({ id, emailAtual }: { id: string; emailAtual: string }) {
+export default function FormAcesso({
+  id,
+  emailAtual,
+  voltarPara,
+}: {
+  id: string;
+  emailAtual: string;
+  /** Padrão: a ficha da incorporadora. */
+  voltarPara?: string;
+}) {
   const router = useRouter();
   const [erro, setErro] = useState<string | null>(null);
   const [salvo, setSalvo] = useState(false);
@@ -45,7 +54,7 @@ export default function FormAcesso({ id, emailAtual }: { id: string; emailAtual:
     <form onSubmit={handleSubmit(enviar)} className="flex flex-col gap-6" noValidate>
       <Section
         title="Acesso da incorporadora"
-        hint="É com esses dados que a incorporadora entra na plataforma. A senha atual não pode ser consultada — só substituída."
+        hint="A senha atual não pode ser consultada, só trocada."
       >
         <Field label="E-mail de acesso" error={errors.email?.message} span={3}>
           <Input type="email" aria-invalid={!!errors.email} {...register("email")} />
@@ -80,8 +89,8 @@ export default function FormAcesso({ id, emailAtual }: { id: string; emailAtual:
           {pendente ? "Salvando…" : "Salvar acesso"}
         </Button>
         <Link
-          href={`/incorporadoras/${id}`}
-          className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+          href={voltarPara ?? `/incorporadoras/${id}`}
+          className="px-2 text-sm font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
         >
           Voltar
         </Link>

@@ -158,7 +158,7 @@ export default function FormIncorporadora({
         </Field>
       </Section>
 
-      <Section title="Dados bancários" hint="Conta que vai receber os repasses.">
+      <Section title="Dados bancários">
         <Field label="Nome do banco" span={3} optional>
           <Input placeholder="Banco do Brasil, Itaú…" {...register("banco.banco")} />
         </Field>
@@ -185,7 +185,7 @@ export default function FormIncorporadora({
 
       <Section
         title="Responsável"
-        hint="Pessoa que responde e assina pela incorporadora nos negócios com a Trilha."
+        hint="Quem assina pela incorporadora."
       >
         <Field label="CPF" error={e.responsavel?.cpf?.message} span={2}>
           <Input
@@ -239,13 +239,12 @@ export default function FormIncorporadora({
       {editando ? null : (
         <Section
           title="Acesso da incorporadora"
-          hint="Com estes dados a incorporadora entra na plataforma. Anote a senha e entregue a ela — depois não é possível consultá-la, só trocar."
+          hint="Anote a senha antes de salvar: depois ela não pode ser consultada, só trocada."
         >
           <Field
             label="E-mail de acesso"
             error={e.acesso?.email?.message}
             span={3}
-            hint="Sugerido a partir do e-mail do responsável. Pode trocar."
           >
             <Input type="email" aria-invalid={!!e.acesso?.email} {...register("acesso.email")} />
           </Field>
@@ -275,7 +274,7 @@ export default function FormIncorporadora({
         {perfil ? null : (
           <Link
             href={voltarPara}
-            className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+            className="px-2 text-sm font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
           >
             Cancelar
           </Link>

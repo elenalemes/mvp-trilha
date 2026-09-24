@@ -137,6 +137,30 @@ export function textoAceitaCorretor({
   ].join("\n");
 }
 
+/** Corretor que entrou na divisão da comissão, mas não conduz o fechamento. */
+export function textoAceitaCorretorAcompanha({
+  nome,
+  link,
+  codigo,
+  unidade,
+  empreendimento,
+}: {
+  nome: string;
+  link: string;
+  codigo: string;
+  unidade: string;
+  empreendimento: string;
+}): string {
+  return [
+    `Boa notícia, ${nome.trim().split(/\s+/)[0]}! O negócio ${codigo} começou e você participa da comissão. 🎉`,
+    "",
+    `🏠 *${unidade}* · ${empreendimento}`,
+    "",
+    "Acompanhe o fechamento por aqui:",
+    link,
+  ].join("\n");
+}
+
 export function textoAceitaIncorporadora({
   nome,
   link,

@@ -29,6 +29,8 @@ export default async function EditarEmpreendimentoPage({
   const { data: incorporadoras } = await supabase
     .from("incorporadora")
     .select("id, nome")
+    // Proprietário PF tem menu próprio.
+    .eq("tipo", "incorporadora")
     .order("nome")
     .returns<{ id: string; nome: string }[]>();
 

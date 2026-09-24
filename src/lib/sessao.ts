@@ -15,6 +15,10 @@ export type Sessao = {
   usuarioId: string;
   /** Preenchido apenas quando a conta é de uma incorporadora. */
   incorporadoraId: string | null;
+  /** Corretor sem incorporadora: vende qualquer unidade. */
+  parceiroTrilha: boolean;
+  /** Conta de vendedor pessoa física (mora na tabela `incorporadora`, tipo PF). */
+  proprietarioPF: boolean;
   /**
    * Motivo de a ficha não ter sido lida, quando o banco recusou a consulta.
    * `null` com `conta` também nulo significa que a linha realmente não existe.
@@ -60,14 +64,28 @@ export async function getSessao(): Promise<Sessao | null> {
     .maybeSingle<Conta>();
 
   let incorporadoraId: string | null = null;
+  let proprietarioPF = false;
 
   if (conta?.tipo === "incorporadora") {
     const { data } = await supabase
       .from("incorporadora")
-      .select("id")
+      .select("id, tipo")
       .eq("conta_id", user.id)
-      .maybeSingle<{ id: string }>();
+      .maybeSingle<{ id: string; tipo: string }>();
     incorporadoraId = data?.id ?? null;
+    proprietarioPF = data?.tipo === "proprietario_pf";
+  }
+
+  // Parceiro sem incorporadora = Parceiro Trilha. Muda o menu e as regras de
+  // envio de proposta, então vale uma leitura a mais só para corretores.
+  let parceiroTrilha = false;
+  if (conta?.tipo === "parceiro") {
+    const { data } = await supabase
+      .from("parceiro")
+      .select("incorporadora_id")
+      .eq("conta_id", user.id)
+      .maybeSingle<{ incorporadora_id: string | null }>();
+    parceiroTrilha = Boolean(data) && data!.incorporadora_id === null;
   }
 
   // Sondas de diagnóstico, só quando a ficha não veio.
@@ -89,6 +107,8 @@ export async function getSessao(): Promise<Sessao | null> {
     email: user.email ?? "",
     usuarioId: user.id,
     incorporadoraId,
+    parceiroTrilha,
+    proprietarioPF,
     erroLeitura: error ? `${error.code ?? "sem código"} · ${error.message}` : null,
     uidNoBanco,
     token,
@@ -98,6 +118,12 @@ export async function getSessao(): Promise<Sessao | null> {
 export const ehAdmin = (sessao: Sessao | null) => sessao?.conta?.tipo === "trilha_admin";
 
 export const ehParceiro = (sessao: Sessao | null) => sessao?.conta?.tipo === "parceiro";
+
+export const ehProprietarioPF = (sessao: Sessao | null) =>
+  sessao?.conta?.tipo === "incorporadora" && Boolean(sessao?.proprietarioPF);
+
+export const ehParceiroTrilha = (sessao: Sessao | null) =>
+  ehParceiro(sessao) && Boolean(sessao?.parceiroTrilha);
 
 /**
  * Quem pode escrever no sistema. O parceiro imobiliário é somente-leitura em

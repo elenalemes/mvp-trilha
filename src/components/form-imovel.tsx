@@ -241,7 +241,7 @@ export default function FormImovel({
         )}
         <Link
           href={destino}
-          className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+          className="px-2 text-sm font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
         >
           Cancelar
         </Link>

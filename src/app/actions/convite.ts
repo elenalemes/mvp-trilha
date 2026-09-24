@@ -122,7 +122,7 @@ export async function reenviarConvite(parceiroId: string): Promise<ResultadoConv
       nome: string;
       telefone: string;
       conta_id: string | null;
-      incorporadora_id: string;
+      incorporadora_id: string | null;
     }>();
 
   if (!parceiro) return { ok: false, erro: "Parceiro não encontrado, ou sem permissão." };

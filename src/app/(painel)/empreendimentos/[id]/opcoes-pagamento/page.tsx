@@ -34,11 +34,11 @@ export default async function OpcoesDoEmpreendimentoPage({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
-        <p className="text-[15px] font-semibold text-red-800">
-          O banco recusou a leitura deste empreendimento.
+      <div className="rounded-lg border border-destructive/20 bg-erro-suave px-5 py-4">
+        <p className="text-sm font-semibold text-destructive">
+          Não consegui carregar os dados deste empreendimento.
         </p>
-        <p className="mt-1 text-sm text-red-700">
+        <p className="mt-1 text-sm text-destructive">
           {error.code ?? "sem código"}: {error.message ?? "sem mensagem"}
         </p>
       </div>
@@ -59,7 +59,7 @@ export default async function OpcoesDoEmpreendimentoPage({
         voltar={{ href: `/empreendimentos/${id}`, label: data.nome }}
       />
 
-      <p className="mb-6 max-w-3xl text-[15px] text-muted-foreground">
+      <p className="mb-6 max-w-3xl text-sm text-muted-foreground">
         O que estiver aqui vale <strong className="text-foreground">só para este empreendimento</strong>{" "}
         e substitui o padrão da incorporadora por inteiro — as duas listas nunca se misturam. Deixar
         vazio é voltar a usar o padrão.

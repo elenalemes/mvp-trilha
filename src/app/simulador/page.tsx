@@ -1,4 +1,5 @@
 import { AvisoPublico, MolduraPublica } from "@/components/publico";
+import { AcessoCorretor } from "@/components/acesso-corretor";
 import { buttonVariants } from "@/components/shadcn/button";
 import { cn } from "@/lib/utils";
 import type { Metadata } from "next";
@@ -174,6 +175,7 @@ function Moldura({ children }: { children: React.ReactNode }) {
   return (
     <MolduraPublica
       contexto="Simulador"
+      acao={<AcessoCorretor />}
       rodape="Valores sujeitos a confirmação. Simulação não constitui proposta nem reserva de unidade."
     >
       <header className="mb-6 flex flex-col gap-1">

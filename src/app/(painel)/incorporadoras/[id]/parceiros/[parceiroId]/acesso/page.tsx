@@ -49,7 +49,7 @@ export default async function AcessoParceiroPage({
           voltarPara={voltarPara}
         />
       ) : (
-        <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+        <p className="rounded-md border border-aviso/20 bg-aviso-suave px-5 py-4 text-sm text-aviso">
           Este parceiro ainda não tem acesso criado.
         </p>
       )}

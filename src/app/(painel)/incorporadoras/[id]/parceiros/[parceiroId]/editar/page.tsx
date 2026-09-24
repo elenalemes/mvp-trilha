@@ -47,11 +47,11 @@ export default async function EditarParceiroPage({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
-        <p className="text-[15px] font-semibold text-red-800">
-          O banco recusou a leitura deste parceiro.
+      <div className="rounded-lg border border-destructive/20 bg-erro-suave px-5 py-4">
+        <p className="text-sm font-semibold text-destructive">
+          Não consegui carregar os dados deste parceiro.
         </p>
-        <p className="mt-1 text-sm text-red-700">
+        <p className="mt-1 text-sm text-destructive">
           {error.code ?? "sem código"}: {error.message ?? "sem mensagem"}
         </p>
       </div>
@@ -63,7 +63,6 @@ export default async function EditarParceiroPage({
     <>
       <PageHeader
         titulo={data.nome}
-        descricao="Dados cadastrais do parceiro"
         voltar={{ href: `/incorporadoras/${id}/parceiros`, label: "Parceiros" }}
         acaoSecundaria={{
           href: `/incorporadoras/${id}/parceiros/${parceiroId}/acesso`,

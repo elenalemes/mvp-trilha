@@ -32,14 +32,19 @@ export default async function ParceirosPage() {
 
   if (!admin && !sessao?.incorporadoraId) {
     return (
-      <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+      <p className="rounded-md border border-aviso/20 bg-aviso-suave px-5 py-4 text-sm text-aviso">
         Esta conta não está ligada a nenhuma incorporadora.
       </p>
     );
   }
 
   const consulta = admin
-    ? supabase.from("parceiro").select(`${CAMPOS}, incorporadora (id, nome)`).order("nome")
+    ? supabase
+        .from("parceiro")
+        .select(`${CAMPOS}, incorporadora (id, nome)`)
+        // Os Parceiros Trilha têm item próprio no menu.
+        .not("incorporadora_id", "is", null)
+        .order("nome")
     : supabase
         .from("parceiro")
         .select(CAMPOS)
@@ -64,7 +69,7 @@ export default async function ParceirosPage() {
         acao={{ href: "/parceiros/novo", label: "Cadastrar parceiro" }}
       />
 
-      <p className="mb-6 max-w-3xl text-[15px] text-muted-foreground">
+      <p className="mb-6 max-w-3xl text-sm text-muted-foreground">
         Cada parceiro entra com o próprio login e enxerga{" "}
         <strong className="text-foreground">somente as unidades disponíveis</strong> da incorporadora
         dele, com as condições de pagamento de cada uma. Ele não cadastra nem altera nada — nem

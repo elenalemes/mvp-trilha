@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { getSessao, podeEditar } from "@/lib/sessao";
+import { ehParceiroTrilha, ehProprietarioPF, getSessao, podeEditar } from "@/lib/sessao";
+import { redirect } from "next/navigation";
 import { EmptyState, PageHeader, Stat } from "@/components/ui";
 import { FiltroIncorporadora } from "@/components/filtro-incorporadora";
 import { Busca } from "@/components/busca";
@@ -26,6 +27,10 @@ export default async function EmpreendimentosPage({
   const { incorporadora, q } = await searchParams;
   const termo = limpar(q ?? "");
   const sessao = await getSessao();
+  // Várias telas mandam o corretor para cá. O Parceiro Trilha não tem uma
+  // incorporadora para listar aqui; o estoque dele é o simulador.
+  if (ehParceiroTrilha(sessao)) redirect("/propostas");
+  if (ehProprietarioPF(sessao)) redirect(`/proprietarios/${sessao!.incorporadoraId}`);
   const admin = sessao?.conta?.tipo === "trilha_admin";
   const edita = podeEditar(sessao);
 
@@ -34,12 +39,16 @@ export default async function EmpreendimentosPage({
   const { data: incorporadoras } = await supabase
     .from("incorporadora")
     .select("id, nome")
+    // Proprietário PF tem menu próprio.
+    .eq("tipo", "incorporadora")
     .order("nome")
     .returns<{ id: string; nome: string }[]>();
 
   let consulta = supabase
     .from("empreendimento")
-    .select("id, nome, endereco, incorporadora_id, incorporadora(nome), imovel(count)")
+    .select("id, nome, endereco, incorporadora_id, incorporadora!inner(nome), imovel(count)")
+    // Os imóveis avulsos (proprietário PF) aparecem no menu próprio.
+    .eq("incorporadora.tipo", "incorporadora")
     .order("nome");
 
   if (incorporadora) consulta = consulta.eq("incorporadora_id", incorporadora);
@@ -54,7 +63,10 @@ export default async function EmpreendimentosPage({
   // Resumo do topo. Ele acompanha o filtro por incorporadora, mas ignora a
   // busca por texto de propósito: "total de imóveis" tem que continuar sendo
   // o total, e não o número de linhas que a busca deixou na tela.
-  let escopo = supabase.from("empreendimento").select("id");
+  let escopo = supabase
+    .from("empreendimento")
+    .select("id, incorporadora!inner(tipo)")
+    .eq("incorporadora.tipo", "incorporadora");
   if (incorporadora) escopo = escopo.eq("incorporadora_id", incorporadora);
   const { data: doEscopo } = await escopo.returns<{ id: string }[]>();
   const idsEscopo = (doEscopo ?? []).map((e) => e.id);
@@ -138,7 +150,7 @@ export default async function EmpreendimentosPage({
       {semIncorporadora ? (
         <EmptyState
           titulo="Cadastre uma incorporadora primeiro"
-          texto="Todo empreendimento pertence a uma incorporadora, então é por ela que o cadastro começa."
+          texto="Cadastre uma incorporadora primeiro."
           acao={{ href: "/incorporadoras/nova", label: "Cadastrar incorporadora" }}
         />
       ) : !data || data.length === 0 ? (

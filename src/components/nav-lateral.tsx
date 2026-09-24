@@ -9,6 +9,8 @@ import {
   Download,
   ExternalLink,
   FileCheck2,
+  Handshake,
+  House,
   KeyRound,
   LogOut,
   UserRound,
@@ -39,6 +41,8 @@ const ICONES = {
   predio: Building,
   pagamento: CreditCard,
   parceiros: Users,
+  trilha: Handshake,
+  casa: House,
 } satisfies Record<string, LucideIcon>;
 
 export type ItemMenu = { href: string; label: string; icone: keyof typeof ICONES };

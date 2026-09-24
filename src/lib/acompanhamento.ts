@@ -42,6 +42,7 @@ export type Acompanhamento = {
 type LinhaNegocio = {
   id: string;
   status: string;
+  parceiro_id: string | null;
   imovel: { identificacao: string } | null;
   empreendimento: { nome: string } | null;
   incorporadora: { nome: string } | null;
@@ -59,7 +60,7 @@ export async function lerAcompanhamento(token: string): Promise<Acompanhamento |
   const { data: negocio } = await supabase
     .from("negocio")
     .select(
-      `id, status,
+      `id, status, parceiro_id,
        imovel (identificacao),
        empreendimento (nome),
        incorporadora (nome),
@@ -89,7 +90,10 @@ export async function lerAcompanhamento(token: string): Promise<Acompanhamento |
 
       return {
         nome: e.nome,
-        responsaveis: [...new Set(pendentes.map((t) => t.ator))],
+        // Venda direta: quem faz o que era do corretor é a Trilha.
+        responsaveis: [
+          ...new Set(pendentes.map((t) => (t.ator === "parceiro" && !negocio.parceiro_id ? "trilha" : t.ator))),
+        ] as Ator[],
         feitas,
         total: visiveis.length,
         situacao:

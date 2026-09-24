@@ -157,3 +157,52 @@ export function calcularCondicoes(
     .map((o) => calcularCondicao(valorImovel, o, percentualComissao))
     .filter((c): c is Condicao => c !== null);
 }
+
+// ------------------------------------------------ divisão entre corretores
+
+export type FatiaComissao = { parceiroId: string; nome: string; pontos: number };
+
+export type DivisaoComissao = {
+  corretores: (FatiaComissao & { total: number; mensal: number })[];
+  /** O que os corretores não levam fica com a Trilha. */
+  trilha: { pontos: number; total: number; mensal: number };
+  /** Falso quando os pontos dos corretores passam da comissão total. */
+  cabe: boolean;
+};
+
+/**
+ * Divide a comissão de uma condição entre corretores, em PONTOS DO VALOR
+ * FINAL do imóvel (3,6 = 3,6% do valor final). O que sobra é da Trilha.
+ *
+ * Mesmos cuidados da conta principal: tudo em centavos, e a parte da Trilha
+ * é DERIVADA (comissão − corretores), não calculada de novo — assim as partes
+ * sempre fecham com `comissaoTotal` e, por mês, com `comissaoMensal`, e a
+ * invariante incorporadora + comissão + gestão = parcela continua valendo.
+ */
+export function dividirComissao(c: Condicao, fatias: FatiaComissao[]): DivisaoComissao {
+  const comissaoCents = centavos(c.comissaoTotal);
+  const comissaoMensalCents = centavos(c.comissaoMensal);
+
+  const totais = fatias.map((f) => centavos((c.base * f.pontos) / 100));
+  // Pontos que somam exatamente a comissão podem passar dela por 1 centavo de
+  // arredondamento; esse centavo sai do último corretor, não da Trilha.
+  const somaPontos = fatias.reduce((s, f) => s + f.pontos, 0);
+  let soma = totais.reduce((s, t) => s + t, 0);
+  if (totais.length && Math.abs(somaPontos - c.percentualComissao) < 1e-9 && soma !== comissaoCents) {
+    totais[totais.length - 1] += comissaoCents - soma;
+    soma = comissaoCents;
+  }
+
+  const mensais = totais.map((t) => Math.floor(t / c.prazoMeses));
+  const somaMensal = mensais.reduce((s, m) => s + m, 0);
+
+  return {
+    corretores: fatias.map((f, i) => ({ ...f, total: emReais(totais[i]), mensal: emReais(mensais[i]) })),
+    trilha: {
+      pontos: Math.round((c.percentualComissao - somaPontos) * 100) / 100,
+      total: emReais(comissaoCents - soma),
+      mensal: emReais(comissaoMensalCents - somaMensal),
+    },
+    cabe: somaPontos <= c.percentualComissao + 1e-9 && soma <= comissaoCents,
+  };
+}

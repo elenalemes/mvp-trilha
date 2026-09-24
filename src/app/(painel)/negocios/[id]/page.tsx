@@ -10,7 +10,7 @@ import TarefaFechamento from "@/components/tarefa-fechamento";
 import CancelarNegocio from "@/components/cancelar-negocio";
 import LinkComprador from "@/components/link-comprador";
 import {
-  NOME_DO_ATOR,
+  nomeDoAtor,
   bolaCom,
   diasParado,
   estaFechada,
@@ -45,11 +45,21 @@ type Ficha = {
   token: string;
   cancelado_motivo: string | null;
   cancelado_em: string | null;
-  proposta: { id: string; codigo: string; prazo_meses: number; valor_parcela: number } | null;
+  proposta: {
+    id: string;
+    codigo: string;
+    prazo_meses: number;
+    valor_parcela: number;
+    valor_imovel: number;
+    valor_tabela: number | null;
+    condicao_especial: boolean;
+    motivo_condicao: string | null;
+  } | null;
   imovel: { identificacao: string } | null;
   empreendimento: { nome: string } | null;
   incorporadora: { nome: string } | null;
-  parceiro: { nome: string } | null;
+  parceiro_id: string | null;
+  parceiro: { nome: string; incorporadora_id: string | null } | null;
   comprador: { nome: string; cpf: string; email: string; telefone: string } | null;
 };
 
@@ -70,12 +80,12 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
   const { data: negocio, error: erroNegocio } = await supabase
     .from("negocio")
     .select(
-      `id, status, created_at, token, cancelado_motivo, cancelado_em,
-       proposta (id, codigo, prazo_meses, valor_parcela),
+      `id, status, created_at, token, cancelado_motivo, cancelado_em, parceiro_id,
+       proposta (id, codigo, prazo_meses, valor_parcela, valor_imovel, valor_tabela, condicao_especial, motivo_condicao),
        imovel (identificacao),
        empreendimento (nome),
        incorporadora (nome),
-       parceiro (nome),
+       parceiro (nome, incorporadora_id),
        comprador (nome, cpf, email, telefone)`,
     )
     .eq("id", id)
@@ -124,6 +134,28 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
   const dias = diasParado(tarefas, negocio.created_at);
 
   const cancelado = negocio.status === "cancelado";
+  const semCorretor = !negocio.parceiro_id;
+
+  // Comissão dividida: a Trilha vê todos; cada corretor, só a própria linha.
+  const { data: divisao } = negocio.proposta
+    ? await supabase
+        .from("proposta_corretor")
+        .select("parceiro_id, principal, percentual, valor_mensal, parceiro (nome)")
+        .eq("proposta_id", negocio.proposta.id)
+        .order("principal", { ascending: false })
+        .returns<{ parceiro_id: string; principal: boolean; percentual: number; valor_mensal: number; parceiro: { nome: string } | null }[]>()
+    : { data: null };
+
+  // Corretor que não é o principal só acompanha: vê o fechamento, não mexe.
+  let observador = false;
+  if (ator === "parceiro") {
+    const { data: eu } = await supabase
+      .from("parceiro")
+      .select("id")
+      .eq("conta_id", sessao!.usuarioId)
+      .maybeSingle<{ id: string }>();
+    observador = !eu || eu.id !== negocio.parceiro_id;
+  }
   const listaEtapas = etapas(tarefas);
   const naEtapa = tarefas.filter((t) => !estaFechada(t) && t.etapa_ordem === nivel).length;
 
@@ -184,14 +216,15 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
                       key={t.id}
                       tarefa={t}
                       negocioId={negocio.id}
-                      podeAgir={liberada && !cancelado && podeMexer(t, ator)}
+                      podeAgir={liberada && !cancelado && !observador && podeMexer(t, ator)}
                       liberada={liberada}
                       arquivos={anexosDa(t.id)}
-                      podeAbrir={podeAbrirArquivos(t, ator)}
-                      podeAbrirFicha={ator === "trilha" || ator === "parceiro"}
+                      podeAbrir={observador ? podeAbrirArquivos(t, "incorporadora") : podeAbrirArquivos(t, ator)}
+                      podeAbrirFicha={ator === "trilha" || (ator === "parceiro" && !observador)}
                       porPessoa={comConjuge && t.ator === "parceiro"}
-                      dadosComprador={t.tipo === "formulario" ? dadosComprador : undefined}
+                      dadosComprador={t.tipo === "formulario" && !observador ? dadosComprador : undefined}
                       cancelado={cancelado}
+                      semCorretor={semCorretor}
                     />
                   ))}
                 </ul>
@@ -213,7 +246,7 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
               <>
                 <p className="text-sm text-muted-foreground">Esperando</p>
                 <p className="mt-0.5 text-base font-semibold tracking-tight text-foreground">
-                  {esperando.map((a) => NOME_DO_ATOR[a]).join(", ")}
+                  {[...new Set(esperando.map((a) => nomeDoAtor(a, semCorretor)))].join(", ")}
                 </p>
                 <p className={`mt-1 text-sm ${dias >= 7 ? "font-medium text-aviso" : "text-muted-foreground"}`}>
                   {naEtapa} tarefa{naEtapa === 1 ? "" : "s"} nesta etapa ·{" "}
@@ -272,14 +305,54 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
                   {negocio.proposta.prazo_meses}× {formatBRL(negocio.proposta.valor_parcela)}
                 </Dado>
               ) : null}
+              {negocio.proposta?.condicao_especial ? (
+                <Dado termo="Tipo">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span aria-hidden="true" className="size-1.5 rounded-full bg-aviso" />
+                    Condição especial
+                  </span>
+                </Dado>
+              ) : null}
+              {negocio.proposta?.condicao_especial &&
+              negocio.proposta.valor_tabela &&
+              Number(negocio.proposta.valor_tabela) !== Number(negocio.proposta.valor_imovel) ? (
+                <Dado termo="Valor negociado">{formatBRL(negocio.proposta.valor_imovel)}</Dado>
+              ) : null}
               {negocio.comprador ? <Dado termo="Comprador">{negocio.comprador.nome}</Dado> : null}
-              {negocio.parceiro && ator !== "parceiro" ? <Dado termo="Corretor">{negocio.parceiro.nome}</Dado> : null}
+              {ator !== "parceiro" && !(divisao && divisao.length > 1) ? (
+                <Dado termo="Corretor">{semCorretor
+                    ? "Venda direta"
+                    : negocio.parceiro
+                      ? `${negocio.parceiro.nome}${negocio.parceiro.incorporadora_id ? "" : " · Parceiro Trilha"}`
+                      : "—"}</Dado>
+              ) : null}
               <Dado termo="Início">{new Date(negocio.created_at).toLocaleDateString("pt-BR")}</Dado>
             </dl>
 
-            {/* O corretor também manda o link: é ele quem conversa com o
-                comprador no dia a dia. A incorporadora não fala com o cliente. */}
-            {(admin || ehParceiro(sessao)) && !cancelado ? (
+            {negocio.proposta?.motivo_condicao && (admin || ator === "incorporadora") ? (
+              <p className="mt-3 rounded-lg bg-muted px-3 py-2 text-xs leading-relaxed text-muted-foreground">
+                {negocio.proposta.motivo_condicao}
+              </p>
+            ) : null}
+
+            {divisao && divisao.length > 0 ? (
+              <div className="mt-4 border-t pt-4">
+                <p className="mb-1 text-sm font-semibold text-foreground">
+                  {divisao.length > 1 || admin ? "Comissão" : "Sua comissão"}
+                </p>
+                <dl className="flex flex-col text-sm">
+                  {divisao.map((d) => (
+                    <Dado key={d.parceiro_id} termo={`${d.parceiro?.nome ?? "Corretor"}${d.principal && divisao.length > 1 ? " · principal" : ""}`}>
+                      {Number(d.percentual).toLocaleString("pt-BR")}% · {negocio.proposta!.prazo_meses}× {formatBRL(d.valor_mensal)}
+                    </Dado>
+                  ))}
+                </dl>
+              </div>
+            ) : null}
+
+            {/* O corretor principal também manda o link: é ele quem conversa com
+                o comprador no dia a dia. A incorporadora não fala com o cliente. */}
+            {(admin || (ehParceiro(sessao) && !observador)) && !cancelado ? (
               <div className="mt-4 border-t pt-4">
                 <LinkComprador
                   token={negocio.token}

@@ -40,7 +40,7 @@ function Item({ label, valor }: { label: string; valor: string }) {
       <span className="text-xs font-semibold text-muted-foreground">
         {label}
       </span>
-      <span className="text-[15px] text-foreground">{valor}</span>
+      <span className="text-sm text-foreground">{valor}</span>
     </div>
   );
 }
@@ -55,13 +55,13 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-border bg-white p-6">
+    <section className="rounded-xl border bg-card p-6 shadow-xs">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <h2 className="text-xl font-semibold text-foreground">{titulo}</h2>
         {acao ? (
           <Link
             href={acao.href}
-            className="rounded-md border border-border bg-white px-3.5 py-1.5 text-sm font-semibold text-foreground transition-colors hover:border-foreground/30 hover:bg-accent"
+            className="rounded-md border border-border bg-card px-3.5 py-1.5 text-sm font-semibold text-foreground transition-colors hover:border-foreground/30 hover:bg-accent"
           >
             {acao.label}
           </Link>
@@ -80,16 +80,15 @@ function Card({
  */
 function ErroDeLeitura({ erro }: { erro: { code?: string; message?: string } }) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
-      <p className="text-[15px] font-semibold text-red-800">
-        O banco recusou a leitura desta incorporadora.
+    <div className="rounded-lg border border-destructive/20 bg-erro-suave px-5 py-4">
+      <p className="text-sm font-semibold text-destructive">
+        Não consegui carregar os dados desta incorporadora.
       </p>
-      <p className="mt-1 text-sm text-red-700">
+      <p className="mt-1 text-sm text-destructive">
         {erro.code ?? "sem código"}: {erro.message ?? "sem mensagem"}
       </p>
-      <p className="mt-2 text-sm text-red-700">
-        Isso não quer dizer que o cadastro não exista — quer dizer que esta sessão não conseguiu
-        lê-lo.
+      <p className="mt-2 text-sm text-destructive">
+        Recarregue a página. Se continuar, envie este código para a Trilha.
       </p>
     </div>
   );
@@ -181,9 +180,7 @@ export default async function IncorporadoraPage({ params }: { params: Promise<{ 
           <div className="sm:col-span-2">
             <ListaOpcoes opcoes={padrao} percentualComissao={data.percentual_comissao} />
             <p className="mt-4 text-sm text-muted-foreground">
-              Padrão desta incorporadora: vale para todos os imóveis dela, menos os de
-              empreendimentos com condições próprias. Os valores em reais aparecem na ficha de cada
-              unidade.
+              Vale para todos os empreendimentos sem condições próprias.
             </p>
           </div>
         </Card>
@@ -197,17 +194,16 @@ export default async function IncorporadoraPage({ params }: { params: Promise<{ 
         >
           <div className="sm:col-span-2">
             {(parceiros?.length ?? 0) === 0 ? (
-              <p className="text-[15px] text-muted-foreground">
-                Nenhum parceiro cadastrado. São as imobiliárias e corretores que vendem o estoque
-                desta incorporadora — cada um com acesso próprio, só de leitura.
+              <p className="text-sm text-muted-foreground">
+                Nenhum parceiro cadastrado.
               </p>
             ) : (
               <ul className="flex flex-col gap-2">
                 {parceiros!.map((p) => (
-                  <li key={p.id} className="flex items-baseline gap-2.5 text-[15px]">
+                  <li key={p.id} className="flex items-baseline gap-2.5 text-sm">
                     <span className="text-foreground">{p.nome}</span>
                     {p.ativo ? null : (
-                      <span className="rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                      <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
                         inativo
                       </span>
                     )}
@@ -224,9 +220,6 @@ export default async function IncorporadoraPage({ params }: { params: Promise<{ 
         >
           <Item label="E-mail de login" valor={data.conta?.email ?? "sem acesso criado"} />
           <Item label="Senha" valor="não pode ser consultada, só substituída" />
-          <p className="text-sm text-muted-foreground sm:col-span-2">
-            Use “Alterar acesso” para trocar o e-mail de login ou definir uma senha nova.
-          </p>
         </Card>
 
         <Card titulo="Dados bancários">

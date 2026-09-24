@@ -62,9 +62,7 @@ export default function CancelarNegocio({
       <h2 className="text-sm font-semibold text-destructive">Cancelar o negócio</h2>
 
       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-        Nada é apagado: a proposta, o negócio e as tarefas continuam no sistema, marcados como
-        cancelados, com o motivo e a data. É assim que daqui a três meses ainda dá para responder o
-        que aconteceu com a <strong>{unidade}</strong>.
+        Nada é apagado: o histórico da <strong>{unidade}</strong> fica guardado como cancelado.
       </p>
 
       <label className="mt-4 flex flex-col gap-1.5">

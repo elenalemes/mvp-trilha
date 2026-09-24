@@ -48,6 +48,8 @@ export default async function ImoveisPage({
   const { data: incorporadoras } = await supabase
     .from("incorporadora")
     .select("id, nome")
+    // Proprietário PF tem menu próprio.
+    .eq("tipo", "incorporadora")
     .order("nome")
     .returns<{ id: string; nome: string }[]>();
 
@@ -59,8 +61,9 @@ export default async function ImoveisPage({
     .from("imovel")
     .select(
       `id, identificacao, tipo, status, valor, metros_quadrados, num_quartos, num_vagas, created_at,
-       empreendimento!inner (id, nome, incorporadora_id, incorporadora (nome))`,
+       empreendimento!inner (id, nome, incorporadora_id, incorporadora!inner (nome, tipo))`,
     )
+    .eq("empreendimento.incorporadora.tipo", "incorporadora")
     .order("created_at", { ascending: false });
 
   if (incorporadora) {
@@ -131,7 +134,7 @@ export default async function ImoveisPage({
       {semEmpreendimento ? (
         <EmptyState
           titulo="Cadastre um empreendimento primeiro"
-          texto="Todo imóvel pertence a um empreendimento, que por sua vez pertence a uma incorporadora. É essa ordem que garante que nenhum imóvel fique sem dono."
+          texto="Cadastre um empreendimento primeiro."
           acao={edita ? { href: "/empreendimentos/novo", label: "Cadastrar empreendimento" } : undefined}
         />
       ) : !data || data.length === 0 ? (

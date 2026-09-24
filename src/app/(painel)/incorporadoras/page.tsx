@@ -36,6 +36,7 @@ export default async function IncorporadorasPage({
   let consulta = supabase
     .from("incorporadora")
     .select("id, nome, cnpj, email, telefone, resp_nome, empreendimento(count)")
+    .eq("tipo", "incorporadora")
     .order("nome", { ascending: true });
 
   if (termo) {
@@ -56,7 +57,6 @@ export default async function IncorporadorasPage({
     <>
       <PageHeader
         titulo="Incorporadoras"
-        descricao="Parceiras cadastradas, em ordem alfabética. Cada uma tem seu próprio acesso à plataforma."
         acao={{ href: "/incorporadoras/nova", label: "Cadastrar incorporadora" }}
       />
 
@@ -81,7 +81,7 @@ export default async function IncorporadorasPage({
         ) : (
           <EmptyState
             titulo="Nenhuma incorporadora cadastrada"
-            texto="O cadastro reúne os dados da empresa, os dados bancários para repasse, o responsável e o acesso que ela vai usar para entrar."
+            texto="Cadastre a primeira incorporadora parceira."
             acao={{ href: "/incorporadoras/nova", label: "Cadastrar a primeira" }}
           />
         )

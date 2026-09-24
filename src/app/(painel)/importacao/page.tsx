@@ -24,10 +24,10 @@ const ROTULO: Record<string, string> = {
 };
 
 const COR: Record<string, string> = {
-  aguardando_revisao: "border-amber-200 bg-amber-50 text-amber-700",
-  aplicada: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  erro: "border-red-200 bg-red-50 text-red-700",
-  descartada: "border-slate-200 bg-slate-100 text-slate-600",
+  aguardando_revisao: "border-aviso/20 bg-aviso-suave text-aviso",
+  aplicada: "border-sucesso/20 bg-sucesso-suave text-sucesso",
+  erro: "border-destructive/20 bg-erro-suave text-destructive",
+  descartada: "border-border bg-muted text-muted-foreground",
   processando: "border-border bg-muted/50 text-foreground",
 };
 
@@ -58,6 +58,8 @@ export default async function ImportacoesPage() {
   const { data: incorporadoras } = await supabase
     .from("incorporadora")
     .select("id, nome")
+    // Proprietário PF tem menu próprio.
+    .eq("tipo", "incorporadora")
     .order("nome")
     .returns<{ id: string; nome: string }[]>();
 
@@ -75,7 +77,7 @@ export default async function ImportacoesPage() {
     <>
       <PageHeader
         titulo="Importação de estoque"
-        descricao="Cadastre as unidades de uma incorporadora a partir da tabela que ela mandou."
+        descricao="Cadastre unidades a partir da tabela da incorporadora."
       />
 
       {(incorporadoras?.length ?? 0) > 0 ? (
@@ -83,7 +85,7 @@ export default async function ImportacoesPage() {
       ) : (
         <EmptyState
           titulo="Cadastre uma incorporadora primeiro"
-          texto="A lista de estoque é sempre de alguém: o arquivo entra vinculado a uma incorporadora."
+          texto="Cadastre uma incorporadora primeiro."
           acao={{ href: "/incorporadoras/nova", label: "Cadastrar incorporadora" }}
         />
       )}
@@ -91,7 +93,7 @@ export default async function ImportacoesPage() {
       <h2 className="mb-4 text-xl font-semibold text-foreground">Envios anteriores</h2>
 
       {!data || data.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border bg-white px-5 py-8 text-center text-[15px] text-muted-foreground">
+        <p className="rounded-lg border border-dashed border-border bg-card px-5 py-8 text-center text-sm text-muted-foreground">
           Nenhum arquivo enviado ainda.
         </p>
       ) : (
@@ -122,11 +124,11 @@ export default async function ImportacoesPage() {
                       {linha.arquivo_nome ?? "sem nome"}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-[15px]">{linha.incorporadora?.nome ?? "—"}</td>
-                  <td className="px-4 py-3 text-[15px] text-muted-foreground">
+                  <td className="px-4 py-3 text-sm">{linha.incorporadora?.nome ?? "—"}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
                     {linha.empreendimento?.nome ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-[15px] tabular-nums">
+                  <td className="px-4 py-3 text-sm tabular-nums">
                     {linha.importacao_linha?.[0]?.count ?? 0}
                   </td>
                   <td className="px-4 py-3">

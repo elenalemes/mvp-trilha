@@ -43,6 +43,16 @@ export const NOME_DO_ATOR: Record<Ator, string> = {
   parceiro: "Corretor",
 };
 
+/**
+ * O nome de quem responde pela tarefa. Na venda direta (negócio sem corretor)
+ * as tarefas continuam marcadas como do corretor — é essa marca que esconde os
+ * documentos do comprador da incorporadora —, mas quem as faz é a Trilha.
+ */
+export function nomeDoAtor(ator: Ator, semCorretor = false): string {
+  return ator === "parceiro" && semCorretor ? "Trilha" : NOME_DO_ATOR[ator];
+}
+
+
 /** Fechada é tarefa que não espera mais ninguém. Reprovada NÃO fecha nada. */
 export const estaFechada = (t: Tarefa) =>
   t.status === "concluido" || t.status === "nao_se_aplica";

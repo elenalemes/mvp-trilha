@@ -8,11 +8,11 @@
  */
 const CORES: Record<string, string> = {
   enviada: "border-border bg-muted text-foreground",
-  em_analise: "border-amber-200 bg-amber-50 text-amber-700",
-  aceita: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  recusada: "border-red-200 bg-red-50 text-red-700",
-  invalidada: "border-slate-200 bg-slate-100 text-slate-600",
-  cancelada: "border-slate-200 bg-slate-100 text-slate-600",
+  em_analise: "border-aviso/20 bg-aviso-suave text-aviso",
+  aceita: "border-sucesso/20 bg-sucesso-suave text-sucesso",
+  recusada: "border-destructive/20 bg-erro-suave text-destructive",
+  invalidada: "border-border bg-muted text-muted-foreground",
+  cancelada: "border-border bg-muted text-muted-foreground",
 };
 
 const ROTULOS: Record<string, string> = {
@@ -28,7 +28,7 @@ export function SituacaoProposta({ status }: { status: string }) {
   return (
     <span
       className={`inline-block rounded-full border px-2.5 py-0.5 text-sm font-semibold whitespace-nowrap ${
-        CORES[status] ?? "border-slate-200 bg-slate-100 text-slate-600"
+        CORES[status] ?? "border-border bg-muted text-muted-foreground"
       }`}
     >
       {ROTULOS[status] ?? status}

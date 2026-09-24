@@ -15,12 +15,15 @@ export function MolduraPublica({
   contexto,
   largura = "4xl",
   rodape,
+  acao,
   children,
 }: {
   /** O que é esta página, à direita do logo: "Simulador", "Acompanhamento". */
   contexto?: string;
   largura?: "md" | "2xl" | "4xl" | "6xl";
   rodape?: React.ReactNode;
+  /** Botão no canto direito do topo (ex.: "Entrar"). */
+  acao?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const max = { md: "max-w-md", "2xl": "max-w-2xl", "4xl": "max-w-4xl", "6xl": "max-w-6xl" }[largura];
@@ -30,9 +33,12 @@ export function MolduraPublica({
       <header className="bg-primary text-primary-foreground print:border-b print:bg-white print:text-foreground">
         <div className={cn("mx-auto flex h-14 w-full items-center justify-between gap-4 px-4 sm:px-6", max)}>
           <Marca />
-          {contexto ? (
-            <span className="text-sm text-primary-foreground/70 print:text-muted-foreground">{contexto}</span>
-          ) : null}
+          <div className="flex items-center gap-4">
+            {contexto ? (
+              <span className="text-sm text-primary-foreground/70 print:text-muted-foreground">{contexto}</span>
+            ) : null}
+            {acao}
+          </div>
         </div>
       </header>
 

@@ -30,9 +30,8 @@ export default function ListaOpcoes({
   if (opcoes.length === 0) {
     return (
       <>
-        <p className="text-[15px] text-muted-foreground">
-          Nenhuma opção cadastrada. Os imóveis desta incorporadora aparecem sem formatos de
-          pagamento até que alguma seja definida — o cadastro de unidades segue liberado.
+        <p className="text-sm text-muted-foreground">
+          Nenhuma opção cadastrada.
         </p>
         {rodape}
       </>
@@ -47,10 +46,10 @@ export default function ListaOpcoes({
           key={o.ordem}
           className="flex flex-wrap items-baseline gap-x-3 gap-y-1 border-b border-border pb-3 last:border-0 last:pb-0"
         >
-          <span className="text-[15px] font-semibold text-foreground">
+          <span className="text-sm font-semibold text-foreground">
             Opção {o.ordem}
           </span>
-          <span className="text-[15px] text-foreground">
+          <span className="text-sm text-foreground">
             Entrada total {pct(o.percentual_entrada)}
           </span>
           <span className="text-sm text-muted-foreground">

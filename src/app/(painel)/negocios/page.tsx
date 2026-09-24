@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ehAdmin, ehParceiro, getSessao } from "@/lib/sessao";
 import { EmptyState, PageHeader } from "@/components/ui";
 import ErroLeitura from "@/components/erro-leitura";
-import { NOME_DO_ATOR, bolaCom, diasParado, progresso, type Tarefa } from "@/lib/fechamento";
+import { nomeDoAtor, bolaCom, diasParado, progresso, type Tarefa } from "@/lib/fechamento";
 
 /**
  * Os negócios em fechamento.
@@ -25,11 +25,12 @@ type LinhaNegocio = {
   imovel: { identificacao: string } | null;
   empreendimento: { nome: string } | null;
   incorporadora: { nome: string } | null;
+  parceiro_id: string | null;
   parceiro: { nome: string } | null;
 };
 
 const ROTULO_STATUS: Record<string, string> = {
-  em_fechamento: "Em fechamento",
+  em_fechamento: "Em andamento",
   em_jornada: "Em jornada",
   em_quitacao: "Em quitação",
   quitado: "Quitado",
@@ -46,7 +47,7 @@ export default async function NegociosPage() {
   const { data, error } = await supabase
     .from("negocio")
     .select(
-      `id, status, created_at,
+      `id, status, created_at, parceiro_id,
        proposta (codigo),
        imovel (identificacao),
        empreendimento (nome),
@@ -84,10 +85,15 @@ export default async function NegociosPage() {
     else porNegocio.set(t.negocio_id, [t]);
   }
 
+  const ativos = negocios.filter((n) => n.status !== "cancelado");
+  const cancelados = negocios.filter((n) => n.status === "cancelado");
+  const segunda = admin ? "Incorporadora" : "Corretor";
+
   return (
     <>
       <PageHeader
         titulo="Setups de negócios"
+        acao={admin ? { href: "/negocios/novo", label: "Nova negociação" } : undefined}
         descricao={
           corretor
             ? "As unidades que você vendeu, e o que falta para fechar cada uma."
@@ -98,27 +104,15 @@ export default async function NegociosPage() {
       {negocios.length === 0 ? (
         <EmptyState
           titulo="Nenhum negócio ainda"
-          texto="Um negócio nasce quando a Trilha aceita uma proposta. A partir daí, cada parte faz a sua parte do fechamento aqui."
+          texto="Os negócios aparecem aqui quando a Trilha aceita uma proposta."
         />
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
-          <table className="w-full min-w-[900px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-border">
-                {["Unidade", admin ? "Incorporadora" : "Corretor", "Esperando", "Andamento", "Situação"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="bg-muted/50 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground"
-                    >
-                      {h}
-                    </th>
-                  ),
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {negocios.map((n) => {
+        <div className="space-y-8">
+          {ativos.length === 0 ? (
+            <EmptyState titulo="Nenhum setup em andamento" texto="Os cancelados estão logo abaixo." />
+          ) : (
+            <Tabela colunas={["Unidade", segunda, "Esperando", "Andamento", "Situação"]}>
+              {ativos.map((n) => {
                 const lista = porNegocio.get(n.id) ?? [];
                 const esperando = bolaCom(lista);
                 const pct = progresso(lista);
@@ -126,18 +120,7 @@ export default async function NegociosPage() {
 
                 return (
                   <tr key={n.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/negocios/${n.id}`}
-                        className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
-                      >
-                        {n.imovel?.identificacao ?? "—"}
-                      </Link>
-                      <span className="block text-sm text-muted-foreground">
-                        {n.empreendimento?.nome ?? "—"}
-                        {n.proposta ? ` · ${n.proposta.codigo}` : ""}
-                      </span>
-                    </td>
+                    <CelulaUnidade n={n} />
 
                     <td className="px-4 py-3 text-sm text-muted-foreground">
                       {admin ? (n.incorporadora?.nome ?? "—") : (n.parceiro?.nome ?? "—")}
@@ -145,11 +128,11 @@ export default async function NegociosPage() {
 
                     <td className="px-4 py-3 text-sm">
                       {esperando.length === 0 ? (
-                        <span className="text-emerald-700">nada — tudo feito</span>
+                        <span className="text-sucesso">nada — tudo feito</span>
                       ) : (
                         <>
                           <span className="font-semibold text-foreground">
-                            {esperando.map((a) => NOME_DO_ATOR[a]).join(" e ")}
+                            {[...new Set(esperando.map((a) => nomeDoAtor(a, !n.parceiro_id)))].join(" e ")}
                           </span>
                           <span className="block text-sm text-muted-foreground">
                             {dias === 0 ? "hoje" : `há ${dias} dia(s)`}
@@ -168,11 +151,82 @@ export default async function NegociosPage() {
                   </tr>
                 );
               })}
-            </tbody>
-          </table>
+            </Tabela>
+          )}
+
+          {cancelados.length > 0 && (
+            <details className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-muted-foreground select-none hover:text-foreground">
+                <span className="inline-block transition-transform group-open:rotate-90">›</span>
+                Cancelados
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums">{cancelados.length}</span>
+              </summary>
+
+              <div className="mt-3 opacity-75">
+                <Tabela colunas={["Unidade", segunda, "Aberto em", "Situação"]}>
+                  {cancelados.map((n) => (
+                    <tr key={n.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
+                      <CelulaUnidade n={n} />
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {admin ? (n.incorporadora?.nome ?? "—") : (n.parceiro?.nome ?? "—")}
+                      </td>
+                      <td className="px-4 py-3 text-sm tabular-nums text-muted-foreground">
+                        {new Date(n.created_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
+                      </td>
+                      <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">
+                        <span className="inline-flex items-center gap-1.5">
+                          <span className="size-1.5 rounded-full bg-muted-foreground/60" />
+                          Cancelado
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </Tabela>
+              </div>
+            </details>
+          )}
         </div>
       )}
     </>
+  );
+}
+
+function Tabela({ colunas, children }: { colunas: string[]; children: React.ReactNode }) {
+  return (
+    <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
+      <table className="w-full min-w-[900px] border-collapse text-left">
+        <thead>
+          <tr className="border-b border-border">
+            {colunas.map((h) => (
+              <th
+                key={h}
+                className="bg-muted/50 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground"
+              >
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>{children}</tbody>
+      </table>
+    </div>
+  );
+}
+
+function CelulaUnidade({ n }: { n: LinhaNegocio }) {
+  return (
+    <td className="px-4 py-3">
+      <Link
+        href={`/negocios/${n.id}`}
+        className="text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
+      >
+        {n.imovel?.identificacao ?? "—"}
+      </Link>
+      <span className="block text-sm text-muted-foreground">
+        {n.empreendimento?.nome ?? "—"}
+        {n.proposta ? ` · ${n.proposta.codigo}` : ""}
+      </span>
+    </td>
   );
 }
 

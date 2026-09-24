@@ -11,7 +11,7 @@ import { Alert, Button, Field, Input } from "@/components/ui";
 
 type Values = z.infer<typeof loginSchema>;
 
-export default function LoginForm() {
+export default function LoginForm({ voltar }: { voltar?: string }) {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -30,7 +30,7 @@ export default function LoginForm() {
         setServerError(result.error);
         return;
       }
-      router.replace("/incorporadoras");
+      router.replace(voltar ?? "/incorporadoras");
       router.refresh();
     });
   };

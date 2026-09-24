@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { propostaSchema, type PropostaFormValues } from "@/lib/schemas";
 import { enviarProposta } from "@/app/actions/propostas";
+import { LinkEntrar } from "@/components/link-entrar";
 import { Alert, Button, Field, Input, Section, Textarea } from "@/components/ui";
 
 export type CorretorConhecido = {
@@ -31,13 +32,19 @@ export default function FormProposta({
   imovelId,
   ordem,
   corretor,
+  incorporadora,
 }: {
   empreendimentoId: string;
   imovelId: string;
   ordem: number;
   corretor: CorretorConhecido | null;
+  /** Nome da incorporadora da unidade, para a pergunta do vínculo. */
+  incorporadora: string;
 }) {
   const [codigo, setCodigo] = useState<string | null>(null);
+  // Só pergunta para quem não está logado; o logado já tem isso no cadastro.
+  const [vinculo, setVinculo] = useState<"incorporadora" | "trilha" | null>(null);
+  const [erroVinculo, setErroVinculo] = useState<string | null>(null);
   const [erro, setErro] = useState<{ texto: string; precisaLogin: boolean } | null>(null);
 
   const {
@@ -63,11 +70,16 @@ export default function FormProposta({
 
   const onSubmit = async (v: PropostaFormValues) => {
     setErro(null);
+    if (!corretor && !vinculo) {
+      setErroVinculo("Escolha o seu vínculo.");
+      return;
+    }
     const r = await enviarProposta({
       empreendimentoId,
       imovelId,
       ordem,
       corretor: v.corretor,
+      vinculo: vinculo ?? undefined,
       comprador: v.comprador,
       observacao: v.observacao,
     });
@@ -134,9 +146,60 @@ export default function FormProposta({
             aria-invalid={Boolean(errors.corretor?.telefone)}
           />
         </Field>
+
+        {corretor ? null : (
+          <Field label="Qual é o seu vínculo?" span={6} error={erroVinculo ?? undefined}>
+            <div role="radiogroup" aria-label="Qual é o seu vínculo?" className="grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  {
+                    valor: "incorporadora",
+                    titulo: incorporadora ? `Corretor da ${incorporadora}` : "Corretor da incorporadora",
+                    texto: "Você é parceiro da incorporadora desta unidade.",
+                  },
+                  {
+                    valor: "trilha",
+                    titulo: "Parceiro Trilha",
+                    texto: "Corretor independente, sem vínculo com uma incorporadora.",
+                  },
+                ] as const
+              ).map((o) => {
+                const marcado = vinculo === o.valor;
+                return (
+                  <button
+                    key={o.valor}
+                    type="button"
+                    role="radio"
+                    aria-checked={marcado}
+                    onClick={() => {
+                      setVinculo(o.valor);
+                      setErroVinculo(null);
+                    }}
+                    className={`flex items-start gap-3 rounded-lg border px-4 py-3 text-left transition-colors ${
+                      marcado ? "border-destaque bg-muted/50" : "border-border hover:bg-muted/40"
+                    }`}
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border ${
+                        marcado ? "border-destaque" : "border-muted-foreground/40"
+                      }`}
+                    >
+                      {marcado ? <span className="size-2 rounded-full bg-destaque" /> : null}
+                    </span>
+                    <span className="flex flex-col gap-0.5">
+                      <span className="text-sm font-medium text-foreground">{o.titulo}</span>
+                      <span className="text-xs text-muted-foreground">{o.texto}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
+        )}
       </Section>
 
-      <Section title="O comprador" hint="Os dados de quem vai comprar a unidade.">
+      <Section title="O comprador">
         <Field label="Nome completo" span={6} error={errors.comprador?.nome?.message}>
           <Input {...register("comprador.nome")} aria-invalid={Boolean(errors.comprador?.nome)} />
         </Field>
@@ -164,7 +227,6 @@ export default function FormProposta({
           label="Observação"
           span={6}
           optional
-          hint="Algo que a equipe da Trilha precise saber sobre este negócio."
         >
           <Textarea rows={3} {...register("observacao")} />
         </Field>
@@ -176,9 +238,9 @@ export default function FormProposta({
           {erro.precisaLogin ? (
             <>
               {" "}
-              <Link href="/login" className="font-semibold underline-offset-4 hover:underline">
+              <LinkEntrar className="font-semibold underline-offset-4 hover:underline">
                 Fazer login
-              </Link>
+              </LinkEntrar>
               .
             </>
           ) : null}

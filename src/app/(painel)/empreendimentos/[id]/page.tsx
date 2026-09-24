@@ -135,7 +135,7 @@ export default async function EmpreendimentoPage({
         <Stat valor={emTrilha} label="Em Trilha" tom="destaque" />
       </div>
 
-      <section className="mb-6 rounded-lg border border-border bg-white p-6">
+      <section className="mb-6 rounded-xl border bg-card p-6 shadow-xs">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
           <div>
             <h2 className="text-xl font-semibold text-foreground">
@@ -152,7 +152,7 @@ export default async function EmpreendimentoPage({
           {edita ? (
             <Link
               href={`/empreendimentos/${id}/opcoes-pagamento`}
-              className="rounded-md border border-border bg-white px-3.5 py-1.5 text-sm font-semibold text-foreground transition-colors hover:border-foreground/30 hover:bg-accent"
+              className="rounded-md border border-border bg-card px-3.5 py-1.5 text-sm font-semibold text-foreground transition-colors hover:border-foreground/30 hover:bg-accent"
             >
               {origem === "empreendimento" ? "Editar condições" : "Criar condições próprias"}
             </Link>

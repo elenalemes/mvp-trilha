@@ -23,6 +23,7 @@ import { linkDeConvite } from "@/lib/convite";
  */
 type Registro = {
   nome: string;
+  incorporadora_id: string | null;
   email: string;
   ativo: boolean;
   origem: string;
@@ -47,7 +48,7 @@ export default async function AcessoParceiroPage({
   const { data, error } = await supabase
     .from("parceiro")
     .select(
-      `nome, email, ativo, origem, conta_id,
+      `nome, incorporadora_id, email, ativo, origem, conta_id,
        convite_token, convite_expira_em, convite_enviado_em,
        conta (email)`,
     )
@@ -57,6 +58,8 @@ export default async function AcessoParceiroPage({
   if (error) return <ErroLeitura oQue="deste parceiro" erro={error} />;
   if (!data) notFound();
 
+  const base = data.incorporadora_id ? "/parceiros" : "/parceiro-trilha";
+  const secao = data.incorporadora_id ? "Parceiros" : "Parceiro Trilha";
   const criar = !data.conta_id;
   const veioDeProposta = data.origem === "proposta" && !data.ativo;
   const link = data.convite_token ? await linkDeConvite(data.convite_token) : null;
@@ -66,11 +69,11 @@ export default async function AcessoParceiroPage({
       <PageHeader
         titulo={criar ? "Criar acesso" : "Dados de acesso"}
         descricao={data.nome}
-        voltar={{ href: "/parceiros", label: "Parceiros" }}
+        voltar={{ href: base, label: secao }}
       />
 
       {veioDeProposta ? (
-        <p className="mb-6 max-w-3xl rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+        <p className="mb-6 max-w-3xl rounded-md border border-aviso/20 bg-aviso-suave px-5 py-4 text-sm text-aviso">
           Este cadastro nasceu de uma proposta enviada pelo simulador e está{" "}
           <strong>aguardando aprovação</strong>. Criar o acesso aqui libera a entrada dele na
           plataforma.
@@ -87,7 +90,7 @@ export default async function AcessoParceiroPage({
       ) : null}
 
       {link ? (
-        <p className="mb-4 max-w-3xl text-[15px] text-muted-foreground">
+        <p className="mb-4 max-w-3xl text-sm text-muted-foreground">
           Se preferir não esperar o corretor usar o link, você pode criar o acesso à mão aqui
           embaixo e entregar a senha a ele.
         </p>
@@ -99,7 +102,7 @@ export default async function AcessoParceiroPage({
         /* Ao criar, o e-mail sugerido é o do cadastro — foi o que ele digitou
            na proposta, e é por onde ele espera receber o acesso. */
         emailAtual={criar ? data.email : (data.conta?.email ?? "")}
-        voltarPara="/parceiros"
+        voltarPara={base}
       />
     </>
   );

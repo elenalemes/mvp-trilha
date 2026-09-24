@@ -67,6 +67,8 @@ const SECOES: Record<string, string> = {
   empreendimentos: "Empreendimentos",
   imoveis: "Imóveis",
   parceiros: "Parceiros imobiliários",
+  "parceiro-trilha": "Parceiro Trilha",
+  proprietarios: "Proprietários PF",
   "opcoes-pagamento": "Opções de pagamento",
   perfil: "Meus dados",
 };

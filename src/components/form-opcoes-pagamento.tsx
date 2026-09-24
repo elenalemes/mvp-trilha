@@ -34,13 +34,13 @@ function Bloco({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-border bg-white p-6 shadow-[0_1px_2px_rgba(21,38,110,0.05)]">
+    <section className="rounded-xl border bg-card p-6 shadow-xs">
       <header className="mb-5 flex items-center justify-between gap-3 border-b border-border pb-3">
         <h2 className="text-xl font-semibold text-foreground">{titulo}</h2>
         <button
           type="button"
           onClick={aoRemover}
-          className="text-sm font-semibold text-muted-foreground transition-colors hover:text-red-600"
+          className="text-sm font-semibold text-muted-foreground transition-colors hover:text-destructive"
         >
           Remover
         </button>
@@ -109,7 +109,7 @@ export default function FormOpcoesPagamento({
       {empreendimentoId ? null : (
         <Section
           title="Comissão do parceiro imobiliário"
-          hint="Vale para todas as opções. É o que a Trilha repassa a imobiliárias, corretores e parceiros que trouxeram o negócio."
+          hint="Vale para todas as opções."
         >
           <Field
             label="Comissão"
@@ -125,19 +125,17 @@ export default function FormOpcoesPagamento({
             />
           </Field>
           <p className="text-sm text-muted-foreground sm:col-span-4">
-            Sai de dentro da entrada e é paga ao parceiro parcelada ao longo da Trilha. O que a
-            incorporadora recebe durante a Trilha é a entrada menos a comissão; o saldo do fim não
-            tem desconto.
+            Sai da entrada, paga em parcelas durante a Trilha. O saldo do fim não tem desconto.
           </p>
         </Section>
       )}
 
       {fields.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border bg-white px-6 py-10 text-center">
+        <div className="rounded-lg border border-dashed border-border bg-card px-6 py-10 text-center">
           <p className="text-lg font-semibold text-foreground">
             Nenhuma opção de pagamento
           </p>
-          <p className="mx-auto mt-1 max-w-lg text-[15px] text-muted-foreground">
+          <p className="mx-auto mt-1 max-w-lg text-sm text-muted-foreground">
             {empreendimentoId
               ? "Sem condições próprias, este empreendimento usa o padrão da incorporadora. Salvar assim, vazio, é como voltar a usar o padrão."
               : "Enquanto não houver nenhuma, os imóveis desta incorporadora aparecem sem formatos de pagamento. O cadastro continua liberado."}
@@ -238,7 +236,7 @@ export default function FormOpcoesPagamento({
         </Button>
         <Link
           href={voltarPara}
-          className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+          className="px-2 text-sm font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
         >
           Voltar
         </Link>

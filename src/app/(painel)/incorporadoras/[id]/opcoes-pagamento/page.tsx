@@ -24,16 +24,15 @@ const paraTexto = (v: number) => String(v).replace(".", ",");
  */
 function ErroDeLeitura({ erro }: { erro: { code?: string; message?: string } }) {
   return (
-    <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
-      <p className="text-[15px] font-semibold text-red-800">
-        O banco recusou a leitura desta incorporadora.
+    <div className="rounded-lg border border-destructive/20 bg-erro-suave px-5 py-4">
+      <p className="text-sm font-semibold text-destructive">
+        Não consegui carregar os dados desta incorporadora.
       </p>
-      <p className="mt-1 text-sm text-red-700">
+      <p className="mt-1 text-sm text-destructive">
         {erro.code ?? "sem código"}: {erro.message ?? "sem mensagem"}
       </p>
-      <p className="mt-2 text-sm text-red-700">
-        Isso não quer dizer que o cadastro não exista — quer dizer que esta sessão não conseguiu
-        lê-lo.
+      <p className="mt-2 text-sm text-destructive">
+        Recarregue a página. Se continuar, envie este código para a Trilha.
       </p>
     </div>
   );
@@ -74,7 +73,7 @@ export default async function OpcoesPagamentoPage({
         voltar={{ href: `/incorporadoras/${id}`, label: "Voltar para a ficha" }}
       />
 
-      <p className="mb-6 max-w-3xl text-[15px] text-muted-foreground">
+      <p className="mb-6 max-w-3xl text-sm text-muted-foreground">
         Estas condições valem para <strong className="text-foreground">todos os imóveis</strong>{" "}
         desta incorporadora. Aqui só entram percentual e prazo — os valores em reais aparecem na
         ficha de cada imóvel, porque dependem do preço da unidade.

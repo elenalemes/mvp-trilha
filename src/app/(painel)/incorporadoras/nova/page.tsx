@@ -11,7 +11,6 @@ export default async function NovaIncorporadoraPage() {
     <>
       <PageHeader
         titulo="Cadastrar incorporadora"
-        descricao="Dados da empresa, conta para repasse, responsável e o acesso que ela vai usar para entrar."
         voltar={{ href: "/incorporadoras", label: "Incorporadoras" }}
       />
       <FormIncorporadora modo="criar" />

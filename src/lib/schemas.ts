@@ -74,6 +74,46 @@ export const incorporadoraEdicaoSchema = z.object(dadosIncorporadora);
 export type IncorporadoraFormValues = z.infer<typeof incorporadoraSchema>;
 export type IncorporadoraEdicaoValues = z.infer<typeof incorporadoraEdicaoSchema>;
 
+// ------------------------------------------------------ proprietário PF
+
+/**
+ * Vendedor pessoa física. No banco mora na tabela `incorporadora` (tipo PF),
+ * com os dados pessoais nas colunas `resp_*`.
+ */
+const dadosProprietario = {
+  pessoa: z.object({
+    nome: req("Nome").min(3, "Nome muito curto"),
+    cpf: req("CPF").refine(isValidCPF, "CPF inválido"),
+    email: req("E-mail").refine(isValidEmail, "E-mail inválido"),
+    telefone: req("Telefone").refine(isValidPhone, "Telefone inválido"),
+    rg: opt(),
+    endereco: opt(),
+    profissao: opt(),
+    estado_civil: opt(),
+  }),
+  banco: bancoSchema,
+};
+
+export const proprietarioSchema = z.object({
+  ...dadosProprietario,
+  acesso: z.object({
+    email: req("E-mail de acesso").refine(isValidEmail, "E-mail inválido"),
+    senha: z.string().min(8, "A senha precisa ter ao menos 8 caracteres"),
+  }),
+});
+
+export const proprietarioEdicaoSchema = z.object(dadosProprietario);
+
+export type ProprietarioFormValues = z.infer<typeof proprietarioSchema>;
+
+/** Onde fica o imóvel avulso: vira o "empreendimento" dele no banco. */
+export const localAvulsoSchema = z.object({
+  nome: req("Condomínio, edifício ou endereço").min(2, "Muito curto"),
+  endereco: opt(),
+});
+
+export type LocalAvulsoValues = z.infer<typeof localAvulsoSchema>;
+
 /** Troca de e-mail e/ou senha de acesso. Senha vazia significa "manter a atual". */
 export const acessoSchema = z.object({
   email: req("E-mail de acesso").refine(isValidEmail, "E-mail inválido"),

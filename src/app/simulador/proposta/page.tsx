@@ -1,5 +1,6 @@
 import { ChevronLeft } from "lucide-react";
 import { AvisoPublico, MolduraPublica } from "@/components/publico";
+import { AcessoCorretor } from "@/components/acesso-corretor";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { simular } from "@/lib/simulador";
@@ -108,6 +109,7 @@ export default async function PropostaPage({
           imovelId={unidade.id}
           ordem={condicao.ordem}
           corretor={corretor}
+          incorporadora={incorporadora ?? ""}
         />
       </div>
     </Moldura>
@@ -118,6 +120,7 @@ function Moldura({ children }: { children: React.ReactNode }) {
   return (
     <MolduraPublica
       contexto="Proposta"
+      acao={<AcessoCorretor />}
       largura="6xl"
       rodape="A proposta passa por análise da equipe da Trilha. Enviar não reserva a unidade."
     >

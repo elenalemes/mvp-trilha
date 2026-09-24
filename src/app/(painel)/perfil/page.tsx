@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ehParceiro, getSessao } from "@/lib/sessao";
+import { ehParceiro, ehProprietarioPF, getSessao } from "@/lib/sessao";
+import FormProprietario, { PROPRIETARIO_VAZIO } from "@/components/form-proprietario";
+import { lerProprietario, paraFormulario } from "@/lib/proprietario";
 import { maskCNPJ, maskCPF, maskPhone } from "@/lib/br";
 import { PageHeader } from "@/components/ui";
 import FormIncorporadora from "@/components/form-incorporadora";
@@ -37,13 +39,26 @@ export default async function PerfilPage() {
   if (ehParceiro(sessao)) redirect("/empreendimentos");
   if (!sessao?.incorporadoraId) {
     return (
-      <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+      <p className="rounded-md border border-aviso/20 bg-aviso-suave px-5 py-4 text-sm text-aviso">
         Esta conta não está ligada a nenhuma incorporadora.
       </p>
     );
   }
 
   const supabase = await createClient();
+
+  // Proprietário PF: dados pessoais, sem CNPJ nem "responsável".
+  if (ehProprietarioPF(sessao)) {
+    const pf = await lerProprietario(supabase, sessao.incorporadoraId);
+    if (!pf) redirect("/");
+    return (
+      <>
+        <PageHeader titulo="Meus dados" />
+        <FormProprietario modo="perfil" inicial={{ ...PROPRIETARIO_VAZIO, ...paraFormulario(pf, maskCPF, maskPhone) }} />
+      </>
+    );
+  }
+
   const { data } = await supabase
     .from("incorporadora")
     .select(
@@ -57,7 +72,7 @@ export default async function PerfilPage() {
 
   if (!data) {
     return (
-      <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+      <p className="rounded-md border border-aviso/20 bg-aviso-suave px-5 py-4 text-sm text-aviso">
         Não foi possível carregar seus dados.
       </p>
     );
@@ -97,7 +112,6 @@ export default async function PerfilPage() {
     <>
       <PageHeader
         titulo="Meus dados"
-        descricao="Dados da sua empresa, conta para repasse e responsável."
       />
       <FormIncorporadora modo="perfil" inicial={inicial} />
     </>

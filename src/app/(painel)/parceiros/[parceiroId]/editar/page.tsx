@@ -9,6 +9,7 @@ import { RemoverParceiro } from "@/components/remover-parceiro";
 
 type Registro = {
   nome: string;
+  incorporadora_id: string | null;
   conta_id: string | null;
   convite_token: string | null;
   documento: string | null;
@@ -45,7 +46,7 @@ export default async function EditarMeuParceiroPage({
   const { data, error } = await supabase
     .from("parceiro")
     .select(
-      `nome, conta_id, convite_token, documento, creci, email, telefone, endereco, ativo,
+      `nome, incorporadora_id, conta_id, convite_token, documento, creci, email, telefone, endereco, ativo,
        banco, agencia, conta_numero, chave_pix, chave_pix_tipo`,
     )
     .eq("id", parceiroId)
@@ -54,17 +55,20 @@ export default async function EditarMeuParceiroPage({
   if (error) return <ErroLeitura oQue="deste parceiro" erro={error} />;
   if (!data) notFound();
 
+  // Parceiro Trilha mora em outra seção do menu; a mesma tela serve às duas.
+  const base = data.incorporadora_id ? "/parceiros" : "/parceiro-trilha";
+  const secao = data.incorporadora_id ? "Parceiros" : "Parceiro Trilha";
+
   return (
     <>
       <PageHeader
         titulo={data.nome}
-        descricao="Dados cadastrais do parceiro"
-        voltar={{ href: "/parceiros", label: "Parceiros" }}
+        voltar={{ href: base, label: secao }}
         /* O rótulo diz a situação, e não uma ação genérica: "Criar acesso"
            num parceiro que já tem convite em aberto manda a pessoa para a
            tela certa pelo motivo errado. */
         acaoSecundaria={{
-          href: `/parceiros/${parceiroId}/acesso`,
+          href: `${base}/${parceiroId}/acesso`,
           label: data.conta_id
             ? "Alterar acesso"
             : data.convite_token
@@ -75,7 +79,7 @@ export default async function EditarMeuParceiroPage({
       <FormParceiro
         modo="editar"
         id={parceiroId}
-        voltarPara="/parceiros"
+        voltarPara={base}
         inicial={{
           dados: {
             nome: data.nome,
@@ -98,7 +102,7 @@ export default async function EditarMeuParceiroPage({
       />
 
       <div className="mt-8">
-        <RemoverParceiro id={parceiroId} nome={data.nome} voltarPara="/parceiros" />
+        <RemoverParceiro id={parceiroId} nome={data.nome} voltarPara={base} />
       </div>
     </>
   );

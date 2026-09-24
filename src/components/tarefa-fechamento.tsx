@@ -10,7 +10,7 @@ import {
   salvarReferencia,
 } from "@/app/actions/fechamento";
 import { Check, X } from "lucide-react";
-import { NOME_DO_ATOR, recebeArquivo, validade, type Arquivo, type Tarefa } from "@/lib/fechamento";
+import { nomeDoAtor, recebeArquivo, validade, type Arquivo, type Tarefa } from "@/lib/fechamento";
 import { Alert, Button, Input, Textarea } from "@/components/ui";
 import ArquivosTarefa from "@/components/arquivos-tarefa";
 import FormFicha from "@/components/form-ficha";
@@ -44,6 +44,7 @@ export default function TarefaFechamento({
   porPessoa,
   dadosComprador,
   cancelado,
+  semCorretor = false,
 }: {
   tarefa: Tarefa;
   negocioId: string;
@@ -59,6 +60,8 @@ export default function TarefaFechamento({
   /** Só na tarefa de formulário, e só para quem lê a ficha (Trilha e corretor). */
   dadosComprador?: DadosComprador | null;
   cancelado?: boolean;
+  /** Venda direta: as tarefas do corretor aparecem como da Trilha. */
+  semCorretor?: boolean;
 }) {
   const router = useRouter();
   const [ocupado, setOcupado] = useState(false);
@@ -109,7 +112,7 @@ export default function TarefaFechamento({
               {tarefa.titulo}
             </p>
             <span className="rounded-full border px-2 text-xs leading-5 text-muted-foreground">
-              {NOME_DO_ATOR[tarefa.ator]}
+              {nomeDoAtor(tarefa.ator, semCorretor)}
             </span>
             {tarefa.interna ? (
               <span className="rounded-full bg-muted px-2 text-xs leading-5 text-muted-foreground">Interna</span>

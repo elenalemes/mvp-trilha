@@ -53,7 +53,7 @@ export default async function PropostasPage() {
        imovel (identificacao),
        empreendimento (nome),
        incorporadora (nome),
-       parceiro (nome, ativo, origem)`,
+       parceiro!parceiro_id (nome, ativo, origem)`,
     )
     .order("created_at", { ascending: false })
     .returns<Linha[]>();
@@ -136,7 +136,7 @@ function Bloco({
       </h2>
 
       {propostas.length === 0 ? (
-        <p className="rounded-lg border border-border bg-white px-5 py-6 text-[15px] text-muted-foreground">
+        <p className="rounded-lg border border-border bg-card px-5 py-6 text-sm text-muted-foreground">
           {vazio}
         </p>
       ) : (
@@ -184,12 +184,12 @@ function Bloco({
 
                   {mostrarIncorporadora ? (
                     <td className="px-4 py-3 text-sm">
-                      {p.parceiro?.nome ?? "—"}
+                      {p.parceiro?.nome ?? "Venda direta"}
                     {/* O corretor que nasceu desta proposta ainda não tem
                         acesso. Dizer isso aqui é o que faz a fila de aprovação
                         ser vista por quem pode resolvê-la. */}
                       {p.parceiro && p.parceiro.origem === "proposta" && !p.parceiro.ativo ? (
-                        <span className="block text-sm font-semibold text-amber-700">
+                        <span className="block text-sm font-semibold text-aviso">
                           cadastro pendente
                         </span>
                       ) : null}

@@ -28,10 +28,13 @@ export function BuscaUnidade({
   empreendimentoId,
   unidades,
   selecionada,
+  base = "/simulador",
 }: {
   empreendimentoId?: string;
   unidades: UnidadeSimulavel[];
   selecionada?: UnidadeSimulavel;
+  /** Para onde a escolha leva. A "Nova negociação" do painel usa a mesma busca. */
+  base?: string;
 }) {
   const router = useRouter();
   const nomeEscolhido = selecionada?.identificacao ?? "";
@@ -70,14 +73,14 @@ export function BuscaUnidade({
   const escolher = (u: UnidadeSimulavel) => {
     setAberto(false);
     campo.current?.blur();
-    iniciar(() => router.replace(`/simulador?e=${empreendimentoId}&u=${u.id}`));
+    iniciar(() => router.replace(`${base}?e=${empreendimentoId}&u=${u.id}`));
   };
 
   const limpar = () => {
     setTexto("");
     setAberto(true);
     campo.current?.focus();
-    if (selecionada) iniciar(() => router.replace(`/simulador?e=${empreendimentoId}`));
+    if (selecionada) iniciar(() => router.replace(`${base}?e=${empreendimentoId}`));
   };
 
   return (

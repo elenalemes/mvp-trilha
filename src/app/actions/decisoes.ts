@@ -7,6 +7,7 @@ import {
   enviarWhatsApp,
   textoAceitaComprador,
   textoAceitaCorretor,
+  textoAceitaCorretorAcompanha,
   textoAceitaIncorporadora,
 } from "@/lib/notificacoes";
 
@@ -93,14 +94,14 @@ type Envolvidos = {
  */
 async function avisarDaAceitacao(supabase: Supabase, propostaId: string, negocioId: string) {
   try {
-    const [{ data: proposta }, { data: negocio }] = await Promise.all([
+    const [{ data: proposta }, { data: negocio }, { data: acompanham }] = await Promise.all([
       supabase
         .from("proposta")
         .select(
           `codigo,
            imovel (identificacao),
            empreendimento (nome),
-           parceiro (nome, telefone),
+           parceiro!parceiro_id (nome, telefone),
            comprador (nome, telefone),
            incorporadora (resp_nome, resp_telefone, telefone)`,
         )
@@ -111,6 +112,13 @@ async function avisarDaAceitacao(supabase: Supabase, propostaId: string, negocio
         .select("token")
         .eq("id", negocioId)
         .maybeSingle<{ token: string }>(),
+      // Os outros corretores da divisão da comissão (condição especial).
+      supabase
+        .from("proposta_corretor")
+        .select("parceiro (nome, telefone)")
+        .eq("proposta_id", propostaId)
+        .eq("principal", false)
+        .returns<{ parceiro: { nome: string; telefone: string } | null }[]>(),
     ]);
 
     if (!proposta || !negocio) return;
@@ -144,6 +152,21 @@ async function avisarDaAceitacao(supabase: Supabase, propostaId: string, negocio
         telefone: proposta.parceiro.telefone,
         texto: textoAceitaCorretor({
           nome: proposta.parceiro.nome,
+          link: linkPainel,
+          codigo: proposta.codigo,
+          unidade,
+          empreendimento,
+        }),
+      });
+    }
+
+    for (const { parceiro } of acompanham ?? []) {
+      if (!parceiro?.telefone) continue;
+      envios.push({
+        quem: `corretor ${parceiro.nome}`,
+        telefone: parceiro.telefone,
+        texto: textoAceitaCorretorAcompanha({
+          nome: parceiro.nome,
           link: linkPainel,
           codigo: proposta.codigo,
           unidade,

@@ -40,7 +40,7 @@ export default function DecisaoProposta({ id, unidade }: { id: string; unidade: 
 
   if (!modo) {
     return (
-      <div className="flex flex-col gap-4 rounded-lg border border-border bg-white p-6">
+      <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-xs">
         <div className="flex flex-wrap gap-3">
           <Button type="button" onClick={() => setModo("aceitar")}>
             Aceitar proposta
@@ -57,12 +57,12 @@ export default function DecisaoProposta({ id, unidade }: { id: string; unidade: 
   const aceitando = modo === "aceitar";
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-border bg-white p-6">
+    <div className="flex flex-col gap-4 rounded-xl border bg-card p-6 shadow-xs">
       <div>
         <h2 className="text-lg font-semibold text-foreground">
           {aceitando ? "Aceitar esta proposta?" : "Recusar esta proposta?"}
         </h2>
-        <p className="mt-1 text-[15px] text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           {aceitando ? (
             <>
               A unidade <strong className="text-foreground">{unidade}</strong> sai do estoque

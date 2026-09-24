@@ -36,14 +36,13 @@ export function ImportarEstoque({
   };
 
   return (
-    <section className="mb-8 rounded-lg border border-border bg-white p-6">
+    <section className="mb-8 rounded-xl border bg-card p-6 shadow-xs">
       <div className="mb-5">
         <h2 className="text-xl font-semibold text-foreground">
-          Adicione a lista de estoque para cadastrar as unidades
+          Enviar tabela de estoque
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Planilha, PDF, Word ou print. A IA lê o arquivo e monta o cadastro — você confere antes
-          de qualquer coisa entrar no sistema.
+          Planilha, PDF, Word ou print. Você confere a leitura antes de salvar.
         </p>
       </div>
 
@@ -56,7 +55,7 @@ export function ImportarEstoque({
             name="incorporadora_id"
             required
             defaultValue={incorporadoras.length === 1 ? incorporadoras[0].id : ""}
-            className="w-full rounded-md border border-border bg-white px-3 py-2 text-[15px] text-foreground hover:border-foreground/20"
+            className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground hover:border-foreground/20"
           >
             <option value="" disabled>
               Selecione
@@ -80,7 +79,7 @@ export function ImportarEstoque({
             required
             accept=".pdf,.xlsx,.xls,.csv,.txt,.docx,.png,.jpg,.jpeg,.webp"
             onChange={(e) => setArquivo(e.target.files?.[0] ?? null)}
-            className="w-full rounded-md border border-border bg-white px-3 py-1.5 text-[15px] text-foreground file:mr-3 file:rounded file:border-0 file:bg-muted file:px-3 file:py-1.5 file:font-semibold file:text-foreground hover:border-foreground/20"
+            className="w-full rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground file:mr-3 file:rounded file:border-0 file:bg-muted file:px-3 file:py-1.5 file:font-semibold file:text-foreground hover:border-foreground/20"
           />
           {arquivo ? (
             <p className="text-xs text-muted-foreground">
@@ -100,7 +99,7 @@ export function ImportarEstoque({
             name="contexto"
             rows={2}
             placeholder="Ex.: ignore as unidades de investidor · os valores já estão com desconto · é a tabela de setembro"
-            className="w-full rounded-md border border-border bg-white px-3 py-2 text-[15px] text-foreground placeholder:text-muted-foreground hover:border-foreground/20"
+            className="w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground hover:border-foreground/20"
           />
           <p className="text-xs text-muted-foreground">
             Use para o que o arquivo não diz. Isso vai junto na instrução da IA.

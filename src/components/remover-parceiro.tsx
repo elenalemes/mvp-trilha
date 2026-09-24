@@ -43,16 +43,16 @@ export function RemoverParceiro({
     });
 
   return (
-    <section className="rounded-lg border border-red-200 bg-red-50/50 p-6">
-      <h2 className="text-xl font-semibold text-red-800">Remover parceiro</h2>
+    <section className="rounded-lg border border-destructive/20 bg-erro-suave p-6">
+      <h2 className="text-xl font-semibold text-destructive">Remover parceiro</h2>
 
       {confirmando ? (
         <>
-          <p className="mt-2 text-[15px] text-red-800">
+          <p className="mt-2 text-sm text-destructive">
             Remover <strong>{nome}</strong> apaga o cadastro e o login dele. Ele perde o acesso na
             hora e isso não tem volta.
           </p>
-          <p className="mt-2 text-sm text-red-700">
+          <p className="mt-2 text-sm text-destructive">
             Se a ideia é só tirar o acesso por enquanto, cancele e desmarque{" "}
             <strong>&ldquo;Parceiro ativo&rdquo;</strong> no formulário acima — o cadastro fica
             guardado e o acesso para de funcionar do mesmo jeito.
@@ -69,7 +69,7 @@ export function RemoverParceiro({
               type="button"
               onClick={remover}
               disabled={pendente}
-              className="inline-flex items-center justify-center rounded-md bg-red-600 px-5 py-2.5 text-[15px] font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
+              className="inline-flex items-center justify-center rounded-md bg-destructive px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-300"
             >
               {pendente ? "Removendo…" : `Sim, remover ${nome}`}
             </button>
@@ -80,7 +80,7 @@ export function RemoverParceiro({
         </>
       ) : (
         <>
-          <p className="mt-2 text-[15px] text-red-800">
+          <p className="mt-2 text-sm text-destructive">
             Apaga o cadastro e o login. Para apenas suspender o acesso, desmarque
             &ldquo;Parceiro ativo&rdquo; no formulário acima.
           </p>
@@ -94,7 +94,7 @@ export function RemoverParceiro({
           <button
             type="button"
             onClick={() => setConfirmando(true)}
-            className="mt-4 inline-flex items-center justify-center rounded-md border border-red-300 bg-white px-5 py-2.5 text-[15px] font-semibold text-red-700 transition-colors hover:bg-red-50"
+            className="mt-4 inline-flex items-center justify-center rounded-md border border-destructive/30 bg-card px-5 py-2.5 text-sm font-semibold text-destructive transition-colors hover:bg-erro-suave"
           >
             Remover parceiro
           </button>

@@ -48,7 +48,8 @@ export default function FormParceiro({
   modo: "criar" | "editar";
   id?: string;
   /** Só no cadastro: a quem este parceiro pertence. */
-  incorporadoraId?: string;
+  /** Na criação: a incorporadora do parceiro. Nulo cria um Parceiro Trilha. */
+  incorporadoraId?: string | null;
   inicial?: Values;
   voltarPara: string;
 }) {
@@ -104,7 +105,7 @@ export default function FormParceiro({
     iniciar(async () => {
       const resultado = editando
         ? await atualizarParceiro(id!, valores)
-        : await criarParceiro(incorporadoraId!, valores);
+        : await criarParceiro(incorporadoraId ?? null, valores);
 
       if (resultado.erro) {
         setErro(resultado.erro);
@@ -128,7 +129,6 @@ export default function FormParceiro({
     <form onSubmit={handleSubmit(enviar)} className="flex flex-col gap-6" noValidate>
       <Section
         title="Dados do parceiro"
-        hint="Imobiliária ou corretor que vende as unidades desta incorporadora."
       >
         <Field label="Nome" error={e.dados?.nome?.message} span={4}>
           <Input
@@ -172,14 +172,13 @@ export default function FormParceiro({
           <div className="sm:col-span-6">
             <Checkbox label="Parceiro ativo" {...register("dados.ativo")} />
             <p className="text-sm text-muted-foreground">
-              Desmarcado, o login continua existindo mas não enxerga mais nada do estoque. É a
-              forma de desligar um parceiro sem apagar o cadastro dele.
+              Desmarque para suspender o acesso sem apagar o cadastro.
             </p>
           </div>
         ) : null}
       </Section>
 
-      <Section title="Dados bancários" hint="Conta que vai receber o repasse da comissão.">
+      <Section title="Dados bancários">
         <Field label="Nome do banco" span={3} optional>
           <Input placeholder="Banco do Brasil, Itaú…" {...register("banco.banco")} />
         </Field>
@@ -207,13 +206,12 @@ export default function FormParceiro({
       {editando ? null : (
         <Section
           title="Acesso do parceiro"
-          hint="Com estes dados ele entra na plataforma e enxerga o estoque disponível da incorporadora. Anote a senha e entregue a ele — depois não é possível consultá-la, só trocar."
+          hint="Anote a senha antes de salvar: depois ela não pode ser consultada, só trocada."
         >
           <Field
             label="E-mail de acesso"
             error={e.acesso?.email?.message}
             span={3}
-            hint="Sugerido a partir do e-mail de contato. Pode trocar."
           >
             <Input type="email" aria-invalid={!!e.acesso?.email} {...register("acesso.email")} />
           </Field>
@@ -242,7 +240,7 @@ export default function FormParceiro({
         </Button>
         <Link
           href={voltarPara}
-          className="px-2 text-[15px] font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+          className="px-2 text-sm font-semibold text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
         >
           {editando ? "Voltar" : "Cancelar"}
         </Link>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { ehParceiro, getSessao, podeEditar } from "@/lib/sessao";
+import { ehAdmin, ehParceiro, getSessao, podeEditar } from "@/lib/sessao";
 import { formatArea, formatBRL, imovelStatusLabel, imovelTipoLabel } from "@/lib/br";
 import { PRAZO_PADRAO_MESES } from "@/lib/trilha";
 import { calcularCondicoes } from "@/lib/pagamento";
@@ -44,14 +44,14 @@ function Item({ label, valor }: { label: string; valor: React.ReactNode }) {
       <span className="text-xs font-semibold text-muted-foreground">
         {label}
       </span>
-      <span className="text-[15px] text-foreground">{valor}</span>
+      <span className="text-sm text-foreground">{valor}</span>
     </div>
   );
 }
 
 function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-border bg-white p-6">
+    <section className="rounded-xl border bg-card p-6 shadow-xs">
       <h2 className="mb-5 border-b border-border pb-3 text-xl font-semibold text-foreground">
         {titulo}
       </h2>
@@ -63,13 +63,13 @@ function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode
 /** Falta alguma coisa para os cards existirem — diz o quê, e o que fazer. */
 function Pendencia({ titulo, texto, acao }: { titulo: string; texto: string; acao?: { href: string; label: string } }) {
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4">
-      <p className="text-[15px] font-semibold text-amber-900">{titulo}</p>
-      <p className="mt-1 text-sm text-amber-800">{texto}</p>
+    <div className="rounded-lg border border-aviso/20 bg-aviso-suave px-5 py-4">
+      <p className="text-sm font-semibold text-aviso">{titulo}</p>
+      <p className="mt-1 text-sm text-aviso">{texto}</p>
       {acao ? (
         <Link
           href={acao.href}
-          className="mt-3 inline-block rounded-md border border-amber-300 bg-white px-3.5 py-1.5 text-sm font-semibold text-amber-900 transition-colors hover:bg-amber-100"
+          className="mt-3 inline-block rounded-md border border-aviso/30 bg-card px-3.5 py-1.5 text-sm font-semibold text-aviso transition-colors hover:bg-amber-100"
         >
           {acao.label}
         </Link>
@@ -107,11 +107,11 @@ export default async function ImovelPage({
   // "Não existe" e "não consigo ler" são coisas diferentes.
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 px-5 py-4">
-        <p className="text-[15px] font-semibold text-red-800">
-          O banco recusou a leitura deste imóvel.
+      <div className="rounded-lg border border-destructive/20 bg-erro-suave px-5 py-4">
+        <p className="text-sm font-semibold text-destructive">
+          Não consegui carregar os dados deste imóvel.
         </p>
-        <p className="mt-1 text-sm text-red-700">
+        <p className="mt-1 text-sm text-destructive">
           {error.code ?? "sem código"}: {error.message ?? "sem mensagem"}
         </p>
       </div>
@@ -138,6 +138,9 @@ export default async function ImovelPage({
     data.churrasqueira ? "churrasqueira" : null,
   ].filter(Boolean);
 
+  // Só a Trilha abre negociação pelo painel, e só de unidade disponível.
+  const negociavel = ehAdmin(sessao) && data.status === "disponivel";
+
   return (
     <>
       <PageHeader
@@ -147,7 +150,14 @@ export default async function ImovelPage({
           .join(" · ")}
         voltar={{ href: `/empreendimentos/${id}`, label: data.empreendimento?.nome ?? "Voltar" }}
         acao={
-          edita
+          negociavel
+            ? { href: `/negocios/novo?e=${id}&u=${imovelId}`, label: "Nova negociação" }
+            : edita
+              ? { href: `/empreendimentos/${id}/imoveis/${imovelId}/editar`, label: "Editar imóvel" }
+              : undefined
+        }
+        acaoSecundaria={
+          negociavel && edita
             ? { href: `/empreendimentos/${id}/imoveis/${imovelId}/editar`, label: "Editar imóvel" }
             : undefined
         }
@@ -219,7 +229,7 @@ export default async function ImovelPage({
           ) : condicoes.length === 0 ? (
             <Pendencia
               titulo="Informe o valor do imóvel"
-              texto="As opções de pagamento existem, mas viram números a partir do preço da unidade. Sem valor cadastrado não há o que calcular."
+              texto="Informe o valor da unidade para ver as condições."
               acao={
                 edita
                   ? {

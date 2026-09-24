@@ -29,9 +29,12 @@ const MAX_RESULTADOS = 20;
 export function BuscaEmpreendimento({
   empreendimentos,
   selecionado,
+  base = "/simulador",
 }: {
   empreendimentos: EmpreendimentoSimulavel[];
   selecionado?: EmpreendimentoSimulavel;
+  /** Para onde a escolha leva. A "Nova negociação" do painel usa a mesma busca. */
+  base?: string;
 }) {
   const router = useRouter();
   const nomeEscolhido = selecionado?.nome ?? "";
@@ -70,14 +73,14 @@ export function BuscaEmpreendimento({
   const escolher = (e: EmpreendimentoSimulavel) => {
     setAberto(false);
     campo.current?.blur();
-    iniciar(() => router.replace(`/simulador?e=${e.id}`));
+    iniciar(() => router.replace(`${base}?e=${e.id}`));
   };
 
   const limpar = () => {
     setTexto("");
     setAberto(true);
     campo.current?.focus();
-    if (selecionado) iniciar(() => router.replace("/simulador"));
+    if (selecionado) iniciar(() => router.replace(base));
   };
 
   return (

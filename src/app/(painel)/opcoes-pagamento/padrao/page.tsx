@@ -17,7 +17,7 @@ export default async function MinhasOpcoesPage() {
   if (ehParceiro(sessao)) redirect("/empreendimentos");
   if (!sessao?.incorporadoraId) {
     return (
-      <p className="rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+      <p className="rounded-md border border-aviso/20 bg-aviso-suave px-5 py-4 text-sm text-aviso">
         Esta conta não está ligada a nenhuma incorporadora.
       </p>
     );
@@ -42,11 +42,10 @@ export default async function MinhasOpcoesPage() {
     <>
       <PageHeader
         titulo="Opções de pagamento"
-        descricao="As condições de entrada parcelada dos seus imóveis."
         voltar={{ href: "/opcoes-pagamento", label: "Opções de pagamento" }}
       />
 
-      <p className="mb-6 max-w-3xl text-[15px] text-muted-foreground">
+      <p className="mb-6 max-w-3xl text-sm text-muted-foreground">
         Estas condições valem para <strong className="text-foreground">todos os seus imóveis</strong>
         . Aqui só entram percentual e prazo — os valores em reais aparecem na ficha de cada imóvel,
         porque dependem do preço da unidade. Mudou aqui, mudou em todos.

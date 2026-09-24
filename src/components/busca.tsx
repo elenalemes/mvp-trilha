@@ -56,7 +56,7 @@ export function Busca({ base, placeholder }: { base: string; placeholder: string
         onChange={(e) => aoDigitar(e.target.value)}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="w-full rounded-md border border-border bg-white py-2 pr-3 pl-10 text-[15px] text-foreground placeholder:text-muted-foreground transition-colors hover:border-foreground/20"
+        className="w-full rounded-md border border-border bg-card py-2 pr-3 pl-10 text-sm text-foreground placeholder:text-muted-foreground transition-colors hover:border-foreground/20"
       />
     </div>
   );

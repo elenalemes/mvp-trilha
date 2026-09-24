@@ -71,8 +71,7 @@ export default function Compartilhar({
       </button>
 
       <p className="w-full text-xs text-muted-foreground/70">
-        O cliente abre uma página só com esta unidade — sem busca e sem as outras unidades do
-        empreendimento.
+        O cliente vê só esta unidade.
       </p>
     </div>
   );

@@ -9,6 +9,8 @@ export default async function PainelLayout({ children }: { children: React.React
   const sessao = await getSessao();
   const admin = sessao?.conta?.tipo === "trilha_admin";
   const parceiro = sessao?.conta?.tipo === "parceiro";
+  const parceiroTrilha = parceiro && Boolean(sessao?.parceiroTrilha);
+  const proprietarioPF = sessao?.conta?.tipo === "incorporadora" && Boolean(sessao?.proprietarioPF);
 
   // O menu principal é só de produto. O que é da conta — nome, e-mail,
   // meus dados e sair — fica no rodapé, separado de propósito.
@@ -31,7 +33,21 @@ export default async function PainelLayout({ children }: { children: React.React
         { href: "/incorporadoras", label: "Incorporadoras", icone: "empresa" as const },
         { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
         { href: "/parceiros", label: "Parceiros imobiliários", icone: "parceiros" as const },
+        { href: "/parceiro-trilha", label: "Parceiro Trilha", icone: "trilha" as const },
+        { href: "/proprietarios", label: "Proprietários PF", icone: "casa" as const },
       ]
+    : proprietarioPF
+      ? [
+          { href: `/proprietarios/${sessao!.incorporadoraId}`, label: "Meus imóveis", icone: "casa" as const },
+          { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+        ]
+    : parceiroTrilha
+      ? [
+          // Sem incorporadora, não há "estoque dele" no painel: o estoque de
+          // todas está no simulador, que fica no atalho do menu.
+          { href: "/propostas", label: "Minhas propostas", icone: "proposta" as const },
+          { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+        ]
     : parceiro
       ? [
           { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
@@ -53,7 +69,17 @@ export default async function PainelLayout({ children }: { children: React.React
     <SidebarProvider defaultOpen={menuAberto}>
       <NavLateral
         links={links}
-        papel={admin ? "Painel da Trilha" : parceiro ? "Parceiro imobiliário" : "Incorporadora"}
+        papel={
+          admin
+            ? "Painel da Trilha"
+            : parceiroTrilha
+              ? "Parceiro Trilha"
+              : proprietarioPF
+                ? "Proprietário"
+              : parceiro
+                ? "Parceiro imobiliário"
+                : "Incorporadora"
+        }
         nome={sessao?.conta?.nome ?? ""}
         email={sessao?.email ?? ""}
         mostrarPerfil={!admin && !parceiro}
@@ -69,15 +95,15 @@ export default async function PainelLayout({ children }: { children: React.React
       <div className="min-w-0 flex-1 px-4 py-8 lg:px-8">
         <div className="mx-auto max-w-6xl">
           {sessao && !sessao.conta ? (
-            <div className="mb-8 flex flex-col gap-2 rounded-md border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800">
+            <div className="mb-8 flex flex-col gap-2 rounded-md border border-aviso/20 bg-aviso-suave px-5 py-4 text-sm text-aviso">
               {sessao.erroLeitura ? (
                 <>
-                  <strong className="font-semibold">O banco recusou a leitura da sua ficha.</strong>
+                  <strong className="font-semibold">Não consegui carregar os dados da sua ficha.</strong>
                   <span>
                     A linha pode até existir — o banco não deixou ler. Isso é permissão ou regra de
                     acesso, não dado faltando.
                   </span>
-                  <code className="rounded bg-amber-100 px-2 py-1 font-mono text-xs break-all">
+                  <code className="rounded bg-aviso/10 px-2 py-1 font-mono text-xs break-all">
                     {sessao.erroLeitura}
                   </code>
                 </>
@@ -89,7 +115,7 @@ export default async function PainelLayout({ children }: { children: React.React
                   <span>
                     O banco respondeu sem erro, mas não encontrou nenhuma linha para este usuário.
                     Rode a Parte 7 do arquivo{" "}
-                    <code className="rounded bg-amber-100 px-1">supabase/sprint-1.sql</code>.
+                    <code className="rounded bg-aviso/10 px-1">supabase/sprint-1.sql</code>.
                   </span>
                 </>
               )}
