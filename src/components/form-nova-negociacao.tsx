@@ -44,6 +44,7 @@ export default function FormNovaNegociacao({
   parceiros,
   valorTabela,
   comissaoPadrao,
+  proprietarioPF = false,
 }: {
   empreendimentoId: string;
   imovelId: string;
@@ -51,6 +52,8 @@ export default function FormNovaNegociacao({
   parceiros: Parceiro[];
   valorTabela: number;
   comissaoPadrao: number;
+  /** Imóvel de proprietário PF: os textos falam "proprietário". */
+  proprietarioPF?: boolean;
 }) {
   const router = useRouter();
   const temCadastro = condicoes.length > 0;
@@ -231,7 +234,7 @@ export default function FormNovaNegociacao({
                     )}
                   >
                     <input type="radio" name="condicao" className="sr-only" checked={escolhida} onChange={() => setOrdem(cond.ordem)} />
-                    <CardPagamento condicao={cond} modo="completo" vendaDireta={vendaDireta} />
+                    <CardPagamento condicao={cond} modo="completo" vendaDireta={vendaDireta} proprietarioPF={proprietarioPF} />
                   </label>
                 );
               })}
@@ -331,14 +334,14 @@ export default function FormNovaNegociacao({
               </div>
 
               <Field label="Motivo" span={6} optional>
-                <Textarea rows={2} value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Ex.: ato reduzido combinado com a incorporadora" />
+                <Textarea rows={2} value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder={proprietarioPF ? "Ex.: ato reduzido combinado com o proprietário" : "Ex.: ato reduzido combinado com a incorporadora"} />
               </Field>
             </div>
 
             <div className="flex flex-col gap-3 lg:sticky lg:top-20">
               {especial ? (
                 <>
-                  <CardPagamento condicao={especial.condicao} modo="completo" divisao={especial.divisao} vendaDireta={vendaDireta} especial />
+                  <CardPagamento condicao={especial.condicao} modo="completo" divisao={especial.divisao} vendaDireta={vendaDireta} especial proprietarioPF={proprietarioPF} />
                   {especial.problemas.map((p) => (
                     <Alert key={p}>{p}</Alert>
                   ))}

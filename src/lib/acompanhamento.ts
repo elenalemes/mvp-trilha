@@ -32,6 +32,8 @@ export type Acompanhamento = {
   unidade: string;
   empreendimento: string;
   incorporadora: string;
+  /** Vendedor pessoa física: o nome dele não vai para a página pública. */
+  proprietarioPF: boolean;
   cancelado: boolean;
   /** Resumo do que foi combinado, para quem quer conferir sem procurar papel. */
   condicao: { prazoMeses: number; parcela: number; ato: number; saldo: number } | null;
@@ -45,7 +47,7 @@ type LinhaNegocio = {
   parceiro_id: string | null;
   imovel: { identificacao: string } | null;
   empreendimento: { nome: string } | null;
-  incorporadora: { nome: string } | null;
+  incorporadora: { nome: string; tipo: string } | null;
   proposta: {
     prazo_meses: number;
     valor_parcela: number;
@@ -63,7 +65,7 @@ export async function lerAcompanhamento(token: string): Promise<Acompanhamento |
       `id, status, parceiro_id,
        imovel (identificacao),
        empreendimento (nome),
-       incorporadora (nome),
+       incorporadora (nome, tipo),
        proposta (prazo_meses, valor_parcela, valor_ato, valor_saldo)`,
     )
     .eq("token", token)
@@ -109,7 +111,8 @@ export async function lerAcompanhamento(token: string): Promise<Acompanhamento |
   return {
     unidade: negocio.imovel?.identificacao ?? "",
     empreendimento: negocio.empreendimento?.nome ?? "",
-    incorporadora: negocio.incorporadora?.nome ?? "",
+    incorporadora: negocio.incorporadora?.tipo === "proprietario_pf" ? "" : (negocio.incorporadora?.nome ?? ""),
+    proprietarioPF: negocio.incorporadora?.tipo === "proprietario_pf",
     cancelado: negocio.status === "cancelado",
     condicao: negocio.proposta
       ? {

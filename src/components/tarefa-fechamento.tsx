@@ -14,6 +14,8 @@ import { nomeDoAtor, recebeArquivo, validade, type Arquivo, type Tarefa } from "
 import { Alert, Button, Input, Textarea } from "@/components/ui";
 import ArquivosTarefa from "@/components/arquivos-tarefa";
 import FormFicha from "@/components/form-ficha";
+import FormFichaVendedor from "@/components/form-ficha-vendedor";
+import { ehTarefaDoVendedor, type DadosVendedor } from "@/lib/vendedor";
 import { maritalLabel } from "@/lib/br";
 import type { DadosComprador } from "@/lib/ficha";
 
@@ -43,8 +45,10 @@ export default function TarefaFechamento({
   podeAbrirFicha,
   porPessoa,
   dadosComprador,
+  dadosVendedor,
   cancelado,
   semCorretor = false,
+  proprietarioPF = false,
 }: {
   tarefa: Tarefa;
   negocioId: string;
@@ -59,9 +63,13 @@ export default function TarefaFechamento({
   porPessoa: boolean;
   /** Só na tarefa de formulário, e só para quem lê a ficha (Trilha e corretor). */
   dadosComprador?: DadosComprador | null;
+  /** "Dados do vendedor" (proprietário PF): só para a Trilha e o proprietário. */
+  dadosVendedor?: DadosVendedor | null;
   cancelado?: boolean;
   /** Venda direta: as tarefas do corretor aparecem como da Trilha. */
   semCorretor?: boolean;
+  /** Vendedor pessoa física: as tarefas "da incorporadora" aparecem como dele. */
+  proprietarioPF?: boolean;
 }) {
   const router = useRouter();
   const [ocupado, setOcupado] = useState(false);
@@ -72,6 +80,8 @@ export default function TarefaFechamento({
   const idSeletor = `anexo-${tarefa.id}`;
   const [fichaAberta, setFichaAberta] = useState(false);
   const formulario = tarefa.tipo === "formulario" && podeAbrirFicha && dadosComprador;
+  const formVendedor = tarefa.tipo === "formulario" && dadosVendedor ? dadosVendedor : null;
+  const doVendedor = ehTarefaDoVendedor(tarefa);
 
   const executar = async (acao: () => Promise<{ ok: boolean; erro?: string }>) => {
     setOcupado(true);
@@ -98,7 +108,7 @@ export default function TarefaFechamento({
           podeAgir={podeAgir}
           ocupado={ocupado}
           idSeletor={idSeletor}
-          abrirFicha={formulario ? () => setFichaAberta((v) => !v) : undefined}
+          abrirFicha={formulario || formVendedor ? () => setFichaAberta((v) => !v) : undefined}
           alternar={() =>
             executar(() =>
               fechada ? reabrirTarefa(tarefa.id, negocioId) : concluirTarefa(tarefa.id, negocioId, {}),
@@ -112,7 +122,7 @@ export default function TarefaFechamento({
               {tarefa.titulo}
             </p>
             <span className="rounded-full border px-2 text-xs leading-5 text-muted-foreground">
-              {nomeDoAtor(tarefa.ator, semCorretor)}
+              {nomeDoAtor(tarefa.ator, semCorretor, proprietarioPF)}
             </span>
             {tarefa.interna ? (
               <span className="rounded-full bg-muted px-2 text-xs leading-5 text-muted-foreground">Interna</span>
@@ -156,8 +166,40 @@ export default function TarefaFechamento({
                 </div>
               )}
             </>
+          ) : formVendedor ? (
+            <>
+              {formVendedor.salva && !fichaAberta ? (
+                <p className="text-sm text-foreground">
+                  {[
+                    formVendedor.valores.vendedor.nome,
+                    formVendedor.valores.vendedor.cpf,
+                    maritalLabel(formVendedor.estadoCivil),
+                  ].join(" · ")}
+                </p>
+              ) : null}
+              {!fichaAberta ? (
+                <button
+                  type="button"
+                  onClick={() => setFichaAberta(true)}
+                  className="self-start text-sm font-semibold text-foreground underline-offset-4 hover:underline hover:text-foreground"
+                >
+                  {!podeAgir || cancelado ? "Ver dados" : formVendedor.salva ? "Editar dados" : "Conferir e completar dados"}
+                </button>
+              ) : (
+                <div className="mt-2">
+                  <FormFichaVendedor
+                    negocioId={negocioId}
+                    inicial={formVendedor.valores}
+                    somenteLeitura={!podeAgir || !!cancelado}
+                    aoFechar={() => setFichaAberta(false)}
+                  />
+                </div>
+              )}
+            </>
           ) : tarefa.tipo === "formulario" && fechada ? (
-            <p className="text-sm text-muted-foreground">Dados preenchidos · acesso restrito à Trilha e ao corretor</p>
+            <p className="text-sm text-muted-foreground">
+              Dados preenchidos · acesso restrito à Trilha e {doVendedor ? "ao proprietário" : "ao corretor"}
+            </p>
           ) : null}
 
           {recebeArquivo(tarefa) ? (
@@ -171,6 +213,7 @@ export default function TarefaFechamento({
               idSeletor={idSeletor}
               porPessoa={porPessoa}
               conjugeObrigatorio={tarefa.pede_conjuge}
+              titular={doVendedor ? "vendedor" : "comprador"}
             />
           ) : null}
 

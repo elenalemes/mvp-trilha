@@ -9,6 +9,7 @@ import {
   textoAceitaCorretor,
   textoAceitaCorretorAcompanha,
   textoAceitaIncorporadora,
+  textoAceitaProprietario,
 } from "@/lib/notificacoes";
 
 /**
@@ -79,7 +80,12 @@ type Envolvidos = {
   empreendimento: { nome: string } | null;
   parceiro: { nome: string; telefone: string } | null;
   comprador: { nome: string; telefone: string } | null;
-  incorporadora: { resp_nome: string | null; resp_telefone: string | null; telefone: string | null } | null;
+  incorporadora: {
+    resp_nome: string | null;
+    resp_telefone: string | null;
+    telefone: string | null;
+    tipo: string;
+  } | null;
 };
 
 /**
@@ -103,7 +109,7 @@ async function avisarDaAceitacao(supabase: Supabase, propostaId: string, negocio
            empreendimento (nome),
            parceiro!parceiro_id (nome, telefone),
            comprador (nome, telefone),
-           incorporadora (resp_nome, resp_telefone, telefone)`,
+           incorporadora (resp_nome, resp_telefone, telefone, tipo)`,
         )
         .eq("id", propostaId)
         .maybeSingle<Envolvidos>(),
@@ -181,7 +187,7 @@ async function avisarDaAceitacao(supabase: Supabase, propostaId: string, negocio
       envios.push({
         quem: "incorporadora",
         telefone: telefoneInc,
-        texto: textoAceitaIncorporadora({
+        texto: (proposta.incorporadora?.tipo === "proprietario_pf" ? textoAceitaProprietario : textoAceitaIncorporadora)({
           nome: proposta.incorporadora?.resp_nome || "equipe",
           link: linkPainel,
           unidade,

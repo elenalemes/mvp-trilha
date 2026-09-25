@@ -35,7 +35,7 @@ type Ficha = {
   valor_tabela: number | null;
   imovel: { id: string; identificacao: string; status: string } | null;
   empreendimento: { id: string; nome: string } | null;
-  incorporadora: { id: string; nome: string } | null;
+  incorporadora: { id: string; nome: string; tipo: string } | null;
   parceiro: {
     id: string;
     nome: string;
@@ -79,7 +79,7 @@ export default async function PropostaDetalhePage({
        valor_imovel, escopo, condicao, condicao_especial, motivo_condicao, valor_tabela,
        imovel (id, identificacao, status),
        empreendimento (id, nome),
-       incorporadora (id, nome),
+       incorporadora (id, nome, tipo),
        parceiro!parceiro_id (id, nome, email, telefone, documento, creci, ativo, origem, incorporadora_id),
        comprador (nome, cpf, email, telefone)`,
     )
@@ -124,6 +124,7 @@ export default async function PropostaDetalhePage({
             modo="completo"
             vendaDireta={!parceiro}
             especial={data.condicao_especial}
+            proprietarioPF={data.incorporadora?.tipo === "proprietario_pf"}
             divisao={
               divisao && divisao.length && admin
                 ? dividirComissao(

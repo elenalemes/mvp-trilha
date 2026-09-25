@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 import { AvisoPublico, MolduraPublica, TituloPublico } from "@/components/publico";
 import type { Metadata } from "next";
 import { lerAcompanhamento, type EtapaPublica } from "@/lib/acompanhamento";
-import { NOME_DO_ATOR } from "@/lib/fechamento";
+import { nomeDoAtor } from "@/lib/fechamento";
 import { formatBRL } from "@/lib/br";
 
 /**
@@ -86,7 +86,7 @@ export default async function AcompanharPage({
             <p className="mt-1 text-sm text-muted-foreground">
               Cuidando disso:{" "}
               {[...new Set(emAndamento.flatMap((e) => e.responsaveis))]
-                .map((a) => NOME_DO_ATOR[a])
+                .map((a) => nomeDoAtor(a, false, dados.proprietarioPF))
                 .join(", ")}
               .
             </p>
@@ -113,7 +113,7 @@ export default async function AcompanharPage({
         <h2 className="mb-5 text-base font-semibold text-foreground">Etapas</h2>
         <ol className="flex flex-col">
           {dados.etapas.map((e, i) => (
-            <Etapa key={e.nome} etapa={e} ultima={i === dados.etapas.length - 1} />
+            <Etapa key={e.nome} etapa={e} ultima={i === dados.etapas.length - 1} pf={dados.proprietarioPF} />
           ))}
         </ol>
       </section>
@@ -150,7 +150,7 @@ export default async function AcompanharPage({
  * Uma etapa na linha do tempo. O traço que liga as bolinhas fica verde até a
  * última concluída — é o "quanto já andou" sem precisar ler número.
  */
-function Etapa({ etapa, ultima }: { etapa: EtapaPublica; ultima: boolean }) {
+function Etapa({ etapa, ultima, pf }: { etapa: EtapaPublica; ultima: boolean; pf: boolean }) {
   const concluida = etapa.situacao === "concluida";
   const andamento = etapa.situacao === "andamento";
 
@@ -188,7 +188,7 @@ function Etapa({ etapa, ultima }: { etapa: EtapaPublica; ultima: boolean }) {
           {concluida
             ? "Concluída"
             : andamento
-              ? `Em andamento · ${etapa.feitas} de ${etapa.total} · com ${etapa.responsaveis.map((a) => NOME_DO_ATOR[a]).join(" e ")}`
+              ? `Em andamento · ${etapa.feitas} de ${etapa.total} · com ${etapa.responsaveis.map((a) => nomeDoAtor(a, false, pf)).join(" e ")}`
               : "Ainda não começou"}
         </p>
       </div>

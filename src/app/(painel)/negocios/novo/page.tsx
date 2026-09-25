@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ehAdmin, getSessao } from "@/lib/sessao";
 import {
-  empreendimentosSimulaveis,
+  empreendimentosNegociaveis,
   simular,
   unidadesDoEmpreendimento,
   type UnidadeSimulavel,
@@ -34,10 +34,10 @@ export default async function NovaNegociacaoPage({
   const { e, u } = await searchParams;
   const base = "/negocios/novo";
 
-  const empreendimentos = await empreendimentosSimulaveis();
+  const empreendimentos = await empreendimentosNegociaveis();
   const selecionado = e ? empreendimentos.find((x) => x.id === e) : undefined;
   const unidades: UnidadeSimulavel[] = selecionado ? await unidadesDoEmpreendimento(selecionado.id) : [];
-  const simulacao = selecionado && u ? await simular(selecionado.id, u) : null;
+  const simulacao = selecionado && u ? await simular(selecionado.id, u, true) : null;
 
   let parceiros: { id: string; nome: string; ativo: boolean; trilha: boolean }[] = [];
   let comissaoPadrao = 6;
@@ -102,6 +102,7 @@ export default async function NovaNegociacaoPage({
             parceiros={parceiros}
             valorTabela={simulacao.valorImovel}
             comissaoPadrao={comissaoPadrao}
+            proprietarioPF={simulacao.avulso}
           />
         ) : null}
       </div>

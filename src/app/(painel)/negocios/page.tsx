@@ -24,7 +24,7 @@ type LinhaNegocio = {
   proposta: { codigo: string } | null;
   imovel: { identificacao: string } | null;
   empreendimento: { nome: string } | null;
-  incorporadora: { nome: string } | null;
+  incorporadora: { nome: string; tipo: string } | null;
   parceiro_id: string | null;
   parceiro: { nome: string } | null;
 };
@@ -51,7 +51,7 @@ export default async function NegociosPage() {
        proposta (codigo),
        imovel (identificacao),
        empreendimento (nome),
-       incorporadora (nome),
+       incorporadora (nome, tipo),
        parceiro (nome)`,
     )
     .order("created_at", { ascending: false })
@@ -87,7 +87,7 @@ export default async function NegociosPage() {
 
   const ativos = negocios.filter((n) => n.status !== "cancelado");
   const cancelados = negocios.filter((n) => n.status === "cancelado");
-  const segunda = admin ? "Incorporadora" : "Corretor";
+  const segunda = admin ? "Vendedor" : "Corretor";
 
   return (
     <>
@@ -123,7 +123,9 @@ export default async function NegociosPage() {
                     <CelulaUnidade n={n} />
 
                     <td className="px-4 py-3 text-sm text-muted-foreground">
-                      {admin ? (n.incorporadora?.nome ?? "—") : (n.parceiro?.nome ?? "—")}
+                      {admin
+                          ? `${n.incorporadora?.nome ?? "—"}${n.incorporadora?.tipo === "proprietario_pf" ? " · Proprietário PF" : ""}`
+                          : (n.parceiro?.nome ?? "—")}
                     </td>
 
                     <td className="px-4 py-3 text-sm">
@@ -132,7 +134,7 @@ export default async function NegociosPage() {
                       ) : (
                         <>
                           <span className="font-semibold text-foreground">
-                            {[...new Set(esperando.map((a) => nomeDoAtor(a, !n.parceiro_id)))].join(" e ")}
+                            {[...new Set(esperando.map((a) => nomeDoAtor(a, !n.parceiro_id, n.incorporadora?.tipo === "proprietario_pf")))].join(" e ")}
                           </span>
                           <span className="block text-sm text-muted-foreground">
                             {dias === 0 ? "hoje" : `há ${dias} dia(s)`}
@@ -168,7 +170,9 @@ export default async function NegociosPage() {
                     <tr key={n.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
                       <CelulaUnidade n={n} />
                       <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {admin ? (n.incorporadora?.nome ?? "—") : (n.parceiro?.nome ?? "—")}
+                        {admin
+                          ? `${n.incorporadora?.nome ?? "—"}${n.incorporadora?.tipo === "proprietario_pf" ? " · Proprietário PF" : ""}`
+                          : (n.parceiro?.nome ?? "—")}
                       </td>
                       <td className="px-4 py-3 text-sm tabular-nums text-muted-foreground">
                         {new Date(n.created_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}

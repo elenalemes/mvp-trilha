@@ -378,3 +378,56 @@ export const fichaSchema = z
   });
 
 export type FichaValues = z.infer<typeof fichaSchema>;
+
+// ------------------------------------------------ dados do vendedor PF
+
+/** Nome, e-mail, telefone e CPF obrigatórios; o resto é opcional (vendedor e cônjuge). */
+const pessoaVendedor = (quem: string) =>
+  z.object({
+    nome: req(`Nome ${quem}`).min(3, "Nome muito curto"),
+    email: req(`E-mail ${quem}`).refine(isValidEmail, "E-mail inválido"),
+    telefone: telefoneFicha(`Telefone ${quem}`),
+    cpf: req(`CPF ${quem}`).refine(isValidCPF, "CPF inválido"),
+    rg: z.string(),
+    endereco: z.string(),
+    profissao: z.string(),
+  });
+
+/**
+ * Os dados do vendedor PF no fechamento. O cônjuge só é validado para quem é
+ * casado ou vive em união estável — mesma trava `ficha_vendedor_conjuge` do banco.
+ */
+export const fichaVendedorSchema = z
+  .object({
+    vendedor: pessoaVendedor("do vendedor").extend({
+      estado_civil: z.enum(["solteiro", "casado", "uniao_estavel", "divorciado", "viuvo"], {
+        message: "Escolha o estado civil",
+      }),
+    }),
+    conjuge: z.object({
+      nome: z.string(),
+      email: z.string(),
+      telefone: z.string(),
+      cpf: z.string(),
+      rg: z.string(),
+      endereco: z.string(),
+      profissao: z.string(),
+    }),
+    banco: z.object({
+      banco: z.string(),
+      agencia: z.string(),
+      conta_numero: z.string(),
+      chave_pix: z.string(),
+    }),
+  })
+  .superRefine((v, ctx) => {
+    if (!temConjuge(v.vendedor.estado_civil)) return;
+    const conjuge = pessoaVendedor("do cônjuge").safeParse(v.conjuge);
+    if (!conjuge.success) {
+      for (const issue of conjuge.error.issues) {
+        ctx.addIssue({ code: "custom", path: ["conjuge", ...issue.path], message: issue.message });
+      }
+    }
+  });
+
+export type FichaVendedorValues = z.infer<typeof fichaVendedorSchema>;

@@ -32,6 +32,7 @@ export default function ArquivosTarefa({
   idSeletor,
   porPessoa = false,
   conjugeObrigatorio = true,
+  titular = "comprador",
 }: {
   arquivos: Arquivo[];
   tarefaId: string;
@@ -45,6 +46,8 @@ export default function ArquivosTarefa({
   porPessoa?: boolean;
   /** No grupo do cônjuge: `false` troca "falta anexar" por "opcional". */
   conjugeObrigatorio?: boolean;
+  /** De quem são os documentos: comprador, ou o vendedor PF. */
+  titular?: "comprador" | "vendedor";
 }) {
   const router = useRouter();
   const [enviando, setEnviando] = useState<string | null>(null);
@@ -87,7 +90,9 @@ export default function ArquivosTarefa({
   // vez de uma lista vazia que parece defeito.
   if (!podeAbrir) {
     return concluida ? (
-      <p className="text-sm text-muted-foreground">Documento entregue · acesso restrito à Trilha e ao corretor</p>
+      <p className="text-sm text-muted-foreground">
+        Documento entregue · acesso restrito à Trilha e {titular === "vendedor" ? "ao proprietário" : "ao corretor"}
+      </p>
     ) : null;
   }
 
@@ -102,18 +107,18 @@ export default function ArquivosTarefa({
   return (
     <div className="flex flex-col gap-3">
       {porPessoa ? (
-        (["comprador", "conjuge"] as const).map((pessoa) => {
-          const doGrupo = arquivos.filter((a) => (a.pessoa ?? "comprador") === pessoa);
-          const outra: Pessoa = pessoa === "comprador" ? "conjuge" : "comprador";
+        ([titular, "conjuge"] as const).map((pessoa) => {
+          const doGrupo = arquivos.filter((a) => (a.pessoa ?? titular) === pessoa);
+          const outra: Pessoa = pessoa === titular ? "conjuge" : titular;
           return (
             <Grupo
               key={pessoa}
               {...props}
               titulo={NOME_DA_PESSOA[pessoa]}
               arquivos={doGrupo}
-              faltando={doGrupo.length === 0 && arquivos.length > 0 && (pessoa === "comprador" || conjugeObrigatorio)}
+              faltando={doGrupo.length === 0 && arquivos.length > 0 && (pessoa === titular || conjugeObrigatorio)}
               opcional={pessoa === "conjuge" && !conjugeObrigatorio}
-              idSeletor={pessoa === "comprador" ? idSeletor : undefined}
+              idSeletor={pessoa === titular ? idSeletor : undefined}
               enviar={(lista) => enviar(lista, pessoa)}
               mover={{
                 rotulo: `é do ${NOME_DA_PESSOA[outra].toLowerCase()}`,

@@ -29,8 +29,10 @@ type LinhaEmpreendimento = {
   id: string;
   nome: string;
   incorporadora_id: string;
-  incorporadora: { nome: string } | null;
+  incorporadora: { nome: string; tipo: string } | null;
 };
+
+const ehAvulso = (tipo?: string | null) => tipo === "proprietario_pf";
 
 /**
  * Os empreendimentos que dá para simular.
@@ -44,6 +46,19 @@ type LinhaEmpreendimento = {
  * que é a pior forma de descobrir que não havia nada ali.
  */
 export async function empreendimentosSimulaveis(): Promise<EmpreendimentoSimulavel[]> {
+  return listarEmpreendimentos(false);
+}
+
+/**
+ * Para a Nova negociação do admin: os simuláveis MAIS os imóveis avulsos
+ * (proprietário PF), que não têm opção de pagamento cadastrada e só saem por
+ * condição especial. Nunca usar na página pública.
+ */
+export async function empreendimentosNegociaveis(): Promise<EmpreendimentoSimulavel[]> {
+  return listarEmpreendimentos(true);
+}
+
+async function listarEmpreendimentos(incluirAvulsos: boolean): Promise<EmpreendimentoSimulavel[]> {
   const supabase = createAdminClient();
 
   // Três consultas rasas em vez de uma com junções: as duas listas de apoio
@@ -52,7 +67,7 @@ export async function empreendimentosSimulaveis(): Promise<EmpreendimentoSimulav
   const [{ data: empreendimentos }, { data: unidades }, { data: opcoes }] = await Promise.all([
     supabase
       .from("empreendimento")
-      .select("id, nome, incorporadora_id, incorporadora (nome)")
+      .select("id, nome, incorporadora_id, incorporadora (nome, tipo)")
       .order("nome")
       .returns<LinhaEmpreendimento[]>(),
 
@@ -80,15 +95,18 @@ export async function empreendimentosSimulaveis(): Promise<EmpreendimentoSimulav
   );
 
   return (empreendimentos ?? [])
-    .filter(
-      (e) =>
-        comEstoque.has(e.id) &&
-        (comCondicaoPropria.has(e.id) || incorporadoraComPadrao.has(e.incorporadora_id)),
-    )
+    .filter((e) => {
+      if (!comEstoque.has(e.id)) return false;
+      // Imóvel avulso nunca vai ao público; no admin entra mesmo sem opções.
+      if (ehAvulso(e.incorporadora?.tipo)) return incluirAvulsos;
+      return comCondicaoPropria.has(e.id) || incorporadoraComPadrao.has(e.incorporadora_id);
+    })
     .map((e) => ({
       id: e.id,
       nome: e.nome,
-      incorporadora: e.incorporadora?.nome ?? "",
+      incorporadora: ehAvulso(e.incorporadora?.tipo)
+        ? `Proprietário PF · ${e.incorporadora?.nome ?? ""}`
+        : (e.incorporadora?.nome ?? ""),
     }));
 }
 
@@ -139,6 +157,8 @@ export type Simulacao = {
   valorImovel: number;
   /** De onde saíram as condições — vai congelado junto, na proposta. */
   escopo: "incorporadora" | "empreendimento";
+  /** Imóvel de proprietário PF: sem opções cadastradas, só condição especial. */
+  avulso: boolean;
   condicoes: Condicao[];
 };
 
@@ -148,7 +168,7 @@ type LinhaImovel = UnidadeSimulavel & {
     id: string;
     nome: string;
     incorporadora_id: string;
-    incorporadora: { nome: string; percentual_comissao: number } | null;
+    incorporadora: { nome: string; percentual_comissao: number; tipo: string } | null;
   } | null;
 };
 
@@ -167,6 +187,8 @@ type LinhaImovel = UnidadeSimulavel & {
 export async function simular(
   empreendimentoId: string,
   imovelId: string,
+  /** Só o admin (Nova negociação) passa `true`. Na página pública, avulso não existe. */
+  permitirAvulso = false,
 ): Promise<Simulacao | null> {
   const supabase = createAdminClient();
 
@@ -174,7 +196,7 @@ export async function simular(
     .from("imovel")
     .select(
       `${CAMPOS_UNIDADE}, valor,
-       empreendimento (id, nome, incorporadora_id, incorporadora (nome, percentual_comissao))`,
+       empreendimento (id, nome, incorporadora_id, incorporadora (nome, percentual_comissao, tipo))`,
     )
     .eq("id", imovelId)
     .eq("empreendimento_id", empreendimentoId)
@@ -184,6 +206,8 @@ export async function simular(
 
   const empreendimento = data?.empreendimento;
   if (!data || !empreendimento) return null;
+  const avulso = ehAvulso(empreendimento.incorporadora?.tipo);
+  if (avulso && !permitirAvulso) return null;
 
   const { opcoes, origem } = await opcoesQueValem(
     supabase,
@@ -202,6 +226,7 @@ export async function simular(
     // "nenhuma" só acontece quando não há opção alguma — e aí `condicoes` sai
     // vazia e ninguém chega a usar este campo.
     escopo: origem === "empreendimento" ? "empreendimento" : "incorporadora",
+    avulso,
     unidade: {
       id: data.id,
       identificacao: data.identificacao,

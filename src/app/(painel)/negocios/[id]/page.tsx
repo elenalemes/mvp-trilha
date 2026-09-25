@@ -5,6 +5,7 @@ import { ehAdmin, ehParceiro, getSessao } from "@/lib/sessao";
 import { PageHeader } from "@/components/ui";
 import { formatBRL, temConjuge } from "@/lib/br";
 import { lerDadosComprador, type DadosComprador } from "@/lib/ficha";
+import { ehTarefaDoVendedor, instrucaoEstadoCivil, lerDadosVendedor, type DadosVendedor } from "@/lib/vendedor";
 import ErroLeitura from "@/components/erro-leitura";
 import TarefaFechamento from "@/components/tarefa-fechamento";
 import CancelarNegocio from "@/components/cancelar-negocio";
@@ -57,7 +58,8 @@ type Ficha = {
   } | null;
   imovel: { identificacao: string } | null;
   empreendimento: { nome: string } | null;
-  incorporadora: { nome: string } | null;
+  incorporadora: { nome: string; tipo: string } | null;
+  incorporadora_id: string;
   parceiro_id: string | null;
   parceiro: { nome: string; incorporadora_id: string | null } | null;
   comprador: { nome: string; cpf: string; email: string; telefone: string } | null;
@@ -80,11 +82,11 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
   const { data: negocio, error: erroNegocio } = await supabase
     .from("negocio")
     .select(
-      `id, status, created_at, token, cancelado_motivo, cancelado_em, parceiro_id,
+      `id, status, created_at, token, cancelado_motivo, cancelado_em, parceiro_id, incorporadora_id,
        proposta (id, codigo, prazo_meses, valor_parcela, valor_imovel, valor_tabela, condicao_especial, motivo_condicao),
        imovel (identificacao),
        empreendimento (nome),
-       incorporadora (nome),
+       incorporadora (nome, tipo),
        parceiro (nome, incorporadora_id),
        comprador (nome, cpf, email, telefone)`,
     )
@@ -135,6 +137,21 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
 
   const cancelado = negocio.status === "cancelado";
   const semCorretor = !negocio.parceiro_id;
+  const proprietarioPF = negocio.incorporadora?.tipo === "proprietario_pf";
+
+  // Dados do vendedor PF: só a Trilha e o próprio proprietário leem.
+  let dadosVendedor: DadosVendedor | null = null;
+  if (proprietarioPF && (ator === "trilha" || ator === "incorporadora")) {
+    dadosVendedor = await lerDadosVendedor(supabase, id, negocio.incorporadora_id);
+  }
+  const vendedorComConjuge = temConjuge(dadosVendedor?.estadoCivil);
+
+  // O comprovante de estado civil do vendedor pede o documento do estado civil
+  // informado; os outros documentos dele se dividem em vendedor/cônjuge.
+  const doVendedorEstadoCivil = (t: Tarefa) =>
+    ehTarefaDoVendedor(t) && t.titulo === "Comprovante de estado civil";
+  const comInstrucao = (t: Tarefa): Tarefa =>
+    doVendedorEstadoCivil(t) && dadosVendedor ? { ...t, instrucoes: instrucaoEstadoCivil(dadosVendedor.estadoCivil) } : t;
 
   // Comissão dividida: a Trilha vê todos; cada corretor, só a própria linha.
   const { data: divisao } = negocio.proposta
@@ -214,17 +231,26 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
                   {etapa.tarefas.map((t) => (
                     <TarefaFechamento
                       key={t.id}
-                      tarefa={t}
+                      tarefa={comInstrucao(t)}
                       negocioId={negocio.id}
                       podeAgir={liberada && !cancelado && !observador && podeMexer(t, ator)}
                       liberada={liberada}
                       arquivos={anexosDa(t.id)}
-                      podeAbrir={observador ? podeAbrirArquivos(t, "incorporadora") : podeAbrirArquivos(t, ator)}
+                      podeAbrir={
+                        observador
+                          ? !ehTarefaDoVendedor(t) && podeAbrirArquivos(t, "incorporadora")
+                          : podeAbrirArquivos(t, ator)
+                      }
                       podeAbrirFicha={ator === "trilha" || (ator === "parceiro" && !observador)}
-                      porPessoa={comConjuge && t.ator === "parceiro"}
-                      dadosComprador={t.tipo === "formulario" && !observador ? dadosComprador : undefined}
+                      porPessoa={
+                        (comConjuge && t.ator === "parceiro") ||
+                        (vendedorComConjuge && ehTarefaDoVendedor(t) && t.tipo === "documento" && !doVendedorEstadoCivil(t))
+                      }
+                      dadosComprador={t.tipo === "formulario" && t.ator === "parceiro" && !observador ? dadosComprador : undefined}
+                      dadosVendedor={t.tipo === "formulario" && ehTarefaDoVendedor(t) ? dadosVendedor : undefined}
                       cancelado={cancelado}
                       semCorretor={semCorretor}
+                      proprietarioPF={proprietarioPF}
                     />
                   ))}
                 </ul>
@@ -246,7 +272,7 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
               <>
                 <p className="text-sm text-muted-foreground">Esperando</p>
                 <p className="mt-0.5 text-base font-semibold tracking-tight text-foreground">
-                  {[...new Set(esperando.map((a) => nomeDoAtor(a, semCorretor)))].join(", ")}
+                  {[...new Set(esperando.map((a) => nomeDoAtor(a, semCorretor, proprietarioPF)))].join(", ")}
                 </p>
                 <p className={`mt-1 text-sm ${dias >= 7 ? "font-medium text-aviso" : "text-muted-foreground"}`}>
                   {naEtapa} tarefa{naEtapa === 1 ? "" : "s"} nesta etapa ·{" "}

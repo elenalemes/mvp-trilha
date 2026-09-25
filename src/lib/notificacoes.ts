@@ -161,6 +161,28 @@ export function textoAceitaCorretorAcompanha({
   ].join("\n");
 }
 
+/** Vendedor pessoa física: fala com ele, não com "a equipe". */
+export function textoAceitaProprietario({
+  nome,
+  link,
+  unidade,
+  empreendimento,
+}: {
+  nome: string;
+  link: string;
+  unidade: string;
+  empreendimento: string;
+}): string {
+  return [
+    `Olá, ${nome.trim().split(/\s+/)[0]}! Seu imóvel entrou em negociação pela Trilha. 🎉`,
+    "",
+    `🏠 *${unidade}* · ${empreendimento}`,
+    "",
+    "O fechamento começou. Seus dados e alguns documentos já podem ser enviados por aqui:",
+    link,
+  ].join("\n");
+}
+
 export function textoAceitaIncorporadora({
   nome,
   link,

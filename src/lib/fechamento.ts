@@ -48,8 +48,11 @@ export const NOME_DO_ATOR: Record<Ator, string> = {
  * as tarefas continuam marcadas como do corretor — é essa marca que esconde os
  * documentos do comprador da incorporadora —, mas quem as faz é a Trilha.
  */
-export function nomeDoAtor(ator: Ator, semCorretor = false): string {
-  return ator === "parceiro" && semCorretor ? "Trilha" : NOME_DO_ATOR[ator];
+export function nomeDoAtor(ator: Ator, semCorretor = false, proprietarioPF = false): string {
+  if (ator === "parceiro" && semCorretor) return "Trilha";
+  // Vendedor pessoa física: as tarefas "da incorporadora" são dele.
+  if (ator === "incorporadora" && proprietarioPF) return "Proprietário";
+  return NOME_DO_ATOR[ator];
 }
 
 
@@ -163,11 +166,12 @@ export type Arquivo = {
   created_at: string;
 };
 
-export type Pessoa = "comprador" | "conjuge";
+export type Pessoa = "comprador" | "conjuge" | "vendedor";
 
 export const NOME_DA_PESSOA: Record<Pessoa, string> = {
   comprador: "Comprador",
   conjuge: "Cônjuge",
+  vendedor: "Vendedor",
 };
 
 /** Tarefas que recebem anexo. Confirmação não leva arquivo. */
@@ -186,6 +190,8 @@ export const recebeArquivo = (t: Tarefa) => t.tipo === "documento" || t.tipo ===
  */
 export function podeAbrirArquivos(tarefa: Tarefa, ator: Ator | null): boolean {
   if (ator === "trilha") return true;
+  // Documentos pessoais do vendedor PF: só a Trilha e o próprio proprietário.
+  if (tarefa.etapa === "Documentação do vendedor") return ator === "incorporadora";
   if (ator !== null && tarefa.ator === ator) return true;
   return !tarefa.interna && tarefa.ator !== "parceiro";
 }

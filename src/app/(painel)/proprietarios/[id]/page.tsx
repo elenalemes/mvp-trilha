@@ -138,14 +138,26 @@ export default async function ProprietarioPage({ params }: { params: Promise<{ i
                           </p>
                         </div>
                         <div className="flex items-center gap-4 text-sm">
-                          <span className="tabular-nums text-foreground">{i.valor ? formatBRL(i.valor) : "—"}</span>
+                          <span className="tabular-nums text-foreground">
+                            {i.valor ? formatBRL(i.valor) : admin ? "Sem valor — preencha para negociar" : "—"}
+                          </span>
                           <span className="text-muted-foreground">{imovelStatusLabel(i.status)}</span>
                           {admin ? (
                             <Link
                               href={`/proprietarios/${id}/imoveis/${i.id}/editar`}
-                              className="font-semibold text-foreground underline-offset-4 hover:underline"
+                              className="text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                             >
                               Editar
+                            </Link>
+                          ) : null}
+                          {/* Negociar pede unidade disponível e com valor — a mesma
+                              regra da Nova negociação. */}
+                          {admin && i.status === "disponivel" && i.valor ? (
+                            <Link
+                              href={`/negocios/novo?e=${l.id}&u=${i.id}`}
+                              className="font-semibold text-foreground underline-offset-4 hover:underline"
+                            >
+                              Nova negociação
                             </Link>
                           ) : null}
                         </div>

@@ -84,7 +84,7 @@ export async function iniciarNegociacao(entrada: Entrada): Promise<ResultadoNego
   const lido = propostaLogadaSchema.safeParse({ comprador: entrada.comprador, observacao: entrada.observacao });
   if (!lido.success) return { ok: false, erro: lido.error.issues[0]?.message ?? "Confira os dados do comprador." };
 
-  const simulacao = await simular(entrada.empreendimentoId, entrada.imovelId);
+  const simulacao = await simular(entrada.empreendimentoId, entrada.imovelId, true);
   if (!simulacao) return { ok: false, erro: "Esta unidade não está mais disponível." };
 
   const especial = entrada.especial;

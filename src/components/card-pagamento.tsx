@@ -54,6 +54,7 @@ export default function CardPagamento({
   vendaDireta = false,
   divisao,
   especial = false,
+  proprietarioPF = false,
 }: {
   condicao: Condicao;
   modo?: "completo" | "parceiro" | "publico";
@@ -63,7 +64,11 @@ export default function CardPagamento({
   divisao?: DivisaoComissao;
   /** Condição definida à mão pela Trilha. */
   especial?: boolean;
+  /** Vendedor pessoa física: quem recebe é "o proprietário", não "a incorporadora". */
+  proprietarioPF?: boolean;
 }) {
+  const vendedor = proprietarioPF ? "proprietário" : "incorporadora";
+  const Vendedor = proprietarioPF ? "Proprietário" : "Incorporadora";
   // O saldo é quitado no mês seguinte ao fim da Trilha: 25º numa opção de 24
   // meses, 13º numa de 12. Fixar "25" quebraria em todo prazo diferente.
   const mesDoSaldo = c.prazoMeses + 1;
@@ -139,7 +144,7 @@ export default function CardPagamento({
             </dl>
           ) : (
             <p className="mt-3 text-sm text-destructive">
-              Esta condição não fecha com a comissão atual. Fale com a incorporadora antes de
+              Esta condição não fecha com a comissão atual. Fale com {proprietarioPF ? "o" : "a"} {vendedor} antes de
               oferecê-la ao cliente.
             </p>
           )}
@@ -160,7 +165,7 @@ export default function CardPagamento({
           {c.comissaoCabe ? (
             <dl className="flex flex-col gap-2">
               <Linha
-                termo="Incorporadora"
+                termo={Vendedor}
                 valor={`${c.prazoMeses}× ${formatBRL(c.incorporadoraMensal)}`}
                 forte
               />
@@ -191,13 +196,13 @@ export default function CardPagamento({
           ) : (
             <p className="text-sm text-destructive">
               A comissão de {pct(c.percentualComissao)} ({formatBRL(c.comissaoTotal)}) é maior que o
-              que se paga parcelado nesta opção ({formatBRL(c.totalNaTrilha)}). Do jeito que está, a
-              incorporadora receberia menos que zero durante a Trilha.
+              que se paga parcelado nesta opção ({formatBRL(c.totalNaTrilha)}). Do jeito que está,{" "}
+              {proprietarioPF ? "o" : "a"} {vendedor} receberia menos que zero durante a Trilha.
             </p>
           )}
 
           <p className="mt-3 text-xs text-muted-foreground">
-            A incorporadora recebe {formatBRL(c.incorporadoraNaTrilha)} durante a Trilha
+            {proprietarioPF ? "O" : "A"} {vendedor} recebe {formatBRL(c.incorporadoraNaTrilha)} durante a Trilha
             {c.ato > 0 ? ` (já contando os ${formatBRL(c.ato)} do ato)` : ""} e{" "}
             {formatBRL(c.saldoFinanciar)} no saldo — {formatBRL(c.incorporadoraTotal)} no total. A
             comissão é quitada inteira durante a Trilha; o saldo do fim não tem desconto.
