@@ -13,6 +13,7 @@ import {
   House,
   KeyRound,
   LogOut,
+  Route,
   UserRound,
   Users,
   type LucideIcon,
@@ -42,6 +43,7 @@ const ICONES = {
   pagamento: CreditCard,
   parceiros: Users,
   trilha: Handshake,
+  jornada: Route,
   casa: House,
 } satisfies Record<string, LucideIcon>;
 

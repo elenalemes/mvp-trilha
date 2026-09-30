@@ -56,7 +56,8 @@ function montarCampos(d: Dados) {
     cnpj: null,
     email: d.pessoa.email,
     telefone,
-    endereco,
+    // O endereço pessoal fica só em `resp_endereco` (coluna protegida).
+    endereco: null,
 
     resp_nome: d.pessoa.nome,
     resp_cpf: stripMask(d.pessoa.cpf),

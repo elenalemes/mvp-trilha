@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ehAdmin, ehProprietarioPF, getSessao } from "@/lib/sessao";
 import {
   formatBRL,
@@ -52,8 +52,9 @@ export default async function ProprietarioPage({ params }: { params: Promise<{ i
   const admin = ehAdmin(sessao);
   if (!admin && !(ehProprietarioPF(sessao) && sessao?.incorporadoraId === id)) redirect("/");
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // Dados pessoais e bancários são colunas protegidas: lidas pelo servidor,
+  // depois da checagem acima (admin ou o próprio proprietário).
+  const { data, error } = await createAdminClient()
     .from("incorporadora")
     .select(
       `id, resp_nome, resp_cpf, resp_rg, resp_email, resp_telefone, resp_endereco, resp_profissao,

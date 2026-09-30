@@ -94,14 +94,19 @@ export function textoAceitaComprador({
   link,
   unidade,
   empreendimento,
+  pelaTrilha = false,
 }: {
   nome: string;
   link: string;
   unidade: string;
   empreendimento: string;
+  /** Negócio aberto pela Trilha no painel: não houve "proposta aceita" para ele. */
+  pelaTrilha?: boolean;
 }): string {
   return [
-    `Olá, ${nome.trim().split(/\s+/)[0]}! Sua proposta foi aceita. 🎉`,
+    pelaTrilha
+      ? `Olá, ${nome.trim().split(/\s+/)[0]}! A negociação do seu imóvel começou. 🎉`
+      : `Olá, ${nome.trim().split(/\s+/)[0]}! Sua proposta foi aceita. 🎉`,
     "",
     `🏠 *${unidade}* · ${empreendimento}`,
     "",

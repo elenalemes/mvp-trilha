@@ -29,6 +29,7 @@ export default async function PainelLayout({ children }: { children: React.React
     ? [
         { href: "/propostas", label: "Propostas", icone: "proposta" as const },
         { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+        { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
         { href: "/importacao", label: "Importação de estoque", icone: "importar" as const },
         { href: "/incorporadoras", label: "Incorporadoras", icone: "empresa" as const },
         { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
@@ -40,6 +41,7 @@ export default async function PainelLayout({ children }: { children: React.React
       ? [
           { href: `/proprietarios/${sessao!.incorporadoraId}`, label: "Meus imóveis", icone: "casa" as const },
           { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+          { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
         ]
     : parceiroTrilha
       ? [
@@ -47,16 +49,19 @@ export default async function PainelLayout({ children }: { children: React.React
           // todas está no simulador, que fica no atalho do menu.
           { href: "/propostas", label: "Minhas propostas", icone: "proposta" as const },
           { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+          { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
         ]
     : parceiro
       ? [
           { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
           { href: "/propostas", label: "Minhas propostas", icone: "proposta" as const },
           { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+          { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
         ]
       : [
           { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
           { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+          { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
           { href: "/opcoes-pagamento", label: "Opções de pagamento", icone: "pagamento" as const },
           { href: "/parceiros", label: "Parceiros imobiliários", icone: "parceiros" as const },
         ];

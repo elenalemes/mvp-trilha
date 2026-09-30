@@ -1,5 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import { estaFechada, etapas, nivelAberto, progresso, type Ator, type Tarefa } from "@/lib/fechamento";
+import { dispensada, estaFechada, etapas, nivelAberto, progresso, type Ator, type Tarefa } from "@/lib/fechamento";
 
 /**
  * O acompanhamento do comprador.
@@ -84,7 +84,9 @@ export async function lerAcompanhamento(token: string): Promise<Acompanhamento |
 
   const publicas = etapas(tarefas)
     .map((e) => {
-      const visiveis = e.tarefas.filter((t) => !t.interna);
+      // Fora a interna, sai também a dispensada: ela não se aplica a este
+      // negócio, e contá-la faria a etapa prometer um passo que não existe.
+      const visiveis = e.tarefas.filter((t) => !t.interna && !dispensada(t));
       if (visiveis.length === 0) return null;
 
       const feitas = visiveis.filter(estaFechada).length;

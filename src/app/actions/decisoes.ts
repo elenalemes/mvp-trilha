@@ -76,6 +76,7 @@ type Supabase = Awaited<ReturnType<typeof createClient>>;
 
 type Envolvidos = {
   codigo: string;
+  origem: string | null;
   imovel: { identificacao: string } | null;
   empreendimento: { nome: string } | null;
   parceiro: { nome: string; telefone: string } | null;
@@ -104,7 +105,7 @@ async function avisarDaAceitacao(supabase: Supabase, propostaId: string, negocio
       supabase
         .from("proposta")
         .select(
-          `codigo,
+          `codigo, origem,
            imovel (identificacao),
            empreendimento (nome),
            parceiro!parceiro_id (nome, telefone),
@@ -148,6 +149,7 @@ async function avisarDaAceitacao(supabase: Supabase, propostaId: string, negocio
           link: linkComprador,
           unidade,
           empreendimento,
+          pelaTrilha: proposta.origem === "trilha",
         }),
       });
     }

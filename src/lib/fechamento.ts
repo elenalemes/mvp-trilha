@@ -29,6 +29,8 @@ export type Tarefa = {
   /** Documento do comprador que também exige o do cônjuge, quando há cônjuge. */
   pede_conjuge: boolean;
   status: StatusTarefa;
+  /** Por que a tarefa não se aplica. Só existe quando o status é nao_se_aplica. */
+  dispensa_motivo: string | null;
   arquivo_path: string | null;
   referencia_externa: string | null;
   observacao: string | null;
@@ -61,6 +63,14 @@ export const estaFechada = (t: Tarefa) =>
   t.status === "concluido" || t.status === "nao_se_aplica";
 
 /**
+ * Dispensada: não se aplica a este negócio, e a Trilha disse por quê.
+ *
+ * Fecha o nível como uma tarefa concluída fecha — ninguém está esperando por
+ * ela —, mas não entra no andamento. Ver `progresso()`.
+ */
+export const dispensada = (t: Tarefa) => t.status === "nao_se_aplica";
+
+/**
  * O nível que está aberto agora: o menor que ainda tem tarefa por fazer.
  * Quando tudo fechou, devolve null — o fechamento acabou.
  */
@@ -69,10 +79,22 @@ export function nivelAberto(tarefas: Tarefa[]): number | null {
   return abertos.length ? Math.min(...abertos) : null;
 }
 
-/** Quanto do fechamento já andou, de 0 a 100. */
+/**
+ * Quanto do fechamento já andou, de 0 a 100.
+ *
+ * A tarefa dispensada sai da conta INTEIRA, não entra como feita: um negócio
+ * de 20 tarefas com uma dispensada é um negócio de 19. Contá-la como concluída
+ * daria andamento por trabalho que ninguém fez, e deixá-la no denominador
+ * travaria o fechamento em 95% para sempre.
+ */
 export function progresso(tarefas: Tarefa[]): number {
   if (tarefas.length === 0) return 0;
-  return Math.round((tarefas.filter(estaFechada).length / tarefas.length) * 100);
+
+  const contam = tarefas.filter((t) => !dispensada(t));
+  // Tudo dispensado é um fechamento sem nada a fazer — 100, e não 0/0.
+  if (contam.length === 0) return 100;
+
+  return Math.round((contam.filter(estaFechada).length / contam.length) * 100);
 }
 
 /**

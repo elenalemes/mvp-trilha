@@ -51,30 +51,31 @@ export default async function ImportacaoPage({ params }: { params: Promise<{ id:
         <PageHeader
           titulo={ocupada ? "A IA está congestionada" : "Não deu para ler este arquivo"}
           descricao={importacao.arquivo_nome ?? undefined}
-          voltar={{ href: "/incorporadoras", label: "Início" }}
+          voltar={{ href: "/importacao", label: "Importação de estoque" }}
         />
 
         {ocupada ? (
           <div className="rounded-lg border border-aviso/20 bg-aviso-suave p-6">
             <p className="text-sm text-aviso">
-              O seu arquivo está bem — quem não respondeu foi o Google. O plano gratuito do Gemini
-              fica indisponível quando há muita gente usando, e isso costuma passar em alguns
-              minutos.
+              O arquivo está certo. Quem não respondeu foi o serviço de IA (Google Gemini, plano
+              gratuito), que fica sobrecarregado em horários de pico. Costuma passar em minutos.
             </p>
             <p className="mt-3 text-sm text-aviso">
-              <strong>O que fazer:</strong> envie o arquivo de novo daqui a pouco. Se acontecer
-              com frequência, vale trocar para uma chave paga — o custo é de centavos por arquivo
-              e não tem fila.
+              Envie de novo daqui a pouco. Se acontecer sempre, uma chave paga resolve: custa
+              centavos por arquivo.
             </p>
             <p className="mt-4 font-mono text-xs break-all text-aviso">{detalhe}</p>
           </div>
         ) : (
           <div className="rounded-lg border border-destructive/20 bg-erro-suave p-6">
-            <p className="text-sm text-destructive">{detalhe}</p>
-            <p className="mt-3 text-sm text-destructive">
-              Se o arquivo estiver num formato que não dá para ler, o caminho é cadastrar as
-              unidades à mão pelo empreendimento.
+            <p className="text-sm text-destructive">
+              A IA não conseguiu tirar as unidades deste arquivo.
             </p>
+            <p className="mt-3 text-sm text-destructive">
+              Tente de novo explicando a tabela no campo de contexto, ou cadastre as unidades à mão
+              pelo empreendimento.
+            </p>
+            <p className="mt-4 font-mono text-xs break-all text-destructive/80">{detalhe}</p>
           </div>
         )}
       </>
@@ -87,7 +88,7 @@ export default async function ImportacaoPage({ params }: { params: Promise<{ id:
         <PageHeader
           titulo="Importação já aplicada"
           descricao={importacao.arquivo_nome ?? undefined}
-          voltar={{ href: "/incorporadoras", label: "Início" }}
+          voltar={{ href: "/importacao", label: "Importação de estoque" }}
           acao={
             importacao.empreendimento_id
               ? { href: `/empreendimentos/${importacao.empreendimento_id}`, label: "Ver empreendimento" }
@@ -126,7 +127,7 @@ export default async function ImportacaoPage({ params }: { params: Promise<{ id:
       <PageHeader
         titulo="Conferir importação"
         descricao={`${importacao.incorporadora?.nome ?? ""} · ${importacao.arquivo_nome ?? ""}`}
-        voltar={{ href: "/incorporadoras", label: "Início" }}
+        voltar={{ href: "/importacao", label: "Importação de estoque" }}
       />
 
       <div className="mb-6 flex flex-wrap items-center gap-3 text-sm">

@@ -100,7 +100,6 @@ export async function salvarFichaVendedor(
         nome: linha.nome,
         email: linha.email,
         telefone: linha.telefone,
-        endereco: linha.endereco,
         resp_nome: linha.nome,
         resp_email: linha.email,
         resp_telefone: linha.telefone,

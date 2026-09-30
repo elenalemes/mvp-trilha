@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ehAdmin, getSessao } from "@/lib/sessao";
 import { maskCPF, maskPhone } from "@/lib/br";
 import { PageHeader } from "@/components/ui";
@@ -11,7 +11,7 @@ export default async function EditarProprietarioPage({ params }: { params: Promi
   if (!ehAdmin(sessao)) redirect("/");
 
   const { id } = await params;
-  const data = await lerProprietario(await createClient(), id);
+  const data = await lerProprietario(createAdminClient(), id);
   if (!data) notFound();
 
   return (

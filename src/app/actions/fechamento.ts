@@ -153,6 +153,46 @@ export async function registrarVeredito(
 }
 
 /**
+ * Dispensar uma tarefa que não se aplica a este negócio.
+ *
+ * Casa não tem negativa de condomínio, e sem isto a tarefa trava o nível para
+ * sempre. Duas regras que NÃO moram aqui, e sim no banco: só a Trilha
+ * dispensa, e só o que está pendente. Esta action manda o update como qualquer
+ * outra e deixa o gatilho recusar — é o mesmo desenho do resto do arquivo, e é
+ * o que garante a regra para quem chamar a API sem passar por esta tela.
+ *
+ * O motivo é conferido aqui também, mas por gentileza: quem barra de verdade é
+ * o `check` do banco, e a mensagem daqui chega antes e mais clara.
+ */
+export async function dispensarTarefa(
+  tarefaId: string,
+  negocioId: string,
+  motivo: string,
+): Promise<ResultadoTarefa> {
+  if (!motivo.trim()) return { ok: false, erro: "Escreva por que esta tarefa não se aplica." };
+
+  const sessao = await getSessao();
+  const supabase = await createClient();
+
+  const { data: linha, error } = await supabase
+    .from("checklist_item")
+    .update({
+      status: "nao_se_aplica",
+      dispensa_motivo: motivo.trim(),
+      concluido_por: sessao?.usuarioId ?? null,
+      concluido_em: new Date().toISOString(),
+    })
+    .eq("id", tarefaId)
+    .select("id")
+    .maybeSingle<{ id: string }>();
+
+  if (error || !linha) return { ok: false, erro: falhou(error) };
+
+  revalidar(negocioId);
+  return { ok: true };
+}
+
+/**
  * Desfazer.
  *
  * Existe porque marcar errado acontece, e um checklist sem volta é um
@@ -168,6 +208,9 @@ export async function reabrirTarefa(
     .from("checklist_item")
     .update({
       status: "pendente",
+      // O motivo sai junto: o `check` do banco amarra os dois, e uma tarefa
+      // pendente com motivo de dispensa não grava.
+      dispensa_motivo: null,
       concluido_por: null,
       concluido_em: null,
     })

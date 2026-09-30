@@ -67,8 +67,8 @@ type Ficha = {
 
 const CAMPOS_TAREFA =
   `id, etapa, etapa_ordem, ordem, titulo, ator, tipo, exige_validade, interna,
-   instrucoes, pede_conjuge, status, arquivo_path, referencia_externa, observacao, emitido_em, valido_ate,
-   concluido_em`;
+   instrucoes, pede_conjuge, status, dispensa_motivo, arquivo_path, referencia_externa, observacao,
+   emitido_em, valido_ate, concluido_em`;
 
 export default async function NegocioPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -234,6 +234,9 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
                       tarefa={comInstrucao(t)}
                       negocioId={negocio.id}
                       podeAgir={liberada && !cancelado && !observador && podeMexer(t, ator)}
+                      // Dispensar não espera a etapa liberar: a Trilha já sabe
+                      // no primeiro dia que aquela casa não tem condomínio.
+                      podeDispensar={admin && !cancelado}
                       liberada={liberada}
                       arquivos={anexosDa(t.id)}
                       podeAbrir={

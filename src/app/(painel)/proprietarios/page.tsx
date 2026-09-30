@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ehAdmin, getSessao } from "@/lib/sessao";
 import { maskCPF, maskPhone } from "@/lib/br";
 import { EmptyState, PageHeader } from "@/components/ui";
@@ -24,8 +24,8 @@ export default async function ProprietariosPage() {
   const sessao = await getSessao();
   if (!ehAdmin(sessao)) redirect("/");
 
-  const supabase = await createClient();
-  const { data, error } = await supabase
+  // CPF é coluna protegida: lida pelo servidor, e só o admin chega aqui.
+  const { data, error } = await createAdminClient()
     .from("incorporadora")
     .select("id, resp_nome, resp_cpf, resp_email, resp_telefone, conta_id, empreendimento (imovel (count))")
     .eq("tipo", "proprietario_pf")

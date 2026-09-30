@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getSessao } from "@/lib/sessao";
 import { maritalLabel, maskCNPJ, maskCPF, maskPhone, pixTypeLabel } from "@/lib/br";
 import { PageHeader, Stat } from "@/components/ui";
@@ -96,12 +97,13 @@ function ErroDeLeitura({ erro }: { erro: { code?: string; message?: string } }) 
 
 export default async function IncorporadoraPage({ params }: { params: Promise<{ id: string }> }) {
   const sessao = await getSessao();
-  if (sessao?.conta && sessao.conta.tipo !== "trilha_admin") redirect("/empreendimentos");
+  // Lê colunas protegidas (CPF, bancários) pelo servidor: só o admin chega aqui.
+  if (sessao?.conta?.tipo !== "trilha_admin") redirect("/empreendimentos");
 
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const { data, error } = await createAdminClient()
     .from("incorporadora")
     .select(
       `id, nome, cnpj, email, telefone, endereco,

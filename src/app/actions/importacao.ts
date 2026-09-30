@@ -90,7 +90,7 @@ export async function enviarArquivo(formulario: FormData): Promise<Resultado> {
     const mb = (arquivo.size / 1024 / 1024).toFixed(1);
     return {
       id: null,
-      erro: `Arquivo muito grande (${mb} MB). O limite é 4 MB. Se for um PDF escaneado, peça a versão original à incorporadora ou comprima o arquivo antes de enviar.`,
+      erro: `Arquivo muito grande (${mb} MB). O limite é 4 MB: peça a versão original à incorporadora ou comprima o arquivo.`,
     };
   }
 
@@ -344,7 +344,7 @@ export async function aplicarImportacao(importacaoId: string): Promise<Resultado
     if (error.code === "23505") {
       return {
         id: null,
-        erro: "O arquivo tem duas unidades com a mesma identificação, ou uma delas já existe no empreendimento. Nada foi gravado — corrija na conferência e aplique de novo.",
+        erro: "Há unidade repetida no arquivo, ou que já existe no empreendimento. Nada foi gravado: corrija na conferência e aplique de novo.",
       };
     }
     if (error.code === "42501") {

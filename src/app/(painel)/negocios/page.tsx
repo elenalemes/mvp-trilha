@@ -29,6 +29,9 @@ type LinhaNegocio = {
   parceiro: { nome: string } | null;
 };
 
+/** Terminaram o fechamento: viraram trilha e moram em /trilhas. */
+const CONCLUIDOS = ["em_jornada", "em_quitacao", "quitado"];
+
 const ROTULO_STATUS: Record<string, string> = {
   em_fechamento: "Em andamento",
   em_jornada: "Em jornada",
@@ -85,7 +88,11 @@ export default async function NegociosPage() {
     else porNegocio.set(t.negocio_id, [t]);
   }
 
-  const ativos = negocios.filter((n) => n.status !== "cancelado");
+  // Três grupos. O concluído sai da fila de trabalho mas continua aqui, num
+  // bloco recolhido: é onde a pessoa acabou de marcar a última tarefa e vai
+  // procurá-lo nos primeiros minutos. A casa dele, daí em diante, é Trilhas.
+  const ativos = negocios.filter((n) => n.status === "em_fechamento");
+  const concluidos = negocios.filter((n) => CONCLUIDOS.includes(n.status));
   const cancelados = negocios.filter((n) => n.status === "cancelado");
   const segunda = admin ? "Vendedor" : "Corretor";
 
@@ -109,7 +116,10 @@ export default async function NegociosPage() {
       ) : (
         <div className="space-y-8">
           {ativos.length === 0 ? (
-            <EmptyState titulo="Nenhum setup em andamento" texto="Os cancelados estão logo abaixo." />
+            <EmptyState
+              titulo="Nenhum setup em andamento"
+              texto="Nada em fechamento agora. O que já terminou está logo abaixo, e nas Trilhas."
+            />
           ) : (
             <Tabela colunas={["Unidade", segunda, "Esperando", "Andamento", "Situação"]}>
               {ativos.map((n) => {
@@ -154,6 +164,46 @@ export default async function NegociosPage() {
                 );
               })}
             </Tabela>
+          )}
+
+          {concluidos.length > 0 && (
+            <details className="group">
+              <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-muted-foreground select-none hover:text-foreground">
+                <span className="inline-block transition-transform group-open:rotate-90">›</span>
+                Concluídos
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums">{concluidos.length}</span>
+              </summary>
+
+              <p className="mt-2 mb-3 text-sm text-muted-foreground">
+                Fechamento terminado — viraram trilha e acompanham em{" "}
+                <Link href="/trilhas" className="underline-offset-4 hover:underline hover:text-foreground">
+                  Trilhas
+                </Link>
+                .
+              </p>
+
+              <Tabela colunas={["Unidade", segunda, "Aberto em", "Situação"]}>
+                {concluidos.map((n) => (
+                  <tr key={n.id} className="border-b border-border transition-colors last:border-0 hover:bg-muted/40">
+                    <CelulaUnidade n={n} />
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {admin
+                        ? `${n.incorporadora?.nome ?? "—"}${n.incorporadora?.tipo === "proprietario_pf" ? " · Proprietário PF" : ""}`
+                        : (n.parceiro?.nome ?? "—")}
+                    </td>
+                    <td className="px-4 py-3 text-sm tabular-nums text-muted-foreground">
+                      {new Date(n.created_at).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })}
+                    </td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">
+                      <span className="inline-flex items-center gap-1.5">
+                        <span className="size-1.5 rounded-full bg-sucesso" />
+                        {ROTULO_STATUS[n.status] ?? n.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </Tabela>
+            </details>
           )}
 
           {cancelados.length > 0 && (

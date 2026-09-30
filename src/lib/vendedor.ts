@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { maskCPF, maskPhone } from "@/lib/br";
 import type { FichaVendedorValues } from "@/lib/schemas";
 
@@ -133,7 +134,9 @@ export async function lerDadosVendedor(
     };
   }
 
-  const { data: c } = await supabase
+  // O cadastro tem colunas protegidas: lido pelo servidor. Quem chama só
+  // passa aqui sendo a Trilha ou o próprio proprietário do negócio.
+  const { data: c } = await createAdminClient()
     .from("incorporadora")
     .select(
       `resp_nome, resp_email, resp_telefone, resp_cpf, resp_rg, resp_endereco, resp_profissao,

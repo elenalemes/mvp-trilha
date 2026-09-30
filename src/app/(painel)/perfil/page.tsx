@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { ehParceiro, ehProprietarioPF, getSessao } from "@/lib/sessao";
 import FormProprietario, { PROPRIETARIO_VAZIO } from "@/components/form-proprietario";
 import { lerProprietario, paraFormulario } from "@/lib/proprietario";
@@ -45,11 +45,11 @@ export default async function PerfilPage() {
     );
   }
 
-  const supabase = await createClient();
 
   // Proprietário PF: dados pessoais, sem CNPJ nem "responsável".
   if (ehProprietarioPF(sessao)) {
-    const pf = await lerProprietario(supabase, sessao.incorporadoraId);
+    // Colunas protegidas: lidas pelo servidor, sempre filtradas pela própria conta.
+    const pf = await lerProprietario(createAdminClient(), sessao.incorporadoraId);
     if (!pf) redirect("/");
     return (
       <>
@@ -59,7 +59,7 @@ export default async function PerfilPage() {
     );
   }
 
-  const { data } = await supabase
+  const { data } = await createAdminClient()
     .from("incorporadora")
     .select(
       `nome, cnpj, email, telefone, endereco,

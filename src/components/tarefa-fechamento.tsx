@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import {
   concluirTarefa,
   definirValidade,
+  dispensarTarefa,
   reabrirTarefa,
   registrarVeredito,
   salvarReferencia,
 } from "@/app/actions/fechamento";
-import { Check, X } from "lucide-react";
-import { nomeDoAtor, recebeArquivo, validade, type Arquivo, type Tarefa } from "@/lib/fechamento";
+import { Check, Minus, X } from "lucide-react";
+import { dispensada, nomeDoAtor, recebeArquivo, validade, type Arquivo, type Tarefa } from "@/lib/fechamento";
 import { Alert, Button, Input, Textarea } from "@/components/ui";
 import ArquivosTarefa from "@/components/arquivos-tarefa";
 import FormFicha from "@/components/form-ficha";
@@ -39,6 +40,7 @@ export default function TarefaFechamento({
   tarefa,
   negocioId,
   podeAgir,
+  podeDispensar = false,
   liberada,
   arquivos,
   podeAbrir,
@@ -53,6 +55,8 @@ export default function TarefaFechamento({
   tarefa: Tarefa;
   negocioId: string;
   podeAgir: boolean;
+  /** Marcar "não se aplica" é só da Trilha — o banco recusa dos outros. */
+  podeDispensar?: boolean;
   liberada: boolean;
   arquivos: Arquivo[];
   /** Pode abrir os anexos desta tarefa — espelho da regra do banco. */
@@ -76,6 +80,7 @@ export default function TarefaFechamento({
   const [erro, setErro] = useState<string | null>(null);
 
   const fechada = tarefa.status === "concluido" || tarefa.status === "nao_se_aplica";
+  const naoSeAplica = dispensada(tarefa);
   const reprovada = tarefa.status === "reprovado";
   const idSeletor = `anexo-${tarefa.id}`;
   const [fichaAberta, setFichaAberta] = useState(false);
@@ -104,6 +109,7 @@ export default function TarefaFechamento({
         <Caixa
           tarefa={tarefa}
           fechada={fechada}
+          naoSeAplica={naoSeAplica}
           reprovada={reprovada}
           podeAgir={podeAgir}
           ocupado={ocupado}
@@ -135,6 +141,14 @@ export default function TarefaFechamento({
           </div>
 
           {tarefa.instrucoes && !fechada && liberada ? <Instrucoes texto={tarefa.instrucoes} /> : null}
+
+          <Dispensa
+            tarefa={tarefa}
+            podeDispensar={podeDispensar}
+            ocupado={ocupado}
+            dispensar={(motivo) => executar(() => dispensarTarefa(tarefa.id, negocioId, motivo))}
+            desfazer={() => executar(() => reabrirTarefa(tarefa.id, negocioId))}
+          />
 
           {formulario ? (
             <>
@@ -257,6 +271,7 @@ export default function TarefaFechamento({
 function Caixa({
   tarefa,
   fechada,
+  naoSeAplica,
   reprovada,
   podeAgir,
   ocupado,
@@ -266,6 +281,7 @@ function Caixa({
 }: {
   tarefa: Tarefa;
   fechada: boolean;
+  naoSeAplica: boolean;
   reprovada: boolean;
   podeAgir: boolean;
   ocupado: boolean;
@@ -278,18 +294,33 @@ function Caixa({
     <span
       aria-hidden="true"
       className={`mt-px flex size-5 shrink-0 items-center justify-center rounded-md border-[1.5px] transition-colors ${
-        reprovada
-          ? "border-destructive bg-destructive text-white"
-          : fechada
-            ? "border-sucesso bg-sucesso text-white"
-            : podeAgir
-              ? "border-foreground/35 bg-card group-hover:border-foreground/60"
-              : "border-dashed border-border bg-muted/50"
+        naoSeAplica
+          ? "border-dashed border-border bg-muted text-muted-foreground"
+          : reprovada
+            ? "border-destructive bg-destructive text-white"
+            : fechada
+              ? "border-sucesso bg-sucesso text-white"
+              : podeAgir
+                ? "border-foreground/35 bg-card group-hover:border-foreground/60"
+                : "border-dashed border-border bg-muted/50"
       }`}
     >
-      {reprovada ? <X className="size-3.5" strokeWidth={3} /> : fechada ? <Check className="size-3.5" strokeWidth={3} /> : null}
+      {naoSeAplica ? (
+        <Minus className="size-3.5" strokeWidth={3} />
+      ) : reprovada ? (
+        <X className="size-3.5" strokeWidth={3} />
+      ) : fechada ? (
+        <Check className="size-3.5" strokeWidth={3} />
+      ) : null}
     </span>
   );
+
+  // Dispensada não é clicável em lugar nenhum: desfazer é decisão da Trilha e
+  // mora no bloco de baixo. Sem isto, a caixa de uma confirmação devolveria à
+  // incorporadora o poder de derrubar a dispensa que ela não pode dar.
+  if (naoSeAplica) {
+    return <span title="Não se aplica a este negócio">{visual}</span>;
+  }
 
   // Confirmação: uma caixa de verdade, que marca e desmarca.
   if (tarefa.tipo === "confirmacao" && podeAgir) {
@@ -333,6 +364,96 @@ function Caixa({
     <span title={tarefa.tipo === "documento" && fechada && podeAgir ? "Para desmarcar, remova os arquivos" : undefined}>
       {visual}
     </span>
+  );
+}
+
+// -------------------------------------------------------------- dispensa
+
+/**
+ * "Não se aplica".
+ *
+ * Em dois passos, na própria tela, como toda confirmação do projeto: o motivo
+ * é obrigatório, e a frase embaixo diz o que vai acontecer antes de acontecer.
+ * Só a Trilha vê o controle — e o banco recusa de todo o resto, então esconder
+ * aqui é cortesia, não segurança.
+ */
+function Dispensa({
+  tarefa,
+  podeDispensar,
+  ocupado,
+  dispensar,
+  desfazer,
+}: {
+  tarefa: Tarefa;
+  podeDispensar: boolean;
+  ocupado: boolean;
+  dispensar: (motivo: string) => Promise<boolean>;
+  desfazer: () => void;
+}) {
+  const [abrindo, setAbrindo] = useState(false);
+  const [motivo, setMotivo] = useState("");
+
+  if (dispensada(tarefa)) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        <span className="font-semibold text-foreground">Não se aplica</span>
+        {tarefa.dispensa_motivo ? ` — ${tarefa.dispensa_motivo}` : ""}
+        {podeDispensar ? (
+          <button
+            type="button"
+            onClick={desfazer}
+            disabled={ocupado}
+            className="ml-2 underline-offset-4 hover:underline hover:text-foreground"
+          >
+            desfazer
+          </button>
+        ) : null}
+      </p>
+    );
+  }
+
+  // Só o que está pendente: dispensar algo já feito seria apagar um fato, e o
+  // banco recusa de qualquer jeito.
+  if (!podeDispensar || tarefa.status !== "pendente") return null;
+
+  if (!abrindo) {
+    return (
+      <button
+        type="button"
+        onClick={() => setAbrindo(true)}
+        className="self-start text-sm text-muted-foreground underline-offset-4 hover:underline hover:text-foreground"
+      >
+        não se aplica
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Textarea
+        rows={2}
+        value={motivo}
+        onChange={(e) => setMotivo(e.target.value)}
+        placeholder="Por que esta tarefa não se aplica a este negócio"
+        autoFocus
+      />
+      <p className="text-xs text-muted-foreground">
+        A tarefa sai da conta do andamento e deixa de travar a etapa. O motivo fica registrado e
+        aparece no painel para todos do negócio — nunca na página do comprador.
+      </p>
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          onClick={async () => (await dispensar(motivo)) && setAbrindo(false)}
+          disabled={ocupado || !motivo.trim()}
+        >
+          Confirmar
+        </Button>
+        <Button type="button" variant="ghost" onClick={() => setAbrindo(false)} disabled={ocupado}>
+          Cancelar
+        </Button>
+      </div>
+    </div>
   );
 }
 
