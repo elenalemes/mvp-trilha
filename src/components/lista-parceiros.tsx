@@ -92,7 +92,8 @@ export default function ListaParceiros({
                         {p.incorporadora.nome}
                       </Link>
                     ) : (
-                      <span className="text-muted-foreground/70">—</span>
+                      // Sem incorporadora é Parceiro Trilha, não dado faltando.
+                      <span className="text-muted-foreground">Trilha</span>
                     )}
                   </td>
                 ) : null}

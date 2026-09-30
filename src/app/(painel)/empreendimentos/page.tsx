@@ -108,6 +108,14 @@ export default async function EmpreendimentosPage({
             ? undefined
             : { href: "/empreendimentos/novo", label: "Novo empreendimento" }
         }
+        // A importação saiu do menu na 6.4 e vive aqui: é a outra forma de um
+        // empreendimento entrar no sistema, só que a partir de um arquivo. Leva
+        // para a página, não abre um modal — ela tem histórico das anteriores.
+        acaoSecundaria={
+          admin && !semIncorporadora
+            ? { href: "/importacao", label: "Importar estoque" }
+            : undefined
+        }
       />
 
       {idsEscopo.length > 0 ? (

@@ -3,10 +3,12 @@ import { ehParceiroTrilha, ehProprietarioPF, getSessao } from "@/lib/sessao";
 
 export default async function Home() {
   const sessao = await getSessao();
-  // O admin cai na importação: é o primeiro passo de toda parceria nova e o
-  // caminho por onde o estoque entra no sistema.
+  // O admin cai nas PROPOSTAS: é a única fila do sistema onde alguém está
+  // parado esperando por ele. Até a 6.4 ele caía na importação, que fazia
+  // sentido quando o sistema era cadastro de estoque — hoje a importação se usa
+  // uma vez por parceria nova e virou botão em Empreendimentos.
   // O Parceiro Trilha não tem estoque "dele" no painel — cai nas propostas.
-  if (sessao?.conta?.tipo === "trilha_admin") redirect("/importacao");
+  if (sessao?.conta?.tipo === "trilha_admin") redirect("/propostas");
   if (ehProprietarioPF(sessao)) redirect(`/proprietarios/${sessao!.incorporadoraId}`);
   redirect(ehParceiroTrilha(sessao) ? "/propostas" : "/empreendimentos");
 }

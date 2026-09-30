@@ -6,10 +6,8 @@ import {
   Building,
   Building2,
   CreditCard,
-  Download,
   ExternalLink,
   FileCheck2,
-  Handshake,
   House,
   KeyRound,
   LogOut,
@@ -37,17 +35,24 @@ import { signOut } from "@/app/actions/auth";
 const ICONES = {
   proposta: FileCheck2,
   chave: KeyRound,
-  importar: Download,
   empresa: Building2,
   predio: Building,
   pagamento: CreditCard,
   parceiros: Users,
-  trilha: Handshake,
   jornada: Route,
   casa: House,
 } satisfies Record<string, LucideIcon>;
 
 export type ItemMenu = { href: string; label: string; icone: keyof typeof ICONES };
+
+/**
+ * O menu vem em grupos com título.
+ *
+ * Antes era uma lista só, e o do admin chegou a nove itens misturando o
+ * trabalho do dia com os cadastros. Separar em "Operação" e "Cadastros" não
+ * encurta o menu — faz a pessoa procurar em metade dele.
+ */
+export type GrupoMenu = { titulo: string; itens: ItemMenu[] };
 
 /**
  * O menu lateral do painel.
@@ -59,14 +64,14 @@ export type ItemMenu = { href: string; label: string; icone: keyof typeof ICONES
  * é o único ponto de cor do menu.
  */
 export function NavLateral({
-  links,
+  grupos,
   papel,
   nome,
   email,
   mostrarPerfil,
   mostrarSimulador,
 }: {
-  links: ItemMenu[];
+  grupos: GrupoMenu[];
   papel: string;
   nome: string;
   email: string;
@@ -97,27 +102,29 @@ export function NavLateral({
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Operação</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {links.map((link) => {
-                const Icone = ICONES[link.icone];
-                const on = ativo(link.href);
-                return (
-                  <SidebarMenuItem key={link.href}>
-                    <SidebarMenuButton asChild isActive={on} tooltip={link.label}>
-                      <Link href={link.href} aria-current={on ? "page" : undefined}>
-                        <Icone className={on ? "text-destaque" : "text-muted-foreground"} />
-                        <span>{link.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {grupos.map((grupo) => (
+          <SidebarGroup key={grupo.titulo}>
+            <SidebarGroupLabel>{grupo.titulo}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {grupo.itens.map((link) => {
+                  const Icone = ICONES[link.icone];
+                  const on = ativo(link.href);
+                  return (
+                    <SidebarMenuItem key={link.href}>
+                      <SidebarMenuButton asChild isActive={on} tooltip={link.label}>
+                        <Link href={link.href} aria-current={on ? "page" : undefined}>
+                          <Icone className={on ? "text-destaque" : "text-muted-foreground"} />
+                          <span>{link.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
 
         {/* Atalho, não item de menu: o corretor sai do painel e vai para a
             página que mostra ao cliente — por isso abre em outra aba. */}

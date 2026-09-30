@@ -12,58 +12,109 @@ export default async function PainelLayout({ children }: { children: React.React
   const parceiroTrilha = parceiro && Boolean(sessao?.parceiroTrilha);
   const proprietarioPF = sessao?.conta?.tipo === "incorporadora" && Boolean(sessao?.proprietarioPF);
 
-  // O menu principal é só de produto. O que é da conta — nome, e-mail,
-  // meus dados e sair — fica no rodapé, separado de propósito.
-  // O imóvel também não tem item próprio: ele vive dentro do empreendimento.
-  // A incorporadora tem item próprio porque só lida com as opções dela. Para o
-  // admin isso não teria contexto — "opções de qual incorporadora?" —, então
-  // do lado da Trilha elas vivem na ficha de cada incorporadora.
-  // "Parceiros", ao contrário das opções, faz sentido nos dois lados: "todos os
-  // parceiros" é pergunta legítima da Trilha, e a coluna da incorporadora dá o
-  // contexto que falta. A ficha de cada um segue morando sob a incorporadora
-  // dele — o item de menu é porta de entrada, não uma segunda casa.
-  // O parceiro imobiliário só enxerga o estoque. Nada de opções de pagamento
-  // no menu: ele não define nem edita condição nenhuma, e um item que só
-  // mostra o que não é dele para editar seria promessa falsa.
-  const links = admin
+  // O MENU EM DOIS GRUPOS. Não é enfeite: o do admin chegou a nove itens
+  // misturando o trabalho do dia com os cadastros, e procurar em metade do
+  // menu é mais rápido do que procurar no menu inteiro. Em cima, o ciclo de
+  // vida na ordem em que acontece — a proposta vira negócio, o negócio vira
+  // trilha. Embaixo, o que se cadastra uma vez e se consulta depois.
+  //
+  // "Vendedores" junta incorporadora e proprietário pessoa física porque no
+  // banco eles são a MESMA tabela, com uma coluna `tipo`. "Parceiros" junta o
+  // corretor de incorporadora e o Parceiro Trilha pela mesma razão: é um
+  // `parceiro` com ou sem `incorporadora_id`. Dois itens separados davam a
+  // duas visões da mesma lista a aparência de duas entidades.
+  //
+  // A importação saiu do menu e virou botão em Empreendimentos: ela é o
+  // caminho por onde o estoque entra, mas se usa uma vez por parceria nova, e
+  // ocupava a primeira linha de quem passa o dia em proposta e fechamento.
+  //
+  // O parceiro imobiliário não tem "Cadastros" — ele não cadastra nada. O
+  // grupo dele se chama Estoque, que é o que ele de fato consulta.
+  const grupos = admin
     ? [
-        { href: "/propostas", label: "Propostas", icone: "proposta" as const },
-        { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
-        { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
-        { href: "/importacao", label: "Importação de estoque", icone: "importar" as const },
-        { href: "/incorporadoras", label: "Incorporadoras", icone: "empresa" as const },
-        { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
-        { href: "/parceiros", label: "Parceiros imobiliários", icone: "parceiros" as const },
-        { href: "/parceiro-trilha", label: "Parceiro Trilha", icone: "trilha" as const },
-        { href: "/proprietarios", label: "Proprietários PF", icone: "casa" as const },
+        {
+          titulo: "Operação",
+          itens: [
+            { href: "/propostas", label: "Propostas", icone: "proposta" as const },
+            { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+            { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
+          ],
+        },
+        {
+          titulo: "Cadastros",
+          itens: [
+            { href: "/vendedores", label: "Vendedores", icone: "empresa" as const },
+            { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
+            { href: "/parceiros", label: "Parceiros", icone: "parceiros" as const },
+          ],
+        },
       ]
     : proprietarioPF
       ? [
-          { href: `/proprietarios/${sessao!.incorporadoraId}`, label: "Meus imóveis", icone: "casa" as const },
-          { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
-          { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
+          {
+            titulo: "Operação",
+            itens: [
+              { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+              { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
+            ],
+          },
+          {
+            titulo: "Cadastros",
+            itens: [
+              {
+                href: `/proprietarios/${sessao!.incorporadoraId}`,
+                label: "Meus imóveis",
+                icone: "casa" as const,
+              },
+            ],
+          },
         ]
     : parceiroTrilha
       ? [
-          // Sem incorporadora, não há "estoque dele" no painel: o estoque de
-          // todas está no simulador, que fica no atalho do menu.
-          { href: "/propostas", label: "Minhas propostas", icone: "proposta" as const },
-          { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
-          { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
+          {
+            titulo: "Operação",
+            itens: [
+              // Sem incorporadora, não há "estoque dele" no painel: o estoque
+              // de todas está no simulador, que fica no atalho do menu.
+              { href: "/propostas", label: "Minhas propostas", icone: "proposta" as const },
+              { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+              { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
+            ],
+          },
         ]
     : parceiro
       ? [
-          { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
-          { href: "/propostas", label: "Minhas propostas", icone: "proposta" as const },
-          { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
-          { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
+          {
+            titulo: "Operação",
+            itens: [
+              { href: "/propostas", label: "Minhas propostas", icone: "proposta" as const },
+              { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+              { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
+            ],
+          },
+          {
+            titulo: "Estoque",
+            itens: [
+              { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
+            ],
+          },
         ]
       : [
-          { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
-          { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
-          { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
-          { href: "/opcoes-pagamento", label: "Opções de pagamento", icone: "pagamento" as const },
-          { href: "/parceiros", label: "Parceiros imobiliários", icone: "parceiros" as const },
+          {
+            titulo: "Operação",
+            itens: [
+              { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
+              { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
+            ],
+          },
+          {
+            titulo: "Cadastros",
+            itens: [
+              { href: "/empreendimentos", label: "Empreendimentos", icone: "predio" as const },
+              { href: "/opcoes-pagamento", label: "Opções de pagamento", icone: "pagamento" as const },
+              { href: "/parceiros", label: "Parceiros", icone: "parceiros" as const },
+            ],
+          },
         ];
 
   // O menu recolhido ou aberto fica num cookie, lido aqui para a página já
@@ -73,7 +124,7 @@ export default async function PainelLayout({ children }: { children: React.React
   return (
     <SidebarProvider defaultOpen={menuAberto}>
       <NavLateral
-        links={links}
+        grupos={grupos}
         papel={
           admin
             ? "Painel da Trilha"
