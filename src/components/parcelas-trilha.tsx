@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { marcarPaga, desmarcarPaga } from "@/app/actions/parcelas";
+import { gerarCobranca } from "@/app/actions/cobranca";
 import { estaAtrasada, type Parcela } from "@/lib/jornada";
 import { formatBRL } from "@/lib/br";
 import { Alert } from "@/components/ui";
@@ -15,8 +16,12 @@ import { Alert } from "@/components/ui";
  * termina?"). A parcela do mês corrente fica marcada, e as atrasadas em
  * vermelho: é o único número desta tela que faz alguém pegar o telefone.
  *
- * Só a Trilha vê o controle de marcar. Os outros leem — para a incorporadora
- * isto é a liquidez dela, para o corretor é a comissão.
+ * Só a Trilha vê o controle de marcar e a coluna de cobrança. Os outros leem —
+ * para a incorporadora isto é a liquidez dela, para o corretor é a comissão.
+ *
+ * Cobrança: parcela em aberto sem cobrança mostra "gerar"; com cobrança, o
+ * link do Asaas (a fatura Pix que o comprador recebe). Se a última tentativa
+ * falhou, o motivo fica na linha — é o Asaas falando, em português.
  */
 export default function ParcelasTrilha({
   parcelas,
@@ -45,15 +50,30 @@ export default function ParcelasTrilha({
     router.refresh();
   };
 
+  const cobrar = async (p: Parcela) => {
+    setOcupado(p.id);
+    setErro(null);
+    const r = await gerarCobranca(p.id, negocioId);
+    setOcupado(null);
+    if (!r.ok) {
+      setErro(`Parcela ${p.numero}: ${r.erro}`);
+    }
+    router.refresh();
+  };
+
+  const colunas = podeMarcar
+    ? ["Parcela", "Vencimento", "Valor", "Situação", "Cobrança"]
+    : ["Parcela", "Vencimento", "Valor", "Situação"];
+
   return (
     <div className="flex flex-col gap-3">
       {erro ? <Alert>{erro}</Alert> : null}
 
       <div className="overflow-x-auto rounded-xl border bg-card shadow-xs">
-        <table className="w-full min-w-[520px] border-collapse text-left">
+        <table className="w-full min-w-[640px] border-collapse text-left">
           <thead>
             <tr className="border-b border-border">
-              {["Parcela", "Vencimento", "Valor", "Situação"].map((h) => (
+              {colunas.map((h) => (
                 <th
                   key={h}
                   className="bg-muted/50 px-4 py-2.5 text-xs font-medium whitespace-nowrap text-muted-foreground"
@@ -109,6 +129,39 @@ export default function ParcelasTrilha({
                       </button>
                     ) : null}
                   </td>
+
+                  {podeMarcar ? (
+                    <td className="px-4 py-2.5 text-sm whitespace-nowrap">
+                      {p.asaas_link ? (
+                        <a
+                          href={p.asaas_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-foreground underline-offset-4 hover:underline"
+                        >
+                          ver no Asaas
+                        </a>
+                      ) : paga ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => cobrar(p)}
+                            disabled={ocupado !== null}
+                            className="text-muted-foreground underline-offset-4 hover:underline hover:text-foreground disabled:opacity-50"
+                          >
+                            {ocupado === p.id ? "gerando…" : "gerar cobrança"}
+                          </button>
+                          {p.cobranca_erro ? (
+                            <span title={p.cobranca_erro} className="cursor-help text-destructive">
+                              falhou
+                            </span>
+                          ) : null}
+                        </span>
+                      )}
+                    </td>
+                  ) : null}
                 </tr>
               );
             })}

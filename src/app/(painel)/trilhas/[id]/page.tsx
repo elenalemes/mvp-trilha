@@ -15,6 +15,7 @@ import {
 import { PageHeader, Stat } from "@/components/ui";
 import ErroLeitura from "@/components/erro-leitura";
 import ParcelasTrilha from "@/components/parcelas-trilha";
+import CobrancaTrilha from "@/components/cobranca-trilha";
 
 /**
  * O painel de uma trilha.
@@ -39,6 +40,8 @@ type Ficha = {
   status: string;
   jornada_inicio: string | null;
   token: string;
+  cobranca_automatica: boolean;
+  primeiro_vencimento: string | null;
   parceiro_id: string | null;
   proposta: {
     id: string;
@@ -79,7 +82,7 @@ export default async function TrilhaPage({ params }: { params: Promise<{ id: str
   const { data: negocio, error } = await supabase
     .from("negocio")
     .select(
-      `id, status, jornada_inicio, token, parceiro_id,
+      `id, status, jornada_inicio, token, parceiro_id, cobranca_automatica, primeiro_vencimento,
        proposta (id, codigo, prazo_meses, percentual_entrada, percentual_ato,
                  valor_base, valor_entrada, valor_ato, valor_parcela, valor_saldo, condicao_especial),
        imovel (identificacao, numero_matricula, tipologia, metros_quadrados, num_quartos, num_vagas),
@@ -96,7 +99,13 @@ export default async function TrilhaPage({ params }: { params: Promise<{ id: str
 
   const { data: linhas, error: erroParcelas } = await supabase
     .from("parcela")
-    .select("id, numero, vencimento, valor, status, pago_em")
+    // Os campos do Asaas só vão para a Trilha: os outros não têm o que fazer
+    // com o link da fatura do comprador.
+    .select(
+      admin
+        ? "id, numero, vencimento, valor, status, pago_em, asaas_cobranca_id, asaas_link, cobranca_erro"
+        : "id, numero, vencimento, valor, status, pago_em",
+    )
     .eq("negocio_id", id)
     .order("numero")
     .returns<Parcela[]>();
@@ -104,6 +113,18 @@ export default async function TrilhaPage({ params }: { params: Promise<{ id: str
   if (erroParcelas) return <ErroLeitura oQue="das parcelas" erro={erroParcelas} />;
 
   const parcelas = linhas ?? [];
+
+  // O ambiente do Asaas (teste ou real) aparece no quadro de cobrança — só a
+  // Trilha lê a configuração, e só ela vê o quadro.
+  let ambiente: "sandbox" | "producao" | null = null;
+  if (admin) {
+    const { data: cfg } = await supabase
+      .from("config_financeiro")
+      .select("asaas_ambiente")
+      .maybeSingle<{ asaas_ambiente: "sandbox" | "producao" }>();
+    ambiente = cfg?.asaas_ambiente ?? null;
+  }
+  const datasTravadas = parcelas.some((x) => x.status === "paga" || Boolean(x.asaas_cobranca_id));
   const resumo = resumoParcelas(parcelas);
   const p = negocio.proposta;
   const j = negocio.jornada_inicio && p ? jornada(negocio.jornada_inicio, p.prazo_meses) : null;
@@ -207,6 +228,16 @@ export default async function TrilhaPage({ params }: { params: Promise<{ id: str
 
         {/* ------------------------------------------------- a lateral */}
         <aside className="flex flex-col gap-4 lg:sticky lg:top-20">
+          {admin && negocio.status === "em_jornada" ? (
+            <CobrancaTrilha
+              negocioId={negocio.id}
+              ambiente={ambiente}
+              liberada={negocio.cobranca_automatica}
+              primeiroVencimento={negocio.primeiro_vencimento}
+              datasTravadas={datasTravadas}
+            />
+          ) : null}
+
           {p ? (
             <section className="rounded-xl border bg-card p-5 shadow-xs">
               <h2 className="mb-2 text-sm font-semibold text-foreground">O combinado</h2>

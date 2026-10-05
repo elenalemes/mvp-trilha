@@ -62,6 +62,10 @@ export type Parcela = {
   valor: number;
   status: "aberta" | "paga";
   pago_em: string | null;
+  /** Campos da cobrança no Asaas. Opcionais: só a Trilha os lê. */
+  asaas_cobranca_id?: string | null;
+  asaas_link?: string | null;
+  cobranca_erro?: string | null;
 };
 
 export type ResumoParcelas = {
