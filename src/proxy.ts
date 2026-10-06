@@ -5,8 +5,9 @@ import { NextResponse, type NextRequest } from "next/server";
 // `/condicoes` é a página que ele envia ao cliente, `/primeiro-acesso` é o
 // link de convite que ele recebe no WhatsApp e `/acompanhar` é o link
 // permanente do comprador: quem tem o link entra, sem conta e sem senha.
-// `/api/asaas/webhook` são os avisos do Asaas — sem sessão, protegidos pelo
-// token secreto que a própria rota confere.
+// `/api/asaas/webhook` são os avisos do Asaas e `/api/cron` as rotinas que a
+// Vercel dispara — nenhum dos dois tem sessão; cada rota confere o próprio
+// segredo antes de qualquer coisa.
 const PUBLIC_ROUTES = [
   "/login",
   "/simulador",
@@ -14,6 +15,7 @@ const PUBLIC_ROUTES = [
   "/primeiro-acesso",
   "/acompanhar",
   "/api/asaas/webhook",
+  "/api/cron",
 ];
 
 export async function proxy(request: NextRequest) {
