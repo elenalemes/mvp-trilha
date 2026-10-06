@@ -141,7 +141,13 @@ export default function ParcelasTrilha({
                         >
                           ver no Asaas
                         </a>
-                      ) : paga ? (
+                      ) : null}
+                      {p.asaas_link && p.cobranca_erro ? (
+                        // Alerta vindo do Asaas (estorno, cobrança apagada…).
+                        <span title={p.cobranca_erro} className="ml-2 cursor-help font-medium text-destructive">
+                          atenção
+                        </span>
+                      ) : p.asaas_link ? null : paga ? (
                         <span className="text-muted-foreground">—</span>
                       ) : (
                         <span className="inline-flex items-center gap-2">
@@ -155,7 +161,7 @@ export default function ParcelasTrilha({
                           </button>
                           {p.cobranca_erro ? (
                             <span title={p.cobranca_erro} className="cursor-help text-destructive">
-                              falhou
+                              aviso
                             </span>
                           ) : null}
                         </span>
