@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getSessao } from "@/lib/sessao";
+import { conferirAndamento } from "@/lib/andamento";
 import { BUCKET_FECHAMENTO, caminhoPertence } from "@/lib/armazenamento";
 import type { Pessoa } from "@/lib/fechamento";
 
@@ -69,6 +70,7 @@ export async function registrarArquivo(
     return { ok: false, erro: "O arquivo subiu, mas não consegui registrá-lo. Tente de novo." };
   }
 
+  await conferirAndamento(negocioId);
   revalidar(negocioId);
   return { ok: true };
 }

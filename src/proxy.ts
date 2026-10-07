@@ -16,6 +16,7 @@ const PUBLIC_ROUTES = [
   "/acompanhar",
   "/api/asaas/webhook",
   "/api/cron",
+  "/minuta",
 ];
 
 export async function proxy(request: NextRequest) {

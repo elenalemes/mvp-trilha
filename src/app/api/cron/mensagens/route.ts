@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { varrerFila } from "@/lib/avisos";
+import { varrerAndamento } from "@/lib/andamento";
 
 /**
  * A segunda chance das mensagens: `GET /api/cron/mensagens`.
@@ -10,6 +11,10 @@ import { varrerFila } from "@/lib/avisos";
  * ar, por exemplo) é tentado de novo aqui, uma vez por dia às 10h de Brasília
  * — horário decente para chegar WhatsApp em comprador. Até 3 tentativas no
  * total; depois disso, só pelo botão em Avisos → Mensagens.
+ *
+ * Antes, a rede de segurança do andamento: um negócio que avançou por um
+ * caminho que não passa pelas actions (gatilho do banco, edição direta) tem
+ * o aviso gravado aqui e sai na mesma execução.
  *
  * Mesma porta da rotina do financeiro: `Authorization: Bearer <CRON_SECRET>`.
  */
@@ -31,8 +36,10 @@ export async function GET(request: NextRequest) {
 
   const inicio = Date.now();
   try {
-    const resumo = await varrerFila(createAdminClient(), inicio + 55_000);
-    return NextResponse.json({ ok: true, ...resumo });
+    const admin = createAdminClient();
+    const andamento = await varrerAndamento(admin, inicio + 20_000);
+    const fila = await varrerFila(admin, inicio + 55_000);
+    return NextResponse.json({ ok: true, andamento, fila });
   } catch (e) {
     console.error("[mensagens] falha inesperada:", e);
     return NextResponse.json({ ok: false, erro: "falha inesperada" }, { status: 500 });

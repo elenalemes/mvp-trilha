@@ -345,3 +345,107 @@ export function textoRecusaVendedor({
     "Não há nada a fazer da sua parte.",
   ].join("\n");
 }
+
+// ------------------------------------------------------ andamento do fechamento
+// Um aviso por NÍVEL que abre (não por tarefa), mais dois marcos: o contrato
+// enviado para assinatura e a trilha começando. Cada papel recebe o seu texto
+// e o seu link: o comprador, a página pública; os outros, o painel.
+//
+// A verificação de crédito é interna e nunca aparece aqui: "a documentação
+// está completa" vale para quem quer que tenha fechado o nível.
+
+export type MarcoAndamento = "contrato" | "assinatura" | "pagamentos" | "chaves" | "trilha";
+export type PapelAviso = "comprador" | "corretor" | "vendedor";
+
+type DadosAndamento = {
+  marco: MarcoAndamento;
+  papel: PapelAviso;
+  nome: string;
+  unidade: string;
+  empreendimento: string;
+  link: string;
+  /** Só no marco "contrato". */
+  linkMinuta?: string;
+};
+
+export function textoAndamento(d: DadosAndamento): string {
+  const ola = `Olá, ${primeiro(d.nome)}!`;
+  const imovel = `🏠 *${d.unidade}* · ${d.empreendimento}`;
+  const comprador = d.papel === "comprador";
+
+  const corpo: Record<MarcoAndamento, string[]> = {
+    contrato: [
+      `${ola} A documentação ${comprador ? "da sua compra " : ""}está completa. ✅`,
+      "",
+      imovel,
+      "",
+      "Agora a Trilha está redigindo o contrato. Antes da assinatura, leia a minuta: é o modelo padrão, que recebe os dados das partes e do imóvel na versão final.",
+      d.linkMinuta ?? "",
+      "",
+      comprador
+        ? "Ficou alguma dúvida sobre as cláusulas? Fale com o seu corretor ou com a Trilha antes de assinar."
+        : "Dúvidas sobre as cláusulas: fale com a Trilha antes do envio para assinatura.",
+      "",
+      comprador ? "Acompanhe por aqui:" : "Painel:",
+      d.link,
+    ],
+    assinatura: [
+      `${ola} O contrato foi enviado para assinatura. 📝`,
+      "",
+      imovel,
+      "",
+      "*Confira o seu e-mail*: o convite para assinar chega pela Autentique (olhe também o spam ou lixo eletrônico). Cada parte recebe o seu e assina pelo link do e-mail.",
+      "",
+      comprador ? "Acompanhe por aqui:" : "Painel:",
+      d.link,
+    ],
+    pagamentos: [
+      `${ola} O contrato foi assinado por todos. ✅`,
+      "",
+      imovel,
+      "",
+      comprador
+        ? "Agora vêm os pagamentos iniciais (como seguro incêndio e vistoria). A Trilha te envia as cobranças."
+        : "Agora a Trilha cuida dos pagamentos iniciais (como seguro incêndio e vistoria).",
+      "",
+      comprador ? "Acompanhe por aqui:" : "Painel:",
+      d.link,
+    ],
+    chaves: [
+      `${ola} Os pagamentos iniciais foram confirmados. ✅`,
+      "",
+      imovel,
+      "",
+      comprador
+        ? "Falta pouco: o próximo passo é a entrega das chaves. A Trilha vai combinar o dia com você."
+        : "Próximo passo: a entrega das chaves.",
+      "",
+      comprador ? "Acompanhe por aqui:" : "Painel:",
+      d.link,
+    ],
+    trilha: [
+      comprador ? `${ola} Chaves liberadas. Bem-vindo(a) ao seu novo lar! 🎉🔑` : `${ola} Chaves liberadas! 🎉🔑`,
+      "",
+      imovel,
+      "",
+      comprador
+        ? "A partir de agora começa a sua Trilha. As parcelas mensais vencem todo dia 10, pagas por Pix — a cobrança de cada mês chega por e-mail e SMS."
+        : d.papel === "corretor"
+          ? "O negócio virou trilha. A sua comissão é repassada por Pix nos dias 14 e 15 de cada mês, conforme as parcelas forem pagas. Obrigado pela parceria!"
+          : "O negócio virou trilha. Os repasses das parcelas pagas são feitos por Pix nos dias 14 e 15 de cada mês.",
+      "",
+      comprador ? "Acompanhe por aqui:" : "Painel:",
+      d.link,
+    ],
+  };
+
+  return corpo[d.marco].join("\n");
+}
+
+export const ASSUNTO_DO_MARCO: Record<MarcoAndamento, string> = {
+  contrato: "Contrato em redação (minuta)",
+  assinatura: "Contrato enviado para assinatura",
+  pagamentos: "Contrato assinado",
+  chaves: "Pagamentos confirmados",
+  trilha: "Chaves liberadas",
+};

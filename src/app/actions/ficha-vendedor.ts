@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getSessao } from "@/lib/sessao";
+import { conferirAndamento } from "@/lib/andamento";
 import { fichaVendedorSchema, type FichaVendedorValues } from "@/lib/schemas";
 import { stripMask, telefoneNacional, temConjuge } from "@/lib/br";
 
@@ -118,6 +119,7 @@ export async function salvarFichaVendedor(
     if (erroCadastro) console.error("[ficha do vendedor] cadastro não atualizado:", erroCadastro);
   }
 
+  await conferirAndamento(negocioId);
   revalidatePath(`/negocios/${negocioId}`);
   return { ok: true };
 }

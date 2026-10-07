@@ -108,6 +108,25 @@ export default async function AcompanharPage({
         </div>
       </section>
 
+      {/* Na etapa do contrato, antes de assinar: a minuta para ler com calma. */}
+      {dados.etapas.some((e) => e.nome.toLowerCase() === "contrato" && e.situacao === "andamento") ? (
+        <section className="mb-6 rounded-xl border bg-card p-6 shadow-xs">
+          <h2 className="text-base font-semibold text-foreground">Minuta do contrato</h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            É o modelo que será usado no seu contrato, antes de receber os seus dados e os do imóvel. Leia antes da
+            assinatura e tire as dúvidas com o seu corretor ou com a Trilha.
+          </p>
+          <a
+            href={`/minuta?t=${encodeURIComponent(t ?? "")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex h-9 items-center rounded-md border px-4 text-sm font-medium text-foreground hover:bg-muted"
+          >
+            Abrir a minuta (PDF)
+          </a>
+        </section>
+      ) : null}
+
       {/* A segunda: o que está acontecendo, e de quem depende. */}
       <section className="rounded-xl border bg-card p-6 shadow-xs">
         <h2 className="mb-5 text-base font-semibold text-foreground">Etapas</h2>

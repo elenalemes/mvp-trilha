@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getSessao } from "@/lib/sessao";
+import { conferirAndamento } from "@/lib/andamento";
 import { fichaSchema, type FichaValues } from "@/lib/schemas";
 import { stripMask, telefoneNacional, temConjuge } from "@/lib/br";
 
@@ -81,6 +82,7 @@ export async function salvarFicha(negocioId: string, valores: FichaValues): Prom
     return { ok: false, erro: "Não consegui salvar a ficha. Tente de novo em instantes." };
   }
 
+  await conferirAndamento(negocioId);
   revalidatePath(`/negocios/${negocioId}`);
   return { ok: true };
 }

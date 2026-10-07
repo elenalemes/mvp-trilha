@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { getSessao } from "@/lib/sessao";
+import { conferirAndamento } from "@/lib/andamento";
 
 /**
  * As escritas do checklist de fechamento.
@@ -113,6 +114,7 @@ export async function concluirTarefa(
   // para quem pediu, e é assim que deve ser.
   if (error || !linha) return { ok: false, erro: falhou(error) };
 
+  await conferirAndamento(negocioId);
   revalidar(negocioId);
   return { ok: true };
 }
@@ -148,6 +150,7 @@ export async function registrarVeredito(
 
   if (error || !linha) return { ok: false, erro: falhou(error) };
 
+  await conferirAndamento(negocioId);
   revalidar(negocioId);
   return { ok: true };
 }
@@ -188,6 +191,7 @@ export async function dispensarTarefa(
 
   if (error || !linha) return { ok: false, erro: falhou(error) };
 
+  await conferirAndamento(negocioId);
   revalidar(negocioId);
   return { ok: true };
 }
