@@ -1,6 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { linkDoSite } from "@/lib/site";
-import { nivelAberto, type Tarefa } from "@/lib/fechamento";
+import { estaFechada, nivelAberto, type Tarefa } from "@/lib/fechamento";
 import { after } from "next/server";
 import { criarAviso, despachar, digitosDe, enfileirar, type NovaMensagem } from "@/lib/avisos";
 import { ASSUNTO_DO_MARCO, textoAndamento, type MarcoAndamento, type PapelAviso } from "@/lib/notificacoes";
@@ -55,6 +55,7 @@ const MARCO_DA_ETAPA: Record<string, MarcoAndamento> = {
 };
 
 const TITULO_ADMIN: Record<MarcoAndamento, string> = {
+  documentos: "vendedor enviou todos os documentos",
   contrato: "documentação completa, contrato em redação",
   assinatura: "contrato enviado para assinatura",
   pagamentos: "contrato assinado, pagamentos iniciais",
@@ -100,14 +101,24 @@ export async function avisarAndamento(negocioId: string, admin: Admin = createAd
 
     const { data: lista } = await admin
       .from("checklist_item")
-      .select("etapa, etapa_ordem, titulo, status")
+      .select("etapa, etapa_ordem, titulo, status, ator")
       .eq("negocio_id", negocioId)
-      .returns<Pick<Tarefa, "etapa" | "etapa_ordem" | "titulo" | "status">[]>();
+      .returns<Pick<Tarefa, "etapa" | "etapa_ordem" | "titulo" | "status" | "ator">[]>();
     const tarefas = (lista ?? []) as Tarefa[];
     if (tarefas.length === 0) return NADA;
 
     const nivel = nivelAberto(tarefas);
     const marcos: MarcoAndamento[] = [];
+
+    // ------------------------------------- 0. o vendedor terminou a parte dele
+    // Todas as tarefas da incorporadora no nível 1 fechadas: ela recebe o
+    // link de acompanhamento. Só enquanto o nível 1 não tinha sido avisado
+    // como encerrado — negócio antigo não recebe isto de surpresa. Repetir a
+    // conferência não repete a mensagem (a chave da fila é a mesma).
+    const doVendedor = tarefas.filter((t) => t.ator === "incorporadora" && t.etapa_ordem === 1);
+    if (n.nivel_avisado <= 1 && !n.aviso_trilha_em && doVendedor.length > 0 && doVendedor.every(estaFechada)) {
+      marcos.push("documentos");
+    }
 
     // ------------------------------------------------- 1. a trilha começou
     // Quando tudo fechou, só este aviso sai: os níveis que passaram juntos
@@ -123,8 +134,11 @@ export async function avisarAndamento(negocioId: string, admin: Admin = createAd
       }
 
       // ------------------------------------------- 3. enviado para assinatura
-      const enviado = tarefas.some((t) => /^enviar para assinatura/i.test(t.titulo) && t.status === "concluido");
-      if (enviado && !n.aviso_assinatura_em && (await travar(admin, negocioId, "assinatura"))) {
+      // Se o nível do contrato já fechou junto (tudo marcado de uma vez), a
+      // marca avança sem mensagem: "confira seu e-mail" depois de "contrato
+      // assinado" só confunde.
+      const envio = tarefas.find((t) => /^enviar para assinatura/i.test(t.titulo) && t.status === "concluido");
+      if (envio && !n.aviso_assinatura_em && (await travar(admin, negocioId, "assinatura")) && envio.etapa_ordem === nivel) {
         marcos.push("assinatura");
       }
     }
@@ -173,6 +187,7 @@ export async function avisarAndamento(negocioId: string, admin: Admin = createAd
     for (const marco of marcos) {
       for (const p of pessoas) {
         if (!p.telefone) continue;
+        if (marco === "documentos" && p.papel !== "vendedor") continue;
         msgs.push({
           chave: `andamento:${negocioId}:${marco}:${p.papel}:${digitosDe(p.telefone)}`,
           destino: p.telefone,
@@ -181,7 +196,18 @@ export async function avisarAndamento(negocioId: string, admin: Admin = createAd
           assunto: ASSUNTO_DO_MARCO[marco],
           negocioId,
           propostaId: n.proposta_id,
-          texto: textoAndamento({ marco, papel: p.papel, nome: p.nome || p.rotulo, unidade, empreendimento, link: p.link, linkMinuta }),
+          texto: textoAndamento({
+            marco,
+            papel: p.papel,
+            nome: p.nome || p.rotulo,
+            unidade,
+            empreendimento,
+            // A incorporadora recebe a página de acompanhamento nesta: é o
+            // jeito de ela ver o andamento sem ter tarefa nenhuma aberta.
+            link: marco === "documentos" ? linkComprador : p.link,
+            linkMinuta,
+            vendedorPF: pf,
+          }),
         });
       }
 

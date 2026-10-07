@@ -23,6 +23,7 @@ import type { createAdminClient } from "@/lib/supabase/admin";
 import { cobrarParcela } from "@/lib/cobranca";
 import { enviarWhatsApp } from "@/lib/notificacoes";
 import { criarAviso } from "@/lib/avisos";
+import { rotuloParcela } from "@/lib/jornada";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
@@ -114,12 +115,12 @@ export async function rodarCobranca(admin: Admin, hoje: string): Promise<ResumoC
     const linhas = [`*Trilha · rotina de cobrança de ${dataBR(hoje)}*`, `Geradas: ${resumo.geradas} de ${resumo.candidatas}.`];
     if (resumo.falhas.length) {
       linhas.push("", `*${resumo.falhas.length} falharam:*`);
-      for (const f of resumo.falhas.slice(0, 10)) linhas.push(`• parcela ${f.numero}: ${f.erro}`);
+      for (const f of resumo.falhas.slice(0, 10)) linhas.push(`• ${rotuloParcela(f.numero)}: ${f.erro}`);
     }
     if (resumo.vencidasSemCobranca.length) {
       linhas.push("", `*${resumo.vencidasSemCobranca.length} venceram sem cobrança:*`);
       for (const v of resumo.vencidasSemCobranca.slice(0, 10)) {
-        linhas.push(`• ${v.unidade}, parcela ${v.numero}, venceu ${dataBR(v.vencimento)}`);
+        linhas.push(`• ${v.unidade}, ${rotuloParcela(v.numero)}, venceu ${dataBR(v.vencimento)}`);
       }
     }
     if (resumo.interrompidaPorTempo) linhas.push("", "Parte ficou para amanhã (tempo de execução).");

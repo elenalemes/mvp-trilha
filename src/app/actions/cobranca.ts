@@ -55,6 +55,26 @@ export async function definirPrimeiroVencimento(negocioId: string, data: string)
   return { ok: true };
 }
 
+/** Vencimento do ato: no fechamento, ou no próximo dia 10. Não mexe nas parcelas. */
+export async function definirVencimentoAto(negocioId: string, data: string): Promise<Resultado> {
+  const recusa = await exigirAdmin();
+  if (recusa) return { ok: false, erro: recusa };
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) return { ok: false, erro: "Data inválida." };
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("definir_vencimento_ato", { p_negocio: negocioId, p_data: data });
+
+  if (error) {
+    if (error.code === "22023" || error.code === "42501") return { ok: false, erro: error.message };
+    console.error("[cobranca] vencimento do ato:", error);
+    return { ok: false, erro: "Não consegui alterar a data do ato." };
+  }
+
+  revalidatePath(`/trilhas/${negocioId}`);
+  return { ok: true };
+}
+
 /** Liberar (ou não) a trilha para cobrança automática. */
 export async function alternarCobrancaAutomatica(negocioId: string, ligar: boolean): Promise<Resultado> {
   const recusa = await exigirAdmin();

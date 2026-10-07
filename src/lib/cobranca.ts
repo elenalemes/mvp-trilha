@@ -14,6 +14,7 @@
  *   5. vencimento no passado: o Asaas recusa, e a tela diz o que fazer.
  */
 
+import { rotuloParcela } from "@/lib/jornada";
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { ErroAsaas, garantirCliente, garantirCobranca, type AmbienteAsaas } from "@/lib/asaas";
 
@@ -133,7 +134,7 @@ export async function cobrarParcela(admin: Admin, parcelaId: string): Promise<Re
       parcelaId: p.id,
       valor: Number(p.valor),
       vencimento: p.vencimento,
-      descricao: `Trilha · ${n.imovel?.identificacao ?? "unidade"} · ${n.empreendimento?.nome ?? ""} · parcela ${p.numero}${prazo ? `/${prazo}` : ""}`,
+      descricao: `Trilha · ${n.imovel?.identificacao ?? "unidade"} · ${n.empreendimento?.nome ?? ""} · ${rotuloParcela(p.numero, prazo)}`,
       multaPercentual: Number(cfg.multa_percentual),
       jurosMensal: Number(cfg.juros_mensal),
     });

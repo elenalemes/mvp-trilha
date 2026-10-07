@@ -42,6 +42,7 @@ type Ficha = {
   token: string;
   cobranca_automatica: boolean;
   primeiro_vencimento: string | null;
+  ato_vencimento: string | null;
   parceiro_id: string | null;
   proposta: {
     id: string;
@@ -82,7 +83,7 @@ export default async function TrilhaPage({ params }: { params: Promise<{ id: str
   const { data: negocio, error } = await supabase
     .from("negocio")
     .select(
-      `id, status, jornada_inicio, token, parceiro_id, cobranca_automatica, primeiro_vencimento,
+      `id, status, jornada_inicio, token, parceiro_id, cobranca_automatica, primeiro_vencimento, ato_vencimento,
        proposta (id, codigo, prazo_meses, percentual_entrada, percentual_ato,
                  valor_base, valor_entrada, valor_ato, valor_parcela, valor_saldo, condicao_especial),
        imovel (identificacao, numero_matricula, tipologia, metros_quadrados, num_quartos, num_vagas),
@@ -124,7 +125,10 @@ export default async function TrilhaPage({ params }: { params: Promise<{ id: str
       .maybeSingle<{ asaas_ambiente: "sandbox" | "producao" }>();
     ambiente = cfg?.asaas_ambiente ?? null;
   }
-  const datasTravadas = parcelas.some((x) => x.status === "paga" || Boolean(x.asaas_cobranca_id));
+  // O ato (parcela 0) tem data própria: travar um não trava o outro.
+  const cobradaOuPaga = (x: (typeof parcelas)[number]) => x.status === "paga" || Boolean(x.asaas_cobranca_id);
+  const datasTravadas = parcelas.some((x) => x.numero > 0 && cobradaOuPaga(x));
+  const ato = parcelas.find((x) => x.numero === 0) ?? null;
   const resumo = resumoParcelas(parcelas);
   const p = negocio.proposta;
   const j = negocio.jornada_inicio && p ? jornada(negocio.jornada_inicio, p.prazo_meses) : null;
@@ -235,6 +239,8 @@ export default async function TrilhaPage({ params }: { params: Promise<{ id: str
               liberada={negocio.cobranca_automatica}
               primeiroVencimento={negocio.primeiro_vencimento}
               datasTravadas={datasTravadas}
+              atoVencimento={ato ? ato.vencimento : null}
+              atoTravado={ato ? cobradaOuPaga(ato) : false}
             />
           ) : null}
 

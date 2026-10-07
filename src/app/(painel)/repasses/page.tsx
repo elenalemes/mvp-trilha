@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ehAdmin, getSessao } from "@/lib/sessao";
 import { formatBRL } from "@/lib/br";
+import { rotuloParcela } from "@/lib/jornada";
 import { EmptyState, PageHeader } from "@/components/ui";
 import { AcoesLote, GerarRepassesAgora } from "@/components/acoes-repasse";
 
@@ -77,7 +78,7 @@ const quemDoLote = (l: Lote) => l.nome_beneficiario ?? l.parceiro?.nome ?? l.inc
 
 const composicao = (linhas: LinhaRepasse[]) =>
   linhas
-    .map((r) => `${r.negocio?.imovel?.identificacao ?? "unidade"} · parcela ${r.parcela?.numero ?? "?"} (${formatBRL(r.valor)})`)
+    .map((r) => `${r.negocio?.imovel?.identificacao ?? "unidade"} · ${r.parcela ? rotuloParcela(r.parcela.numero) : "parcela ?"} (${formatBRL(r.valor)})`)
     .join(" · ");
 
 export default async function RepassesPage({ searchParams }: { searchParams: Promise<{ aba?: string }> }) {
@@ -194,7 +195,7 @@ export default async function RepassesPage({ searchParams }: { searchParams: Pro
                 g.papel,
                 <span key="v" className="tabular-nums">{formatBRL(g.total)}</span>,
                 <span key="c" className="text-muted-foreground">
-                  {g.itens.map((r) => `${r.negocio?.imovel?.identificacao ?? "unidade"} · parcela ${r.parcela?.numero ?? "?"}`).join(" · ")}
+                  {g.itens.map((r) => `${r.negocio?.imovel?.identificacao ?? "unidade"} · ${r.parcela ? rotuloParcela(r.parcela.numero) : "parcela ?"}`).join(" · ")}
                 </span>,
               ])}
             />

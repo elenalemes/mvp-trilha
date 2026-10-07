@@ -68,6 +68,13 @@ export type Parcela = {
   cobranca_erro?: string | null;
 };
 
+/**
+ * O nome de uma parcela para gente ler. A parcela 0 é o ATO: a entrada paga no
+ * fechamento, que entra na trilha para ser cobrada e repassada como as outras.
+ */
+export const rotuloParcela = (numero: number, prazo?: number | null) =>
+  numero === 0 ? "ato" : prazo ? `parcela ${numero}/${prazo}` : `parcela ${numero}`;
+
 export type ResumoParcelas = {
   pagas: number;
   total: number;
@@ -95,14 +102,16 @@ function hoje(): number {
  */
 export function resumoParcelas(parcelas: Parcela[]): ResumoParcelas {
   const limite = hoje();
+  // "x de 24 pagas" conta só as mensais; o ato entra no dinheiro e no atraso.
+  const mensais = parcelas.filter((p) => p.numero > 0);
   const pagas = parcelas.filter((p) => p.status === "paga");
   const abertas = parcelas
     .filter((p) => p.status === "aberta")
     .sort((a, b) => a.vencimento.localeCompare(b.vencimento));
 
   return {
-    pagas: pagas.length,
-    total: parcelas.length,
+    pagas: mensais.filter((p) => p.status === "paga").length,
+    total: mensais.length,
     atrasadas: abertas.filter((p) => new Date(`${p.vencimento}T00:00:00`).getTime() < limite).length,
     proxima: abertas[0] ?? null,
     recebido: pagas.reduce((soma, p) => soma + Number(p.valor), 0),

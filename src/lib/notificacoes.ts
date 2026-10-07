@@ -354,7 +354,7 @@ export function textoRecusaVendedor({
 // A verificação de crédito é interna e nunca aparece aqui: "a documentação
 // está completa" vale para quem quer que tenha fechado o nível.
 
-export type MarcoAndamento = "contrato" | "assinatura" | "pagamentos" | "chaves" | "trilha";
+export type MarcoAndamento = "documentos" | "contrato" | "assinatura" | "pagamentos" | "chaves" | "trilha";
 export type PapelAviso = "comprador" | "corretor" | "vendedor";
 
 type DadosAndamento = {
@@ -366,14 +366,27 @@ type DadosAndamento = {
   link: string;
   /** Só no marco "contrato". */
   linkMinuta?: string;
+  /** Vendedor pessoa física: "o proprietário" no lugar de "a incorporadora". */
+  vendedorPF?: boolean;
 };
 
 export function textoAndamento(d: DadosAndamento): string {
   const ola = `Olá, ${primeiro(d.nome)}!`;
   const imovel = `🏠 *${d.unidade}* · ${d.empreendimento}`;
   const comprador = d.papel === "comprador";
+  const corretor = d.papel === "corretor";
+  const vendedor = d.vendedorPF ? "o proprietário" : "a incorporadora";
 
   const corpo: Record<MarcoAndamento, string[]> = {
+    // Só para o vendedor, quando ele termina a parte dele no nível 1.
+    documentos: [
+      `${ola} Recebemos todos os documentos de vocês. ✅ Obrigado!`,
+      "",
+      imovel,
+      "",
+      "Agora a Trilha segue com as próximas etapas. Acompanhe o andamento por aqui, quando quiser:",
+      d.link,
+    ],
     contrato: [
       `${ola} A documentação ${comprador ? "da sua compra " : ""}está completa. ✅`,
       "",
@@ -405,20 +418,24 @@ export function textoAndamento(d: DadosAndamento): string {
       imovel,
       "",
       comprador
-        ? "Agora vêm os pagamentos iniciais (como seguro incêndio e vistoria). A Trilha te envia as cobranças."
-        : "Agora a Trilha cuida dos pagamentos iniciais (como seguro incêndio e vistoria).",
+        ? "Falta só um detalhe antes das chaves: os pagamentos do seguro incêndio e da vistoria. A Trilha vai gerar essas cobranças e, assim que forem confirmadas, o seu corretor agenda a entrega das chaves com você."
+        : corretor
+          ? `Agora estamos aguardando o cliente pagar o seguro incêndio e a vistoria — se precisar, dê um toque nele. Assim que os pagamentos forem confirmados, agende com ${vendedor} a retirada das chaves e combine a entrega com o cliente.`
+          : "O próximo passo é a entrega das chaves: assim que os pagamentos iniciais do comprador forem confirmados, o corretor entra em contato para combinar a retirada.",
       "",
       comprador ? "Acompanhe por aqui:" : "Painel:",
       d.link,
     ],
     chaves: [
-      `${ola} Os pagamentos iniciais foram confirmados. ✅`,
+      comprador ? `${ola} Os seus pagamentos foram confirmados. ✅` : `${ola} Os pagamentos do comprador foram confirmados. ✅`,
       "",
       imovel,
       "",
       comprador
-        ? "Falta pouco: o próximo passo é a entrega das chaves. A Trilha vai combinar o dia com você."
-        : "Próximo passo: a entrega das chaves.",
+        ? "Agora é a entrega das chaves: o seu corretor vai combinar o dia com você."
+        : corretor
+          ? `Agende agora com ${vendedor} a retirada das chaves e combine a entrega com o cliente.`
+          : "O corretor vai entrar em contato para combinar a retirada das chaves.",
       "",
       comprador ? "Acompanhe por aqui:" : "Painel:",
       d.link,
@@ -443,6 +460,7 @@ export function textoAndamento(d: DadosAndamento): string {
 }
 
 export const ASSUNTO_DO_MARCO: Record<MarcoAndamento, string> = {
+  documentos: "Documentos do vendedor recebidos",
   contrato: "Contrato em redação (minuta)",
   assinatura: "Contrato enviado para assinatura",
   pagamentos: "Contrato assinado",

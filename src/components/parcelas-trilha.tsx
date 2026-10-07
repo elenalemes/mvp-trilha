@@ -56,7 +56,7 @@ export default function ParcelasTrilha({
     const r = await gerarCobranca(p.id, negocioId);
     setOcupado(null);
     if (!r.ok) {
-      setErro(`Parcela ${p.numero}: ${r.erro}`);
+      setErro(`${p.numero === 0 ? "Ato" : `Parcela ${p.numero}`}: ${r.erro}`);
     }
     router.refresh();
   };
@@ -94,7 +94,7 @@ export default function ParcelasTrilha({
                   className="border-b border-border transition-colors last:border-0 hover:bg-muted/40"
                 >
                   <td className="px-4 py-2.5 text-sm tabular-nums text-muted-foreground">
-                    {p.numero}
+                    {p.numero === 0 ? "Ato" : p.numero}
                   </td>
 
                   <td className="px-4 py-2.5 text-sm tabular-nums">

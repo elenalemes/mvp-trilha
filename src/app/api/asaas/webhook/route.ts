@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { criarAviso } from "@/lib/avisos";
 import { formatBRL } from "@/lib/br";
+import { rotuloParcela } from "@/lib/jornada";
 
 /**
  * Os avisos do Asaas: `POST /api/asaas/webhook`.
@@ -133,7 +134,7 @@ async function avisarNoSino(admin: Admin, resultado: string, evento: EventoAsaas
     }>();
 
   const qual = parcela
-    ? `parcela ${parcela.numero} · ${parcela.negocio?.imovel?.identificacao ?? "unidade"}`
+    ? `${rotuloParcela(parcela.numero)} · ${parcela.negocio?.imovel?.identificacao ?? "unidade"}`
     : "parcela";
   const link = parcela ? `/trilhas/${parcela.negocio_id}` : undefined;
 

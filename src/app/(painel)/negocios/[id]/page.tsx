@@ -389,6 +389,24 @@ export default async function NegocioPage({ params }: { params: Promise<{ id: st
                   empreendimento={negocio.empreendimento?.nome ?? ""}
                 />
               </div>
+            ) : !cancelado ? (
+              // Quem não conversa com o comprador (a incorporadora, o corretor
+              // que só acompanha) também pode ver a página que ele vê — só
+              // abrir, sem o botão de mandar para o cliente.
+              <div className="mt-4 border-t pt-4">
+                <p className="text-sm font-semibold text-foreground">Página de acompanhamento</p>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                  A mesma que o comprador vê: a etapa e com quem ela está.
+                </p>
+                <a
+                  href={`/acompanhar?t=${negocio.token}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex h-9 w-full items-center justify-center rounded-md border px-4 text-sm font-medium text-foreground hover:bg-muted"
+                >
+                  Abrir acompanhamento
+                </a>
+              </div>
             ) : null}
 
             {admin && !cancelado && negocio.status !== "quitado" ? (
