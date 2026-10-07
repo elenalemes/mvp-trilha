@@ -206,3 +206,89 @@ export async function garantirCobranca(
 export async function lerCobranca(ambiente: AmbienteAsaas, id: string): Promise<CobrancaAsaas> {
   return chamar<CobrancaAsaas>(configurar(ambiente), "GET", `/payments/${encodeURIComponent(id)}`);
 }
+
+// ------------------------------------------------------------- transferências
+
+export type TipoChaveAsaas = "CPF" | "CNPJ" | "EMAIL" | "PHONE" | "EVP";
+
+const TIPO_DO_CADASTRO: Record<string, TipoChaveAsaas> = {
+  cpf: "CPF",
+  cnpj: "CNPJ",
+  email: "EMAIL",
+  telefone: "PHONE",
+  aleatoria: "EVP",
+};
+
+/**
+ * O tipo da chave no formato do Asaas. Quando o cadastro não guarda o tipo
+ * (a ficha do proprietário PF não guarda), deduz pelo formato. Na dúvida —
+ * 11 dígitos podem ser CPF ou celular —, o dígito verificador decide: CPF
+ * válido é CPF; senão, telefone.
+ */
+export function tipoDaChave(chave: string, tipoCadastro?: string | null): TipoChaveAsaas | null {
+  if (tipoCadastro && TIPO_DO_CADASTRO[tipoCadastro]) return TIPO_DO_CADASTRO[tipoCadastro];
+
+  const c = chave.trim();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)) return "EMAIL";
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(c)) return "EVP";
+
+  const d = c.replace(/\D/g, "");
+  if (c.startsWith("+")) return "PHONE";
+  if (d.length === 14) return "CNPJ";
+  if (d.length === 11) return cpfValido(d) ? "CPF" : "PHONE";
+  if (d.length === 10 || d.length === 13) return "PHONE";
+  return null;
+}
+
+function cpfValido(cpf: string): boolean {
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+  const dv = (base: string, peso: number) => {
+    const soma = base.split("").reduce((s, n, i) => s + Number(n) * (peso - i), 0);
+    const r = (soma * 10) % 11;
+    return r === 10 ? 0 : r;
+  };
+  return dv(cpf.slice(0, 9), 10) === Number(cpf[9]) && dv(cpf.slice(0, 10), 11) === Number(cpf[10]);
+}
+
+/** A chave no formato que o Asaas espera para cada tipo. */
+export function normalizarChave(chave: string, tipo: TipoChaveAsaas): string {
+  const c = chave.trim();
+  if (tipo === "CPF" || tipo === "CNPJ") return c.replace(/\D/g, "");
+  if (tipo === "PHONE") {
+    const d = c.replace(/\D/g, "");
+    return d.length === 13 && d.startsWith("55") ? `+${d}` : `+55${d}`;
+  }
+  if (tipo === "EMAIL") return c.toLowerCase();
+  return c;
+}
+
+export type DadosTransferencia = {
+  valor: number;
+  chave: string;
+  tipo: TipoChaveAsaas;
+  descricao: string;
+  /** Id do lote no nosso banco. */
+  referencia: string;
+};
+
+export type TransferenciaAsaas = { id: string; status: string; failReason?: string | null };
+
+/**
+ * Pede uma transferência Pix. NÃO é idempotente do lado do Asaas — a garantia
+ * de "uma vez só" é a trava do lote no nosso banco (ver `lib/repasse.ts`).
+ * Com a validação por SMS ligada na conta, a transferência nasce pendente e só
+ * sai quando alguém aprova no Asaas.
+ */
+export async function criarTransferencia(
+  ambiente: AmbienteAsaas,
+  d: DadosTransferencia,
+): Promise<TransferenciaAsaas> {
+  return chamar<TransferenciaAsaas>(configurar(ambiente), "POST", "/transfers", {
+    value: d.valor,
+    operationType: "PIX",
+    pixAddressKey: normalizarChave(d.chave, d.tipo),
+    pixAddressKeyType: d.tipo,
+    description: d.descricao.slice(0, 140),
+    externalReference: d.referencia,
+  });
+}

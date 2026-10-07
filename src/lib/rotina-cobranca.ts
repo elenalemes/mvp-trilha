@@ -14,7 +14,7 @@
  *   5. grava o resumo em `rotina_execucao`;
  *   6. se algo precisa de gente, manda UM WhatsApp para o telefone de alerta.
  *
- * Para caber no tempo de uma execução (60s), para de cobrar perto dos 45s. O
+ * Para caber no tempo de uma execução (60s), para de cobrar perto dos 35s (deixa tempo para o repasse). O
  * que sobrar fica para o dia seguinte — ainda dentro do prazo, porque a
  * geração é no dia 1 e o vencimento no dia 10.
  */
@@ -25,7 +25,7 @@ import { enviarWhatsApp } from "@/lib/notificacoes";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
-const LIMITE_MS = 45_000;
+const LIMITE_MS = 35_000;
 
 export type ResumoCobranca = {
   data: string;

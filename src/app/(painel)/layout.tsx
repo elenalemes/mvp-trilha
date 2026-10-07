@@ -38,6 +38,7 @@ export default async function PainelLayout({ children }: { children: React.React
             { href: "/propostas", label: "Propostas", icone: "proposta" as const },
             { href: "/negocios", label: "Setups de negócios", icone: "chave" as const },
             { href: "/trilhas", label: "Trilhas", icone: "jornada" as const },
+            { href: "/repasses", label: "Repasses", icone: "pagamento" as const },
           ],
         },
         {

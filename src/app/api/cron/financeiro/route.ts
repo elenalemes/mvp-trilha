@@ -2,6 +2,7 @@ import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { rodarCobranca } from "@/lib/rotina-cobranca";
+import { rodarRepasse } from "@/lib/rotina-repasse";
 
 /**
  * As rotinas do financeiro: `GET /api/cron/financeiro`.
@@ -14,7 +15,8 @@ import { rodarCobranca } from "@/lib/rotina-cobranca";
  * esperar o mês virar. Só vale com o Asaas em modo de teste (sandbox): na
  * conta real, a data é sempre a de hoje.
  *
- * Hoje roda a cobrança. Os repasses (Parte 5) entram aqui também.
+ * Roda as duas, em ordem: a cobrança (todo dia) e o repasse (só nos dias
+ * da janela, 14 e 15 — fora dela a rotina de repasse não faz nada).
  */
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -35,6 +37,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
+  const inicio = Date.now();
   const admin = createAdminClient();
   let hoje = hojeSP();
 
@@ -58,7 +61,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const cobranca = await rodarCobranca(admin, hoje);
-    return NextResponse.json({ ok: true, cobranca });
+    // A execução inteira tem 60s. O repasse só começa um Pix novo até os 48s,
+    // para nenhum pedido ao Asaas ser cortado no meio.
+    const repasse = await rodarRepasse(admin, hoje, { ate: inicio + 48_000 });
+    return NextResponse.json({ ok: true, cobranca, repasse });
   } catch (e) {
     console.error("[rotina] falha inesperada:", e);
     return NextResponse.json({ ok: false, erro: "falha inesperada na rotina" }, { status: 500 });
