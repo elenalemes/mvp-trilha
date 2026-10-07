@@ -14,6 +14,7 @@
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { enviarLote } from "@/lib/repasse";
 import { enviarWhatsApp } from "@/lib/notificacoes";
+import { criarAviso } from "@/lib/avisos";
 import type { AmbienteAsaas } from "@/lib/asaas";
 
 type Admin = ReturnType<typeof createAdminClient>;
@@ -130,7 +131,7 @@ export async function rodarRepasse(
   const temNovidade =
     resumo.enviados.length > 0 || resumo.problemas.length > 0 || resumo.presosParaVerificar > 0 || resumo.interrompidaPorTempo;
 
-  if (temNovidade && cfg.telefone_alerta) {
+  if (temNovidade) {
     const total = resumo.enviados.reduce((s, e) => s + e.valor, 0);
     const linhas = [`*Trilha · repasses de ${dataBR(hoje)}*`];
     if (resumo.enviados.length) {
@@ -149,9 +150,20 @@ export async function rodarRepasse(
     if (resumo.interrompidaPorTempo) linhas.push("", "Parte ficou para a próxima execução (tempo).");
     linhas.push("", "Detalhes no painel, em Repasses.");
 
-    const envio = await enviarWhatsApp(cfg.telefone_alerta, linhas.join("\n"));
-    resumo.alertaEnviado = envio.ok;
-    if (!envio.ok) console.error("[repasse] alerta não enviado:", envio.erro);
+    // O sino sempre; o WhatsApp só se houver telefone de alerta.
+    await criarAviso(admin, {
+      tipo: "repasse",
+      gravidade: resumo.problemas.length || resumo.presosParaVerificar ? "problema" : "atencao",
+      titulo: resumo.problemas.length || resumo.presosParaVerificar ? `Repasses de ${dataBR(hoje)}: há problema` : `Repasses de ${dataBR(hoje)}: ${resumo.enviados.length} Pix aguardando aprovação no Asaas`,
+      texto: linhas.slice(1).join("\n").trim(),
+      link: resumo.problemas.length || resumo.presosParaVerificar ? "/repasses?aba=problema" : "/repasses?aba=aguardando",
+    });
+
+    const envio = cfg.telefone_alerta
+      ? await enviarWhatsApp(cfg.telefone_alerta, linhas.join("\n"))
+      : ({ ok: false, erro: "sem telefone de alerta" } as const);
+    resumo.alertaEnviado = cfg.telefone_alerta ? envio.ok : null;
+    if (!envio.ok && cfg.telefone_alerta) console.error("[repasse] alerta não enviado:", envio.erro);
   }
 
   return terminar();

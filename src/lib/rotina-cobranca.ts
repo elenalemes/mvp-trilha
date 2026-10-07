@@ -22,6 +22,7 @@
 import type { createAdminClient } from "@/lib/supabase/admin";
 import { cobrarParcela } from "@/lib/cobranca";
 import { enviarWhatsApp } from "@/lib/notificacoes";
+import { criarAviso } from "@/lib/avisos";
 
 type Admin = ReturnType<typeof createAdminClient>;
 
@@ -109,7 +110,7 @@ export async function rodarCobranca(admin: Admin, hoje: string): Promise<ResumoC
   const precisaDeGente =
     resumo.falhas.length > 0 || resumo.vencidasSemCobranca.length > 0 || resumo.interrompidaPorTempo;
 
-  if (precisaDeGente && cfg.telefone_alerta) {
+  if (precisaDeGente) {
     const linhas = [`*Trilha · rotina de cobrança de ${dataBR(hoje)}*`, `Geradas: ${resumo.geradas} de ${resumo.candidatas}.`];
     if (resumo.falhas.length) {
       linhas.push("", `*${resumo.falhas.length} falharam:*`);
@@ -124,9 +125,20 @@ export async function rodarCobranca(admin: Admin, hoje: string): Promise<ResumoC
     if (resumo.interrompidaPorTempo) linhas.push("", "Parte ficou para amanhã (tempo de execução).");
     linhas.push("", "Confira no painel, na tela da trilha.");
 
-    const envio = await enviarWhatsApp(cfg.telefone_alerta, linhas.join("\n"));
-    resumo.alertaEnviado = envio.ok;
-    if (!envio.ok) console.error("[rotina] alerta não enviado:", envio.erro);
+    // O sino sempre; o WhatsApp só se houver telefone de alerta.
+    await criarAviso(admin, {
+      tipo: "cobranca",
+      gravidade: "problema",
+      titulo: `Rotina de cobrança de ${dataBR(hoje)}: precisa de atenção`,
+      texto: linhas.slice(1).join("\n").trim(),
+      link: "/trilhas",
+    });
+
+    const envio = cfg.telefone_alerta
+      ? await enviarWhatsApp(cfg.telefone_alerta, linhas.join("\n"))
+      : ({ ok: false, erro: "sem telefone de alerta" } as const);
+    resumo.alertaEnviado = cfg.telefone_alerta ? envio.ok : null;
+    if (!envio.ok && cfg.telefone_alerta) console.error("[rotina] alerta não enviado:", envio.erro);
   }
 
   return terminar();

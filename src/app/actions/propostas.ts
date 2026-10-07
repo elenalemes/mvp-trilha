@@ -6,7 +6,10 @@ import { getSessao } from "@/lib/sessao";
 import { simular } from "@/lib/simulador";
 import { propostaLogadaSchema, propostaSchema } from "@/lib/schemas";
 import { linkDeConvite, novoConvite } from "@/lib/convite";
-import { enviarWhatsApp, textoConviteParceiro } from "@/lib/notificacoes";
+import { after } from "next/server";
+import { enviarWhatsApp, textoConviteParceiro, textoPropostaRecebida } from "@/lib/notificacoes";
+import { criarAviso, despachar, enfileirar } from "@/lib/avisos";
+import { linkDoSite } from "@/lib/site";
 
 /**
  * O envio da proposta.
@@ -209,8 +212,8 @@ export async function enviarProposta(entrada: Entrada): Promise<ResultadoPropost
       condicao,
       observacao: observacao || null,
     })
-    .select("codigo")
-    .maybeSingle<{ codigo: string }>();
+    .select("id, codigo")
+    .maybeSingle<{ id: string; codigo: string }>();
 
   if (error || !data) {
     console.error("[proposta] falha ao gravar a proposta:", error);
@@ -244,7 +247,17 @@ export async function enviarProposta(entrada: Entrada): Promise<ResultadoPropost
       }),
     );
 
-    if (!envio.ok) console.error("[proposta] convite não saiu:", envio.erro);
+    if (!envio.ok) {
+      console.error("[proposta] convite não saiu:", envio.erro);
+      await criarAviso(admin, {
+        chave: `convite-falhou:${data.id}`,
+        tipo: "mensagem_falhou",
+        gravidade: "problema",
+        titulo: `Convite de acesso não saiu: ${convite.nome} (proposta ${data.codigo})`,
+        texto: `${envio.erro}\nReenvie o convite pela ficha do parceiro.`,
+        link: `/parceiros/${parceiroId}`,
+      });
+    }
 
     await admin
       .from("parceiro")
@@ -255,7 +268,76 @@ export async function enviarProposta(entrada: Entrada): Promise<ResultadoPropost
       .eq("id", parceiroId);
   }
 
+  await avisarDaProposta(admin, {
+    propostaId: data.id,
+    codigo: data.codigo,
+    parceiroId,
+    jaConvidado: Boolean(convite),
+    unidade: simulacao.unidade.identificacao,
+    empreendimento: simulacao.empreendimento,
+  });
+
   return { ok: true, codigo: data.codigo };
+}
+
+/**
+ * Proposta gravada: o sino da Trilha e a confirmação para o corretor.
+ *
+ * O corretor NOVO não recebe a confirmação: o convite de acesso que acabou de
+ * sair já começa com "recebemos a sua proposta". Os outros recebem pela fila,
+ * depois da resposta — quem enviou não fica esperando a uazapi.
+ *
+ * Nada aqui derruba o envio: a proposta já está salva.
+ */
+async function avisarDaProposta(
+  admin: Admin,
+  p: {
+    propostaId: string;
+    codigo: string;
+    parceiroId: string;
+    jaConvidado: boolean;
+    unidade: string;
+    empreendimento: string;
+  },
+) {
+  try {
+    const { data: corretor } = await admin
+      .from("parceiro")
+      .select("nome, telefone")
+      .eq("id", p.parceiroId)
+      .maybeSingle<{ nome: string; telefone: string | null }>();
+
+    await criarAviso(admin, {
+      chave: `proposta-nova:${p.propostaId}`,
+      tipo: "proposta_nova",
+      titulo: `Nova proposta ${p.codigo}`,
+      texto: `${p.unidade} · ${p.empreendimento}${corretor ? ` — corretor ${corretor.nome}` : ""}`,
+      link: `/propostas/${p.propostaId}`,
+    });
+
+    if (p.jaConvidado || !corretor?.telefone) return;
+
+    const ids = await enfileirar(admin, [
+      {
+        chave: `proposta-recebida:${p.propostaId}:corretor`,
+        destino: corretor.telefone,
+        destinatario: `${corretor.nome} (corretor)`,
+        papel: "corretor",
+        assunto: "Proposta recebida",
+        propostaId: p.propostaId,
+        texto: textoPropostaRecebida({
+          nome: corretor.nome,
+          codigo: p.codigo,
+          unidade: p.unidade,
+          empreendimento: p.empreendimento,
+          link: await linkDoSite(`/propostas/${p.propostaId}`),
+        }),
+      },
+    ]);
+    if (ids.length) after(() => despachar(admin, ids));
+  } catch (e) {
+    console.error("[proposta] falha ao avisar do envio:", e);
+  }
 }
 
 // ---------------------------------------------------------------------------

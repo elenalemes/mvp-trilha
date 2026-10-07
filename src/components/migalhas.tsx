@@ -71,6 +71,9 @@ const SECOES: Record<string, string> = {
   proprietarios: "Proprietários PF",
   "opcoes-pagamento": "Opções de pagamento",
   perfil: "Meus dados",
+  avisos: "Avisos",
+  repasses: "Repasses",
+  trilhas: "Trilhas",
 };
 
 export function Migalhas() {

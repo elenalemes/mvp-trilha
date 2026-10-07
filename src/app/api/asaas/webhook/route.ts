@@ -1,6 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { criarAviso } from "@/lib/avisos";
+import { formatBRL } from "@/lib/br";
 
 /**
  * Os avisos do Asaas: `POST /api/asaas/webhook`.
@@ -48,7 +50,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, erro: "corpo inválido" }, { status: 400 });
   }
 
-  const { data, error } = await createAdminClient().rpc("asaas_processar_evento", {
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("asaas_processar_evento", {
     p_evento: evento,
   });
 
@@ -61,5 +64,95 @@ export async function POST(request: NextRequest) {
     console.error("[asaas] aviso gravado com erro de processamento:", (evento as { id?: string })?.id);
   }
 
+  // O sino: o aviso já foi processado; isto só conta para a equipe.
+  await avisarNoSino(admin, String(data), evento as EventoAsaas).catch((e) =>
+    console.error("[asaas] aviso do sino não gravado:", e),
+  );
+
   return NextResponse.json({ ok: true, resultado: data });
+}
+
+type EventoAsaas = {
+  id?: string;
+  event?: string;
+  payment?: { id?: string; value?: number };
+  transfer?: { id?: string; value?: number; failReason?: string };
+};
+
+type Admin = ReturnType<typeof createAdminClient>;
+
+/**
+ * O que do Asaas vale aparecer no sino. Repetido não entra (a chave é o id do
+ * evento, e o Asaas reenvia com o mesmo id).
+ */
+async function avisarNoSino(admin: Admin, resultado: string, evento: EventoAsaas) {
+  const chave = evento.id ? `asaas:${evento.id}` : undefined;
+
+  if (resultado === "erro") {
+    await criarAviso(admin, {
+      chave,
+      tipo: "asaas",
+      gravidade: "problema",
+      titulo: `Aviso do Asaas não processado (${evento.event ?? "?"})`,
+      texto: "Ficou gravado com o motivo na tabela asaas_evento. Conferir.",
+    });
+    return;
+  }
+
+  if (resultado.startsWith("transferencia_")) {
+    if (resultado === "transferencia_situacao") return;
+    const { data: lote } = await admin
+      .from("repasse_lote")
+      .select("nome_beneficiario, valor")
+      .eq("asaas_transferencia_id", evento.transfer?.id ?? "")
+      .maybeSingle<{ nome_beneficiario: string | null; valor: number }>();
+    const quem = `${lote?.nome_beneficiario ?? "beneficiário"} · ${formatBRL(Number(lote?.valor ?? evento.transfer?.value ?? 0))}`;
+    const falhou = resultado === "transferencia_falhou";
+    await criarAviso(admin, {
+      chave,
+      tipo: "repasse",
+      gravidade: falhou ? "problema" : "info",
+      titulo: falhou ? `Pix de repasse falhou: ${quem}` : `Pix de repasse concluído: ${quem}`,
+      texto: falhou ? (evento.transfer?.failReason ?? "Corrigir e tentar de novo em Repasses.") : undefined,
+      link: falhou ? "/repasses?aba=problema" : "/repasses?aba=concluidos",
+    });
+    return;
+  }
+
+  if (!["baixa", "apagada", "alerta"].includes(resultado)) return;
+
+  const { data: parcela } = await admin
+    .from("parcela")
+    .select("numero, negocio_id, cobranca_erro, negocio (imovel (identificacao))")
+    .eq("asaas_cobranca_id", evento.payment?.id ?? "")
+    .maybeSingle<{
+      numero: number;
+      negocio_id: string;
+      cobranca_erro: string | null;
+      negocio: { imovel: { identificacao: string } | null } | null;
+    }>();
+
+  const qual = parcela
+    ? `parcela ${parcela.numero} · ${parcela.negocio?.imovel?.identificacao ?? "unidade"}`
+    : "parcela";
+  const link = parcela ? `/trilhas/${parcela.negocio_id}` : undefined;
+
+  if (resultado === "baixa") {
+    await criarAviso(admin, {
+      chave,
+      tipo: "cobranca",
+      titulo: `Pagamento recebido: ${qual}`,
+      texto: evento.payment?.value ? formatBRL(evento.payment.value) : undefined,
+      link,
+    });
+  } else {
+    await criarAviso(admin, {
+      chave,
+      tipo: "cobranca",
+      gravidade: resultado === "alerta" ? "problema" : "atencao",
+      titulo: resultado === "alerta" ? `Estorno ou contestação no Asaas: ${qual}` : `Cobrança apagada no Asaas: ${qual}`,
+      texto: parcela?.cobranca_erro ?? evento.event,
+      link,
+    });
+  }
 }

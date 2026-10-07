@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { getSessao } from "@/lib/sessao";
 import { NavLateral } from "@/components/nav-lateral";
 import { Migalhas } from "@/components/migalhas";
+import { SinoAvisos } from "@/components/sino-avisos";
 import { Separator } from "@/components/shadcn/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/shadcn/sidebar";
 
@@ -147,6 +148,7 @@ export default async function PainelLayout({ children }: { children: React.React
           <SidebarTrigger className="-ml-1 text-muted-foreground" />
           <Separator orientation="vertical" className="mx-1 data-[orientation=vertical]:h-4" />
           <Migalhas />
+          {admin ? <SinoAvisos /> : null}
         </header>
       {/* `SidebarInset` já é o <main> da página; aqui é só o miolo. */}
       <div className="min-w-0 flex-1 px-4 py-8 lg:px-8">

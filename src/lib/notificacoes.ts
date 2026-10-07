@@ -239,3 +239,109 @@ export function textoConviteParceiro({
     "O link vale por 7 dias e só pode ser usado uma vez.",
   ].join("\n");
 }
+
+// ------------------------------------------------------ proposta enviada
+
+const primeiro = (nome: string) => nome.trim().split(/\s+/)[0];
+
+/**
+ * Confirmação para o corretor que já tem cadastro. Quem é novo recebe o
+ * convite de acesso, que já diz "recebemos a sua proposta" — mandar as duas
+ * seria repetir.
+ */
+export function textoPropostaRecebida({
+  nome,
+  codigo,
+  unidade,
+  empreendimento,
+  link,
+}: {
+  nome: string;
+  codigo: string;
+  unidade: string;
+  empreendimento: string;
+  link: string;
+}): string {
+  return [
+    `Olá, ${primeiro(nome)}! Recebemos a sua proposta na Trilha. ✅`,
+    "",
+    `📄 *Proposta:* ${codigo}`,
+    `🏠 *Unidade:* ${unidade} · ${empreendimento}`,
+    "",
+    "Agora ela passa pela análise da Trilha. Você recebe a resposta aqui no WhatsApp.",
+    "Acompanhe pelo painel:",
+    link,
+  ].join("\n");
+}
+
+// --------------------------------------------------------------- recusa
+// Só o corretor recebe o MOTIVO: é ele quem conversa com o cliente e decide o
+// próximo passo. Comprador e vendedor recebem uma mensagem neutra.
+
+export function textoRecusaCorretor({
+  nome,
+  codigo,
+  unidade,
+  empreendimento,
+  motivo,
+  link,
+}: {
+  nome: string;
+  codigo: string;
+  unidade: string;
+  empreendimento: string;
+  motivo: string | null;
+  link: string;
+}): string {
+  return [
+    `Olá, ${primeiro(nome)}. A proposta ${codigo} não foi aprovada pela Trilha.`,
+    "",
+    `🏠 *${unidade}* · ${empreendimento}`,
+    ...(motivo ? ["", `*Motivo:* ${motivo}`] : []),
+    "",
+    "Se fizer sentido, converse com o seu cliente e envie uma nova proposta pelo simulador. Detalhes no painel:",
+    link,
+  ].join("\n");
+}
+
+export function textoRecusaComprador({
+  nome,
+  unidade,
+  empreendimento,
+  corretor,
+}: {
+  nome: string;
+  unidade: string;
+  empreendimento: string;
+  corretor: string | null;
+}): string {
+  return [
+    `Olá, ${primeiro(nome)}. A sua proposta para o imóvel abaixo não seguiu adiante desta vez.`,
+    "",
+    `🏠 *${unidade}* · ${empreendimento}`,
+    "",
+    corretor
+      ? `${primeiro(corretor)}, o seu corretor, vai falar com você sobre os próximos passos.`
+      : "O seu corretor vai falar com você sobre os próximos passos.",
+  ].join("\n");
+}
+
+export function textoRecusaVendedor({
+  nome,
+  codigo,
+  unidade,
+  empreendimento,
+}: {
+  nome: string;
+  codigo: string;
+  unidade: string;
+  empreendimento: string;
+}): string {
+  return [
+    `Olá, ${primeiro(nome)}. A proposta ${codigo} não seguiu adiante.`,
+    "",
+    `🏠 *${unidade}* · ${empreendimento}`,
+    "",
+    "Não há nada a fazer da sua parte.",
+  ].join("\n");
+}
